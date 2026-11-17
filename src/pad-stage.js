@@ -194,6 +194,35 @@
     }));
   }
 
+  let hitLightTimer = null;
+
+  function buildLightStrips() {
+    ['#pad-light-strip', '#pad-light-strip-bottom'].forEach((selector) => {
+      $(selector).innerHTML = Array.from({ length: 16 }, (_, index) => `<i data-beat="${index}"></i>`).join('');
+    });
+  }
+
+  function clearBeatLights() {
+    const stage = $('#pad-playground');
+    stage.classList.remove('beat-kick', 'beat-snare');
+    $$('.pad-light-strip i').forEach((light) => light.classList.remove('current', 'trail'));
+  }
+
+  function syncBeatLights(event) {
+    const { position, id, kick, snare } = event.detail;
+    if (!backingOn || currentPreset().backing !== id) return;
+    const stage = $('#pad-playground');
+    stage.classList.toggle('beat-kick', kick);
+    stage.classList.toggle('beat-snare', snare);
+    $$('.pad-light-strip').forEach((strip) => {
+      [...strip.children].forEach((light, index) => {
+        const distance = (position - index + 16) % 16;
+        light.classList.toggle('current', index === position);
+        light.classList.toggle('trail', distance > 0 && distance < 4);
+      });
+    });
+  }
+
   function renderBackingSelect() {
     const preset = currentPreset();
     $('#pad-backing-select').value = preset.backing;
@@ -202,6 +231,7 @@
     toggle.classList.toggle('active', backingOn && preset.backing !== 'off');
     toggle.setAttribute('aria-pressed', String(backingOn && preset.backing !== 'off'));
     $('span', toggle).textContent = backingOn && preset.backing !== 'off' ? 'Loop 开' : 'Loop 关';
+    if (!backingOn || preset.backing === 'off') clearBeatLights();
   }
 
   function burst(button, slot) {
@@ -211,10 +241,16 @@
     const rect = button.getBoundingClientRect();
     const x = rect.left - stageRect.left + rect.width / 2;
     const y = rect.top - stageRect.top + rect.height / 2;
-    for (let index = 0; index < 8; index++) {
+    stage.style.setProperty('--hit-color', source.color);
+    stage.classList.remove('hit');
+    void stage.offsetWidth;
+    stage.classList.add('hit');
+    clearTimeout(hitLightTimer);
+    hitLightTimer = setTimeout(() => stage.classList.remove('hit'), 420);
+    for (let index = 0; index < 12; index++) {
       const particle = document.createElement('i');
-      const angle = Math.PI * 2 * index / 8;
-      const distance = 52 + (index % 3) * 18;
+      const angle = Math.PI * 2 * index / 12;
+      const distance = 62 + (index % 3) * 22;
       particle.className = 'pad-particle';
       particle.style.cssText = `left:${x}px;top:${y}px;--particle-color:${source.color};--particle-x:${Math.cos(angle) * distance}px;--particle-y:${Math.sin(angle) * distance}px;--particle-rotate:${index * 47}deg`;
       stage.append(particle);
@@ -223,7 +259,7 @@
     button.classList.remove('hit');
     void button.offsetWidth;
     button.classList.add('hit');
-    setTimeout(() => button.classList.remove('hit'), 240);
+    setTimeout(() => button.classList.remove('hit'), 280);
   }
 
   async function hitPad(index, button) {
@@ -245,7 +281,7 @@
       if (backingOn && preset.backing !== 'off') options.setBacking(true, preset.backing);
     }
     if (button) burst(button, slot);
-    $('#pad-live-status').innerHTML = `<strong>${sourceInfo(slot).title}</strong> · 已落入 C 大调五声音阶 · <span id="pad-backing-name">${options.loopName(preset.backing)}</span>`;
+    $('#pad-live-status').innerHTML = `<strong>${sourceInfo(slot).title}</strong><span id="pad-backing-name">${options.loopName(preset.backing)}</span>`;
   }
 
   function selectPreset(id) {
@@ -344,7 +380,9 @@
   function init(initOptions) {
     options = initOptions;
     loadState();
+    buildLightStrips();
     bindControls();
+    window.addEventListener('meme-pad-beat', syncBeatLights);
     renderPads(); renderLibrary(); renderBackingSelect();
   }
 

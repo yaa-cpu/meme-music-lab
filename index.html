@@ -51,21 +51,20 @@
       <div class="pad-sticker pad-sticker-two" aria-hidden="true"><img src="./assets/oiia.webp" alt=""></div>
       <div class="pad-hero-layout">
         <div class="pad-intro">
-          <p class="pad-overline">TAP THE MEME · 打开就玩</p>
-          <h1 id="page-title">别想了，<br>先<span>敲</span>一下。</h1>
-          <p>每张梗图都是一颗音符。随手敲、连着敲、闭眼敲，都会落在同一条好听的路上。</p>
-          <div class="pad-feature-list"><span>C 大调五声音阶</span><span>原创节奏底奏</span><span>键盘 1–9</span></div>
-          <a class="pad-editor-link" href="#sequencer-title">去线谱认真编一首 <svg><use href="#i-arrow"/></svg></a>
+          <h1 id="page-title">先<span>敲</span>一下。</h1>
+          <a class="pad-editor-link" href="#sequencer-title">去线谱 <svg><use href="#i-arrow"/></svg></a>
         </div>
         <div class="pad-playground" id="pad-playground">
+          <div class="pad-light-strip" id="pad-light-strip" aria-hidden="true"></div>
           <div class="pad-console-top">
-            <div class="pad-preset-readout"><small>NOW JAMMING</small><strong id="pad-preset-name">梗图派对</strong></div>
+            <div class="pad-preset-readout"><strong id="pad-preset-name">梗图派对</strong></div>
             <button class="pad-console-button active" id="pad-loop-toggle" type="button" aria-pressed="true" title="原创合成底奏，首次敲击自动开始"><svg><use href="#i-loop"/></svg><span>Loop 开</span></button>
-            <button class="pad-console-button pad-console-primary" id="pad-backpack-open" type="button"><svg><use href="#i-spark"/></svg><span>背包换装</span></button>
+            <button class="pad-console-button pad-console-primary" id="pad-backpack-open" type="button"><svg><use href="#i-spark"/></svg><span>换装</span></button>
           </div>
           <div class="drum-pad-grid" id="drum-pad-grid" aria-label="梗图音乐打击垫"></div>
+          <div class="pad-light-strip pad-light-strip-bottom" id="pad-light-strip-bottom" aria-hidden="true"></div>
           <div class="pad-console-bottom">
-            <p id="pad-live-status" role="status"><strong>随便敲，都好听。</strong> 首次敲击启动原创底奏 · <span id="pad-backing-name">柑橘跳跳糖</span></p>
+            <p id="pad-live-status" role="status"><strong>随便敲。</strong><span id="pad-backing-name">柑橘跳跳糖</span></p>
             <div class="pad-layout-switch" id="pad-layout" aria-label="打击垫布局"><button type="button" data-layout="4" aria-pressed="false">2 × 2</button><button type="button" data-layout="9" class="active" aria-pressed="true">3 × 3</button></div>
           </div>
         </div>
