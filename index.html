@@ -8,8 +8,10 @@
   <title>梗图音乐坊 · Meme Music Lab</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23232620'/%3E%3Cpath d='M25 45V17l25-5v27M25 24l25-5' fill='none' stroke='%23d7ed62' stroke-width='5' stroke-linecap='round'/%3E%3Ccircle cx='19' cy='46' r='8' fill='%23d7ed62'/%3E%3Ccircle cx='44' cy='40' r='8' fill='%23d7ed62'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="./src/style.css">
+  <link rel="stylesheet" href="./src/pad-stage.css">
   <script defer src="./src/music-data.js"></script>
   <script defer src="./src/record-stage.js"></script>
+  <script defer src="./src/pad-stage.js"></script>
   <script defer src="./src/main.js"></script>
 </head>
 <body>
@@ -37,20 +39,38 @@
       <span><strong>梗图音乐坊</strong><small>MEME MUSIC LAB</small></span>
     </a>
     <div class="header-actions">
-      <span class="demo-badge"><i></i> DEMO 01</span>
+      <span class="demo-badge"><i></i> DEMO 02</span>
       <button class="text-button" id="credits-button" type="button">素材出处</button>
       <button class="icon-button help-button" id="help-button" type="button" aria-label="查看玩法"><svg><use href="#i-help"/></svg></button>
     </div>
   </header>
 
   <main id="top">
-    <section class="intro" aria-labelledby="page-title">
-      <div>
-        <p class="overline">INTERNET SOUNDS, RE-COMPOSED</p>
-        <h1 id="page-title">把梗，弹成一首曲子。</h1>
-        <p class="intro-copy">挑一张梗卡或一种乐器，把声音放上自由线谱。抽象不是噪声，<br class="desktop-break">只是还没排好节拍。</p>
+    <section class="pad-home" id="pad-home" aria-labelledby="page-title">
+      <div class="pad-sticker pad-sticker-one" aria-hidden="true"><img src="./assets/doro.webp" alt=""></div>
+      <div class="pad-sticker pad-sticker-two" aria-hidden="true"><img src="./assets/oiia.webp" alt=""></div>
+      <div class="pad-hero-layout">
+        <div class="pad-intro">
+          <p class="pad-overline">TAP THE MEME · 打开就玩</p>
+          <h1 id="page-title">别想了，<br>先<span>敲</span>一下。</h1>
+          <p>每张梗图都是一颗音符。随手敲、连着敲、闭眼敲，都会落在同一条好听的路上。</p>
+          <div class="pad-feature-list"><span>C 大调五声音阶</span><span>原创节奏底奏</span><span>键盘 1–9</span></div>
+          <a class="pad-editor-link" href="#sequencer-title">去线谱认真编一首 <svg><use href="#i-arrow"/></svg></a>
+        </div>
+        <div class="pad-playground" id="pad-playground">
+          <div class="pad-console-top">
+            <div class="pad-preset-readout"><small>NOW JAMMING</small><strong id="pad-preset-name">梗图派对</strong></div>
+            <button class="pad-console-button active" id="pad-loop-toggle" type="button" aria-pressed="true" title="原创合成底奏，首次敲击自动开始"><svg><use href="#i-loop"/></svg><span>Loop 开</span></button>
+            <button class="pad-console-button pad-console-primary" id="pad-backpack-open" type="button"><svg><use href="#i-spark"/></svg><span>背包换装</span></button>
+          </div>
+          <div class="drum-pad-grid" id="drum-pad-grid" aria-label="梗图音乐打击垫"></div>
+          <div class="pad-console-bottom">
+            <p id="pad-live-status" role="status"><strong>随便敲，都好听。</strong> 首次敲击启动原创底奏 · <span id="pad-backing-name">柑橘跳跳糖</span></p>
+            <div class="pad-layout-switch" id="pad-layout" aria-label="打击垫布局"><button type="button" data-layout="4" aria-pressed="false">2 × 2</button><button type="button" data-layout="9" class="active" aria-pressed="true">3 × 3</button></div>
+          </div>
+        </div>
       </div>
-      <div class="intro-sticker" aria-hidden="true"><span>∞</span><strong>自由<br>创作</strong><small>MEMES & REAL NOTES</small></div>
+      <button class="pad-surprise" id="pad-surprise" type="button" aria-label="切换下一套打击垫预设" title="换一套玩玩">换一套</button>
     </section>
 
     <div class="studio-layout">
@@ -159,7 +179,7 @@
     <section class="backpack" id="backpack" aria-labelledby="backpack-title">
       <div class="performance-heading">
         <div><span class="section-index">04</span><h2 id="backpack-title">采样卡带背包图鉴</h2></div>
-        <p>集齐卡带，把每一类声音装进口袋</p>
+        <button class="small-button" id="backpack-pad-button" type="button"><svg><use href="#i-spark"/></svg>配置首页打击垫</button>
       </div>
       <div class="backpack-tasks" aria-label="卡带解锁任务">
         <button class="task-button" id="follow-task" type="button" aria-pressed="false"><strong>关注作者</strong><small>关注后可领取专属卡带</small></button>
@@ -192,6 +212,33 @@
     </div>
     <button class="note-fx-circle note-fx-delete" id="note-fx-delete" type="button" aria-label="删除所选音符" title="删除音符"><svg><use href="#i-trash"/></svg></button>
   </div>
+
+  <dialog id="pad-backpack-dialog" aria-labelledby="pad-backpack-title">
+    <div class="pad-backpack-head">
+      <div><small>DRUM PAD BACKPACK</small><h2 id="pad-backpack-title">给每一键，换上喜欢的声音</h2></div>
+      <button class="icon-button dialog-close" type="button" aria-label="关闭打击垫背包"><svg><use href="#i-close"/></svg></button>
+    </div>
+    <div class="pad-backpack-body">
+      <div class="pad-preset-manager">
+        <label class="pad-field"><span>当前预设</span><select id="pad-preset-select" aria-label="选择打击垫预设"></select></label>
+        <label class="pad-field"><span>原创自动底奏（本地逐音合成）</span><select id="pad-backing-select" aria-label="选择原创自动底奏"><option value="sunny">柑橘跳跳糖 · 摇摆流行</option><option value="bounce">像素弹跳 · 舞曲</option><option value="chill">夜空气泡 · 慢摇</option><option value="off">关闭底奏</option></select></label>
+        <div class="pad-preset-actions"><button class="small-button" id="pad-preset-delete" type="button"><svg><use href="#i-trash"/></svg>删除自定义</button></div>
+      </div>
+      <div class="pad-custom-save"><label><span>把当前按键布局存成我的预设</span><input id="pad-custom-name" type="text" maxlength="24" placeholder="例如：周末抽象小队" autocomplete="off"></label><button id="pad-preset-save" type="button">保存我的预设</button></div>
+      <div class="pad-editor-grid">
+        <section class="pad-editor-column" aria-labelledby="pad-editing-title">
+          <h3 id="pad-editing-title">正在替换 1 号按键</h3>
+          <p id="pad-editing-current">先选按键，再从右侧挑声音。</p>
+          <div id="pad-slot-picker" aria-label="选择要替换的打击垫按键"></div>
+          <p class="pad-preset-tip">4 键布局使用前四颗按键；自定义预设只保存在当前浏览器。</p>
+        </section>
+        <section class="pad-editor-column" aria-label="声音背包">
+          <div id="pad-kind-tabs" aria-label="声音类型"><button type="button" data-kind="sample" class="active" aria-pressed="true">梗采样</button><button type="button" data-kind="note" aria-pressed="false">乐器音符</button><button type="button" data-kind="drum" aria-pressed="false">鼓点</button><button type="button" data-kind="loop" aria-pressed="false">Loop</button></div>
+          <div id="pad-library" aria-label="可装入按键的声音"></div>
+        </section>
+      </div>
+    </div>
+  </dialog>
 
   <dialog id="help-dialog" aria-labelledby="help-title">
     <div class="dialog-top"><div><small>QUICK START</small><h2 id="help-title">三步，作出第一首抽象曲</h2></div><button class="icon-button dialog-close" type="button" aria-label="关闭玩法"><svg><use href="#i-close"/></svg></button></div>

@@ -2057,6 +2057,165 @@
     startPlayback();
   }
 
+  const padDrums = [
+    { kind: 'drum', source: 'drum:kick', title: '底鼓', sub: 'KICK · 低频', symbol: 'KICK', color: '#efabc2' },
+    { kind: 'drum', source: 'drum:snare', title: '军鼓', sub: 'SNARE · 脆响', symbol: 'SNARE', color: '#91cfe8' },
+    { kind: 'drum', source: 'drum:hat', title: '踩镲', sub: 'HAT · 颗粒', symbol: 'HAT', color: '#d9ef68' },
+    { kind: 'drum', source: 'drum:clap', title: '拍手', sub: 'CLAP · 节拍', symbol: 'CLAP', color: '#f2d468' }
+  ];
+  const padLoops = [
+    { kind: 'loop', source: 'loop:sunny', title: '柑橘跳跳糖', sub: '摇摆流行', symbol: 'LOOP', color: '#d9ef68' },
+    { kind: 'loop', source: 'loop:bounce', title: '像素弹跳', sub: '舞曲碎拍', symbol: 'LOOP', color: '#efabc2' },
+    { kind: 'loop', source: 'loop:chill', title: '夜空气泡', sub: '慢摇和弦', symbol: 'LOOP', color: '#91cfe8' }
+  ];
+  const padLoopNames = { sunny: '柑橘跳跳糖', bounce: '像素弹跳', chill: '夜空气泡', off: '无底奏' };
+  let padBackingTimer = null;
+  let padBackingId = null;
+  let padBackingStep = 0;
+  let padBackingNextTime = 0;
+  let padBackingGeneration = 0;
+
+  function padSourceInfo(kind, source) {
+    if (kind === 'drum') return padDrums.find((item) => item.source === source) || padDrums[0];
+    if (kind === 'loop') return padLoops.find((item) => item.source === source) || padLoops[0];
+    const item = sourceInfo(source);
+    return { ...item, kind, source, title: item.title, sub: item.sub, color: item.color || '#d9ef68' };
+  }
+
+  function padSourceUnlocked(kind, source) {
+    if (kind === 'drum' || kind === 'loop') return true;
+    const index = cartridges.findIndex((cartridge) => cartridge.items.some((item) => item.id === source));
+    return index < 0 || isCartridgeUnlocked(index);
+  }
+
+  function nearestPitchRow(midi) {
+    return pitches.reduce((best, pitch, index) => Math.abs(pitch.midi - midi) < Math.abs(pitches[best].midi - midi) ? index : best, 0);
+  }
+
+  function padDrumSound(kind, when, volume = 1) {
+    const type = kind.replace('drum:', '');
+    withSoundBus({ loopVolume: volume, reverbPreset: 'room', reverbWet: .06 }, when, .45, () => {
+      if (type === 'kick') {
+        tone('sine', 155, when, .24, .72, 43);
+        tone('triangle', 68, when, .13, .22, 42);
+      } else if (type === 'snare') {
+        noise(when, .18, 1750, .36);
+        tone('triangle', 185, when, .11, .18, 105);
+      } else if (type === 'hat') {
+        noise(when, .065, 7200, .18);
+        noise(when, .035, 10500, .08);
+      } else {
+        [0, .022, .046].forEach((offset, index) => noise(when + offset, .12 - index * .015, 1250 + index * 380, .19));
+      }
+    });
+  }
+
+  function padInstrumentTone(instrument, midi, when, length, volume) {
+    const row = nearestPitchRow(midi);
+    withSoundBus({ loopVolume: volume, reverbPreset: 'room', reverbWet: .1 }, when, length * stepDuration(), () => {
+      instrumentSound(`instrument:${instrument}`, row, when, false, { midi, length });
+    });
+  }
+
+  function schedulePadBackingStep(step, when, id) {
+    const position = step % 16;
+    const bar = Math.floor(step / 16) % 4;
+    const chords = [[60, 64, 67], [57, 60, 64], [53, 57, 60], [55, 59, 62]];
+    const roots = [36, 33, 29, 31];
+    // Original four-bar groove: swung drums, syncopated bass and a short pentatonic answer.
+    if (id === 'sunny' && position % 2) when += stepDuration() * .08;
+    const kick = id === 'bounce' ? [0, 6, 8, 14].includes(position) : id === 'sunny' ? [0, 8, 11].includes(position) : [0, 8].includes(position);
+    const snare = [4, 12].includes(position);
+    const hat = id === 'chill' ? [2, 6, 10, 14].includes(position) : id === 'bounce' ? true : position % 2 === 0 || [3, 11, 15].includes(position);
+    if (kick) padDrumSound('drum:kick', when, id === 'chill' ? .35 : .5);
+    if (snare) padDrumSound(id === 'bounce' ? 'drum:clap' : 'drum:snare', when, id === 'chill' ? .14 : .23);
+    if (hat) padDrumSound('drum:hat', when, position % 4 === 2 ? .13 : .075);
+    if (position === 0 || (id === 'sunny' && position === 7)) {
+      const chordLength = id === 'chill' ? 7.4 : position === 7 ? 1.25 : 3.2;
+      chords[bar].forEach((midi) => padInstrumentTone(id === 'chill' ? 'pad' : 'piano', midi, when, chordLength, id === 'chill' ? .12 : .085));
+    }
+    if ([0, 8].includes(position) || (id !== 'chill' && position === (id === 'sunny' ? 11 : 6))) {
+      padInstrumentTone('bass', roots[bar] + (position === 6 ? 12 : 0), when, position === 0 ? 3.4 : 1.35, .24);
+    }
+    if (id === 'sunny' && [2, 5, 10, 15].includes(position)) {
+      const melodies = [[76, 79, 74, 72], [72, 76, 69, 67], [77, 76, 72, 69], [74, 79, 78, 76]];
+      const noteIndex = [2, 5, 10, 15].indexOf(position);
+      padInstrumentTone('marimba', melodies[bar][noteIndex], when, noteIndex === 3 ? 1.7 : .85, .085);
+    }
+    if (id === 'chill' && position === 10) padInstrumentTone('harp', chords[bar][1] + 12, when, 2.4, .055);
+  }
+
+  function runPadBackingScheduler() {
+    if (!audioCtx || !padBackingId) return;
+    while (padBackingNextTime < audioCtx.currentTime + .12) {
+      schedulePadBackingStep(padBackingStep, padBackingNextTime, padBackingId);
+      padBackingStep = (padBackingStep + 1) % 64;
+      padBackingNextTime += stepDuration();
+    }
+  }
+
+  function clearPadBacking() {
+    clearInterval(padBackingTimer);
+    padBackingTimer = null;
+    padBackingId = null;
+  }
+
+  async function setPadBacking(enabled, id) {
+    const generation = ++padBackingGeneration;
+    if (!enabled || id === 'off') { clearPadBacking(); return; }
+    try {
+      await ensureAudio();
+      if (generation !== padBackingGeneration) return;
+      if (padBackingId === id && padBackingTimer) return;
+      clearPadBacking();
+      padBackingId = id;
+      padBackingStep = 0;
+      padBackingNextTime = audioCtx.currentTime + .06;
+      runPadBackingScheduler();
+      padBackingTimer = setInterval(runPadBackingScheduler, 25);
+    } catch (_) {
+      showToast('底奏暂时无法启动，请再敲一下');
+    }
+  }
+
+  async function hitPadSource(slot) {
+    try {
+      await ensureAudio();
+      if (slot.kind === 'drum') {
+        padDrumSound(slot.source, audioCtx.currentTime + .008, .9);
+        return;
+      }
+      if (slot.kind === 'sample') {
+        try { await loadBuffer(slot.source); } catch (_) { /* synthesized fallback */ }
+      }
+      const note = { midi: slot.midi, length: 2, reverbPreset: 'room', reverbWet: .1 };
+      const when = audioCtx.currentTime + .008;
+      triggerSound(slot.source, nearestPitchRow(slot.midi), when, true, note);
+      // Harmony is played only for this hit; no automatic background loop is started.
+      padInstrumentTone('piano', Math.max(36, slot.midi - 12), when + .012, 1.25, .055);
+      padInstrumentTone('piano', Math.max(36, slot.midi - 5), when + .035, 1.05, .032);
+      flashMeme(slot.source, nearestPitchRow(slot.midi));
+    } catch (_) {
+      showToast('声音还没有准备好，请再敲一下');
+    }
+  }
+
+  function initPadStage() {
+    if (!window.MemePadStage) return;
+    const samples = memes.map((meme) => ({ kind: 'sample', source: meme.id, title: meme.title, sub: meme.sub, image: meme.image, color: meme.color }));
+    const instrumentNotes = musicData.instruments.map((instrument) => ({ kind: 'note', source: `instrument:${instrument.id}`, title: instrument.title, sub: instrument.description, symbol: instrument.symbol, color: instrument.color }));
+    window.MemePadStage.init({
+      library: { sample: samples, note: instrumentNotes, drum: padDrums, loop: padLoops },
+      sourceInfo: padSourceInfo,
+      isUnlocked: padSourceUnlocked,
+      hit: hitPadSource,
+      setBacking: setPadBacking,
+      currentBacking: () => padBackingId,
+      loopName: (id) => padLoopNames[id] || padLoopNames.sunny,
+      toast: showToast
+    });
+  }
+
   function bindControls() {
     $('#play-button').addEventListener('click', togglePlay);
     $('#record-button').addEventListener('click', () => recording ? finishRecording() : startRecording());
@@ -2208,6 +2367,7 @@
   bindStaff();
   bindControls();
   bindDialogs();
+  initPadStage();
   updateTransport();
   restoreVocalTake();
 })();
