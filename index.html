@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#edf1ea">
+  <meta name="description" content="把 Doro、耄耋、旋转小猫等梗卡放进八线谱，演奏一首抽象音乐。">
+  <title>梗图音乐坊 · Meme Music Lab</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23232620'/%3E%3Cpath d='M25 45V17l25-5v27M25 24l25-5' fill='none' stroke='%23d7ed62' stroke-width='5' stroke-linecap='round'/%3E%3Ccircle cx='19' cy='46' r='8' fill='%23d7ed62'/%3E%3Ccircle cx='44' cy='40' r='8' fill='%23d7ed62'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="./src/style.css">
+  <script defer src="./src/music-data.js"></script>
+  <script defer src="./src/record-stage.js"></script>
+  <script defer src="./src/main.js"></script>
+</head>
+<body>
+  <svg class="svg-defs" aria-hidden="true">
+    <defs>
+      <symbol id="i-note" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13M9 8l11-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><ellipse cx="6" cy="18" rx="3" ry="2.5" fill="currentColor"/><ellipse cx="17" cy="16" rx="3" ry="2.5" fill="currentColor"/></symbol>
+      <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></symbol>
+      <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="1.5" fill="currentColor"/></symbol>
+      <symbol id="i-record" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7" fill="currentColor"/></symbol>
+      <symbol id="i-loop" viewBox="0 0 24 24"><path d="M17 2l3 3-3 3M3 11V9a4 4 0 014-4h13M7 22l-3-3 3-3m14-3v2a4 4 0 01-4 4H4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z" fill="currentColor"/></symbol>
+      <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3m-9 0l1 14h10l1-14M10 11v6m4-6v6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+      <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M9.8 9a2.3 2.3 0 114.1 1.4c-.9 1-1.9 1.2-1.9 2.6M12 17h.01" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+      <symbol id="i-volume" viewBox="0 0 24 24"><path d="M4 10v4h4l5 4V6L8 10zm12-1c1.5 1.7 1.5 4.3 0 6m2.5-8.5c3 3 3 8 0 11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+      <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M7 17L17 7M8 7h9v9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-keyboard" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M6 9h.01M10 9h.01M14 9h.01M18 9h.01M6 13h.01M10 13h.01M14 13h.01M18 13h.01M8 16h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+      <symbol id="i-portrait" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M10 5h4M11 18h2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    </defs>
+  </svg>
+
+  <header class="site-header">
+    <a class="brand" href="#top" aria-label="梗图音乐坊首页">
+      <span class="brand-mark"><svg><use href="#i-note"/></svg></span>
+      <span><strong>梗图音乐坊</strong><small>MEME MUSIC LAB</small></span>
+    </a>
+    <div class="header-actions">
+      <span class="demo-badge"><i></i> DEMO 01</span>
+      <button class="text-button" id="credits-button" type="button">素材出处</button>
+      <button class="icon-button help-button" id="help-button" type="button" aria-label="查看玩法"><svg><use href="#i-help"/></svg></button>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="intro" aria-labelledby="page-title">
+      <div>
+        <p class="overline">INTERNET SOUNDS, RE-COMPOSED</p>
+        <h1 id="page-title">把梗，弹成一首曲子。</h1>
+        <p class="intro-copy">挑一张梗卡或一种乐器，把声音放上自由线谱。抽象不是噪声，<br class="desktop-break">只是还没排好节拍。</p>
+      </div>
+      <div class="intro-sticker" aria-hidden="true"><span>∞</span><strong>自由<br>创作</strong><small>MEMES & REAL NOTES</small></div>
+    </section>
+
+    <div class="studio-layout">
+      <section class="workbench" aria-labelledby="sequencer-title">
+        <div class="section-heading sequencer-heading">
+          <div><span class="section-index">01</span><h2 id="sequencer-title">八线谱音序器</h2></div>
+          <span class="tiny-label">2 BARS · FREE TIMING</span>
+        </div>
+
+        <div class="transport" aria-label="播放控制">
+          <div class="transport-main">
+            <button class="control-button play-button" id="play-button" type="button"><svg><use href="#i-play"/></svg><span>播放</span></button>
+            <button class="control-button record-button" id="record-button" type="button"><svg><use href="#i-record"/></svg><span>边弹边录</span></button>
+            <div class="mini-wheel-control"><span>音阶</span><div class="mini-wheel" id="scale-wheel" role="slider" tabindex="0" aria-label="音阶数量，拖动或滚动切换" aria-valuemin="1" aria-valuemax="8" aria-valuenow="3" aria-valuetext="8 音阶"><div class="mini-wheel-track"><span data-value="4"><strong>4</strong><small>四音阶</small></span><span data-value="5"><strong>5</strong><small>五声音阶</small></span><span data-value="8" class="active"><strong>8</strong><small>自然音阶</small></span><span data-value="12"><strong>12</strong><small>八度半音</small></span><span data-value="24"><strong>24</strong><small>两组半音</small></span><span data-value="49"><strong>49</strong><small>四组钢琴</small></span><span data-value="61"><strong>61</strong><small>五组钢琴</small></span><span data-value="88"><strong>88</strong><small>完整钢琴</small></span></div></div></div>
+            <div class="mini-wheel-control"><span>混响</span><div class="mini-wheel reverb-wheel" id="reverb-wheel" role="slider" tabindex="0" aria-label="混响预设，拖动或滚动切换" aria-valuemin="1" aria-valuemax="5" aria-valuenow="1" aria-valuetext="无混响"><div class="mini-wheel-track"><span data-value="none" class="active"><strong>DRY</strong><small>无混响</small></span><span data-value="room"><strong>ROOM</strong><small>小房间</small></span><span data-value="hall"><strong>HALL</strong><small>大厅</small></span><span data-value="church"><strong>CHURCH</strong><small>教堂</small></span><span data-value="plate"><strong>PLATE</strong><small>金属板</small></span></div></div></div>
+            <div class="mini-wheel-control"><span>湿声</span><div class="mini-wheel" id="reverb-wet-wheel" role="slider" tabindex="0" aria-label="全局混响湿声百分比，拖动或滚动切换" aria-valuemin="1" aria-valuemax="8" aria-valuenow="1" aria-valuetext="0%"><div class="mini-wheel-track"><span data-value="0" class="active"><strong>0%</strong></span><span data-value="0.1"><strong>10%</strong></span><span data-value="0.2"><strong>20%</strong></span><span data-value="0.3"><strong>30%</strong></span><span data-value="0.4"><strong>40%</strong></span><span data-value="0.5"><strong>50%</strong></span><span data-value="0.6"><strong>60%</strong></span><span data-value="0.7"><strong>70%</strong></span></div></div></div>
+          </div>
+          <div class="transport-options">
+            <div class="mini-wheel-control"><span>BPM</span><div class="mini-wheel" id="bpm-wheel" role="slider" tabindex="0" aria-label="每分钟节拍数，拖动或滚动切换" aria-valuemin="1" aria-valuemax="121" aria-valuenow="91" aria-valuetext="150"><div class="mini-wheel-track" data-min="60" data-max="180" data-step="1"></div></div></div>
+            <button class="control-button active" id="loop-button" type="button" aria-pressed="true"><svg><use href="#i-loop"/></svg><span>循环</span></button>
+            <div class="mini-wheel-control"><span>音量</span><div class="mini-wheel" id="volume-wheel" role="slider" tabindex="0" aria-label="音量百分比，拖动或滚动切换" aria-valuemin="1" aria-valuemax="21" aria-valuenow="15" aria-valuetext="70%"><div class="mini-wheel-track" data-min="0" data-max="100" data-step="5" data-unit="%"></div></div></div>
+          </div>
+        </div>
+
+        <div class="staff-toolbar">
+          <p><span class="selection-swatch" id="selection-swatch"></span>当前音符：<strong id="selected-name">Doro</strong><span class="toolbar-divider"></span>空白处右滑：放入＋延长 · 点击音符：单独设置混响</p>
+          <div>
+            <button class="small-button" id="demo-button" type="button"><svg><use href="#i-spark"/></svg>来点抽象</button>
+            <button class="small-button" id="clear-button" type="button"><svg><use href="#i-trash"/></svg>清空</button>
+          </div>
+        </div>
+
+        <div class="staff-scroll" id="staff-scroll">
+          <div class="staff-canvas" id="staff-canvas">
+            <div class="ruler" id="ruler" aria-hidden="true"></div>
+            <div class="staff-grid" id="staff-grid" aria-label="八线谱滑轨编辑区"></div>
+            <div class="playhead" id="playhead" aria-hidden="true"></div>
+          </div>
+        </div>
+        <div class="staff-footer"><span id="note-count">0 个音符</span><span id="play-status" role="status">准备好了，先试听一张梗卡</span><span>自动保存在此浏览器</span></div>
+      </section>
+
+    </div>
+
+    <section class="loop-lab" id="loop-lab" aria-labelledby="loop-title">
+      <div class="performance-heading">
+        <div><span class="section-index">02</span><h2 id="loop-title">循环底奏工作台</h2></div>
+        <p>把自己的线谱选段合并为音频循环 · 独立音量与混响</p>
+      </div>
+      <div class="loop-console">
+        <div class="loop-range-panel">
+          <div class="loop-panel-heading"><strong>01 选择线谱片段</strong><button id="loop-range-all" type="button">选取全部线谱</button></div>
+          <div class="loop-range-inputs">
+            <label>开始步<input id="loop-range-start" type="number" min="0" step="0.25" value="0" inputmode="decimal"></label>
+            <span aria-hidden="true">→</span>
+            <label>结束步<input id="loop-range-end" type="number" min="0.25" step="0.25" value="16" inputmode="decimal"></label>
+            <button class="loop-merge-button" id="loop-merge" type="button"><svg><use href="#i-loop"/></svg>合并为循环</button>
+          </div>
+          <p id="loop-range-summary">在线谱里编辑声音，再在这里选择需要重复的一段。</p>
+        </div>
+        <div class="loop-clip-panel" id="loop-clip-panel">
+          <div class="loop-panel-heading"><strong>02 合并后的循环片段</strong><span id="loop-clip-status">尚未合并</span></div>
+          <div class="loop-waveform" id="loop-waveform" aria-hidden="true"></div>
+          <p id="loop-clip-meta">合并后不会改动原线谱，循环片段在线谱之外独立播放。</p>
+        </div>
+        <div class="loop-mix-panel" aria-label="循环片段独立混音">
+          <div class="mini-wheel-control"><span>底奏音量</span><div class="mini-wheel" id="loop-volume-wheel" role="slider" tabindex="0" aria-label="循环底奏音量，拖动或滚动切换" aria-valuemin="1" aria-valuemax="21" aria-valuenow="15"><div class="mini-wheel-track" data-min="0" data-max="100" data-step="5" data-unit="%"></div></div></div>
+          <div class="mini-wheel-control"><span>底奏混响</span><div class="mini-wheel reverb-wheel" id="loop-reverb-wheel" role="slider" tabindex="0" aria-label="循环底奏混响预设，拖动或滚动切换" aria-valuemin="1" aria-valuemax="5" aria-valuenow="1"><div class="mini-wheel-track"><span data-value="none"><strong>DRY</strong><small>无混响</small></span><span data-value="room"><strong>ROOM</strong><small>小房间</small></span><span data-value="hall"><strong>HALL</strong><small>大厅</small></span><span data-value="church"><strong>CHURCH</strong><small>教堂</small></span><span data-value="plate"><strong>PLATE</strong><small>金属板</small></span></div></div></div>
+          <div class="mini-wheel-control"><span>底奏湿声</span><div class="mini-wheel" id="loop-wet-wheel" role="slider" tabindex="0" aria-label="循环底奏湿声比例，拖动或滚动切换" aria-valuemin="1" aria-valuemax="8" aria-valuenow="3"><div class="mini-wheel-track"><span data-value="0"><strong>0%</strong></span><span data-value="0.1"><strong>10%</strong></span><span data-value="0.2"><strong>20%</strong></span><span data-value="0.3"><strong>30%</strong></span><span data-value="0.4"><strong>40%</strong></span><span data-value="0.5"><strong>50%</strong></span><span data-value="0.6"><strong>60%</strong></span><span data-value="0.7"><strong>70%</strong></span></div></div></div>
+        </div>
+        <div class="loop-actions"><button class="small-button" id="loop-preview" type="button"><svg><use href="#i-play"/></svg>试听循环</button><button class="small-button" id="loop-toggle" type="button" aria-pressed="false"><svg><use href="#i-loop"/></svg><span>底奏关</span></button></div>
+      </div>
+    </section>
+
+    <section class="performance" aria-labelledby="performance-title">
+      <div class="performance-heading">
+        <div><span class="section-index">03</span><h2 id="performance-title">采样与音阶操作台</h2></div>
+        <p><svg><use href="#i-keyboard"/></svg><span><strong>字母键</strong> 换梗卡　<strong id="pitch-shortcut-label">1–8</strong> 弹音阶</span></p>
+      </div>
+      <div class="performance-console cartridge-console">
+        <div class="sample-console">
+        <div class="cartridge-changer">
+          <div class="cartridge-heading"><span>音符卡带</span><small>拖动 / 滑动换盒</small></div>
+          <div class="cartridge-wheel-shell">
+            <span class="wheel-groove groove-top" aria-hidden="true"></span>
+            <div class="cartridge-wheel" id="cartridge-wheel" role="slider" tabindex="0" aria-label="切换音符卡带，拖动、滚动或使用上下方向键" aria-valuemin="1" aria-valuemax="6" aria-valuenow="1" aria-valuetext="抽象梗采样">
+              <div class="cartridge-wheel-track" id="cartridge-wheel-track"></div>
+            </div>
+            <span class="wheel-groove groove-bottom" aria-hidden="true"></span>
+          </div>
+          <div class="cartridge-meta"><strong id="cartridge-name">抽象梗采样</strong><small id="cartridge-status" role="status">01 / 06 · 8 张采样</small></div>
+        </div>
+        <div class="meme-grid sample-note-row" id="meme-grid" aria-label="当前卡带的全部音符，数量不限"></div>
+        </div>
+        <div class="performance-body">
+          <div class="now-playing">
+            <div class="now-image" id="now-image"><img src="./assets/doro.webp" alt="当前选中的 Doro"></div>
+            <div><small>NOW PLAYING</small><h3 id="now-name">Doro</h3><p id="now-sound">原声采样 · 点击下面的音阶</p></div>
+            <div class="equalizer" id="equalizer" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+          </div>
+          <div class="pitch-pad" id="pitch-pad" aria-label="实时演奏音阶"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="backpack" id="backpack" aria-labelledby="backpack-title">
+      <div class="performance-heading">
+        <div><span class="section-index">04</span><h2 id="backpack-title">采样卡带背包图鉴</h2></div>
+        <p>集齐卡带，把每一类声音装进口袋</p>
+      </div>
+      <div class="backpack-tasks" aria-label="卡带解锁任务">
+        <button class="task-button" id="follow-task" type="button" aria-pressed="false"><strong>关注作者</strong><small>关注后可领取专属卡带</small></button>
+        <button class="task-button" id="share-task" type="button"><strong>分享作品</strong><small>每天一次 · 需保持关注</small></button>
+        <button class="task-button" id="repost-task" type="button"><strong>转发动态</strong><small>每天一次 · 需保持关注</small></button>
+      </div>
+      <p class="task-rule">Demo 任务仅记录在本机浏览器，不会操作真实账号。分享与转发每天可完成一次；次日仍可再次完成，但必须保持关注，取消关注后奖励卡带会暂时锁定。</p>
+      <div class="backpack-grid" id="backpack-grid"></div>
+    </section>
+
+    <section class="songbook" aria-labelledby="songbook-title">
+      <div class="performance-heading">
+        <div><span class="section-index">05</span><h2 id="songbook-title">先来一首熟悉的</h2></div>
+        <p>逐音合成完整旋律并自动播放 · 不播放原曲 · 之后仍可自由编辑</p>
+      </div>
+      <div class="song-grid" id="song-grid"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer"><span>梗图音乐坊 / 一个不太正经的音乐实验</span><span>建议戴耳机，别在深夜外放。</span></footer>
+
+  <div class="note-fx" id="note-fx" hidden role="group" aria-label="所选音符的独立混响设置">
+    <div class="note-fx-circle note-fx-preset" id="note-fx-preset-wheel" role="slider" tabindex="0" aria-label="混响预设，上下拖动或滚动切换" aria-valuemin="1" aria-valuemax="6" aria-valuenow="1" aria-valuetext="跟随全局" title="混响预设 · 上下拖动">
+      <svg viewBox="0 0 48 48" aria-hidden="true"><rect x="9" y="8" width="24" height="27" rx="4" fill="#e7374c"/><rect x="17" y="16" width="24" height="27" rx="4" fill="#f7fbf4" stroke="#298fc2" stroke-width="2"/></svg>
+      <div class="mini-wheel-track fx-wheel-values"><span data-value="inherit">跟随全局</span><span data-value="none">无混响</span><span data-value="room">小房间</span><span data-value="hall">大厅</span><span data-value="church">教堂</span><span data-value="plate">金属板</span></div>
+    </div>
+    <div class="note-fx-circle note-fx-wet" id="note-fx-wet-wheel" role="slider" tabindex="0" aria-label="混响干湿比例，上下拖动或滚动切换" aria-valuemin="1" aria-valuemax="8" aria-valuenow="1" aria-valuetext="0%" title="干湿比例 · 上下拖动">
+      <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M11 19a15 15 0 0 1 25-5l3 3M37 9v8h-8M37 30a15 15 0 0 1-25 5l-3-3m0 5v-8h8" fill="none" stroke="#f7fbf4" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><strong id="note-fx-percent">0%</strong>
+      <div class="mini-wheel-track fx-wheel-values"><span data-value="0">0%</span><span data-value="0.1">10%</span><span data-value="0.2">20%</span><span data-value="0.3">30%</span><span data-value="0.4">40%</span><span data-value="0.5">50%</span><span data-value="0.6">60%</span><span data-value="0.7">70%</span></div>
+    </div>
+    <button class="note-fx-circle note-fx-delete" id="note-fx-delete" type="button" aria-label="删除所选音符" title="删除音符"><svg><use href="#i-trash"/></svg></button>
+  </div>
+
+  <dialog id="help-dialog" aria-labelledby="help-title">
+    <div class="dialog-top"><div><small>QUICK START</small><h2 id="help-title">三步，作出第一首抽象曲</h2></div><button class="icon-button dialog-close" type="button" aria-label="关闭玩法"><svg><use href="#i-close"/></svg></button></div>
+    <ol class="help-steps">
+      <li><span>1</span><div><strong>选音色</strong><p>滑动左侧滚轮切换六盒卡带：抽象梗、大狗叫逐音、两盒哈基米逐音、键盘与弦乐、管乐与电子。每盒音符数量不限；点击卡片或用卡片所示字母键选中，十三种乐器也可直接选用。保留 4／5／8 双排音阶，也可切换 12／24／49／61／88 键钢琴操作台。</p></div></li>
+      <li><span>2</span><div><strong>滑出音符</strong><p>在空白轨道按下并向右滑，一次完成放入和延长；位置与长度不吸附格子，时间轴会随乐曲自动增长。拖动音符可精细移动，[ / ] 以 0.25 步微调。点击音符后，三枚圆形按钮会短暂悬浮在上方：混响预设、干湿比例与删除；前两个直接上下拖动，无操作约 3 秒自动隐藏。</p></div></li>
+      <li><span>3</span><div><strong>边弹边录</strong><p>点击进入全屏落键模式。每按一下，谱面按当前 BPM 向前滚动一步；连续熟练弹奏时便形成匀速滚动，不按则停下等待。点按或长按数字键、落键轨道与底部音阶，松开后按真实时长收尾，并伴随粒子反馈。尾音结束不会退出录制。拖动上方时间轴可回到任意位置接着弹，已有谱面和人声保留；按 Esc 或“收好这首”保存返回。</p></div></li>
+      <li><span>4</span><div><strong>加入人声与底奏</strong><p>录制中点击“录人声”并允许麦克风权限，即可录入自己的声音。先在线谱里编好一段声音，再在循环底奏工作台选择起止位置并“合并为循环”；原线谱不会被改动。合并后的片段可单独试听、随主线谱循环，并拥有独立的音量、混响预设和湿声控制。</p></div></li>
+    </ol>
+    <div class="dialog-note"><strong>声音说明</strong><p>二十四张梗卡使用你提供的裁剪采样，原声加载失败时才用合成仿音兜底。“哈基米南北绿豆”现有十二段。普通乐器、鼓点与混响均由 Web Audio 在本地合成；生日快乐、小星星、虫儿飞和朋友的酒均为逐音合成谱面，不直接播放原曲。</p></div>
+  </dialog>
+
+  <dialog id="credits-dialog" aria-labelledby="credits-title">
+    <div class="dialog-top"><div><small>SOURCES & CREDITS</small><h2 id="credits-title">梗图与声音出处</h2></div><button class="icon-button dialog-close" type="button" aria-label="关闭素材出处"><svg><use href="#i-close"/></svg></button></div>
+    <div class="credits-list" id="credits-list"></div>
+    <p class="copyright-note">本页面仅作交互原型与非商业演示。梗图及原声权利归原作者或相关权利人所有；合成仿音不代表官方原声。</p>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

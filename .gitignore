@@ -1,0 +1,26 @@
+# Dependencies and local tooling
+node_modules/
+.npm/
+.vscode/
+.idea/
+
+# Builds and temporary files
+dist/
+.work/
+.tmp/
+tmp/
+*.log
+*.tmp
+*.bak
+.DS_Store
+Thumbs.db
+
+# Local secrets and machine-specific settings
+.env
+.env.*
+!.env.example
+
+# Test artifacts
+playwright-report/
+test-results/
+coverage/
