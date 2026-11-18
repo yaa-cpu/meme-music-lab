@@ -424,8 +424,9 @@
 
   function renderRuler() {
     const length = syncTimelineDimensions();
-    $('#ruler').innerHTML = '<span></span>' + Array.from({ length }, (_, col) => `<span class="ruler-label${col % 4 === 0 ? ' bar-start' : ''}" data-ruler="${col}">${col % 4 === 0 ? col / 4 + 1 : '·'}</span>`).join('');
-    $('.sequencer-heading .tiny-label').textContent = `${Math.ceil(length / 4)} BARS · FREE TIMING`;
+    // 线谱一格是 8 分音符：8 格 = 1 小节（之前按 4 格算，所有工程的小节数都显示成两倍）
+    $('#ruler').innerHTML = '<span></span>' + Array.from({ length }, (_, col) => `<span class="ruler-label${col % 8 === 0 ? ' bar-start' : ''}" data-ruler="${col}">${col % 8 === 0 ? col / 8 + 1 : '·'}</span>`).join('');
+    $('.sequencer-heading .tiny-label').textContent = `${Math.ceil(length / 8)} BARS · FREE TIMING`;
   }
 
   const cartridgeRewards = [
@@ -981,7 +982,7 @@
     $('#staff-grid').innerHTML = pitches.map((pitch, row) => `
       <div class="staff-row"><div class="pitch-label${selectedRows.has(row) ? ' selected' : ''}" data-row="${row}" role="button" tabindex="0" title="点一下选中这条轨道，用于合成 loop 底奏卡带">${pitch.name}<span>${pitch.name === 'G4' ? '原调' : ''}</span></div>
       <div class="rail-track" data-row="${row}" tabindex="0" aria-label="${pitch.name} 滑轨，在空白处按下并向右拖动，放入并延长 ${sourceInfo(selectedId).title}">${notes.filter((note) => note.row === row).map(noteMarkup).join('')}</div></div>`).join('');
-    $('#note-count').textContent = `${notes.length} 个音符 · ${Math.ceil(timelineLength() / 4)} 小节`;
+    $('#note-count').textContent = `${notes.length} 个音符 · ${Math.ceil(timelineLength() / 8)} 小节`;
 
     $$('.placed-note').forEach((noteEl) => {
       noteEl.addEventListener('dragstart', (event) => event.preventDefault());
