@@ -405,7 +405,16 @@
     }
   ];
 
-  const libraryTracks = [];
+  const libraryTracks = [
+    {
+      id: 'friendwine-instrumental',
+      title: '朋友的酒 DJ · 原声器乐',
+      subtitle: 'ACE 分轨器乐混音 · 无人声 · 99% 还原',
+      action: '播放演示',
+      audio: './assets/ace/friendwine_dj_instrumental.mp3',
+      source: 'https://www.bilibili.com/video/BV1kFar6KE4t/'
+    }
+  ];
 
   // ACE 分轨工程 → 网页合成器工程包（JSON 由 _shots/gen_synth_project.py 生成）
   const synthProjects = [
