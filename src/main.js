@@ -151,6 +151,7 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
   let highShelf = null;
   let masterHPF = null;
   let lowBoost = 0;
+  let reverbSendBuses = new Map();
   let bpm = 112;
   let outputVolume = 70;
   let loop = true;
@@ -717,7 +718,8 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
     host.innerHTML = `<div class="mixer-title"><span>工程分轨混音 · 低音轻就拉高贝斯，觉得哪轨怪就静音</span><span style="display:flex;gap:8px;align-items:center"><button class="mixer-mute" id="mix-low-boost" type="button" aria-pressed="${lowBoost > 0}">${lowBoost > 0 ? `低音增强 +${lowBoost}dB` : '低音增强 +4dB'}</button><small>${projectMixer.length} 轨</small></span></div>` + projectMixer.map((track, index) => `
       <div class="mixer-row${track.mute ? ' muted' : ''}" data-mix-index="${index}">
         <strong>${track.label}</strong>
-        <input type="range" min="0" max="150" step="1" value="${Math.round(track.gain / track.base * 100)}" aria-label="${track.label} 音量">
+        <input type="range" min="0" max="150" step="1" value="${Math.round(track.gain / track.base * 100)}" aria-label="${track.label} 音量" title="音量">
+        <input type="range" min="0" max="100" step="1" value="${Math.round(track.wet * 100)}" aria-label="${track.label} 混响量" title="混响量 ${Math.round(track.wet * 100)}%">
         <button class="mixer-mute" type="button" aria-pressed="${track.mute}" data-mix-mute="${index}">${track.mute ? '已静音' : '静音'}</button>
       </div>`).join('');
     $$('[data-mix-index] input', host).forEach((input) => input.addEventListener('input', (event) => {
@@ -733,6 +735,18 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
       renderProjectMixer();
       showToast(lowBoost ? `低音增强 +${lowBoost}dB 已开启` : '低音增强已关闭');
     });
+    $$('[data-mix-index] input[aria-label$="混响量"]', host).forEach((input) => input.addEventListener('input', (event) => {
+      const index = Number(event.target.closest('[data-mix-index]').dataset.mixIndex);
+      const amount = Math.max(0, Math.min(1, Number(event.target.value) / 100));
+      projectMixer[index].wet = amount;
+      event.target.title = `混响量 ${Math.round(amount * 100)}%`;
+      const meme = `instrument:${projectMixer[index].preset}`;
+      notes.forEach((note) => {
+        if (note.meme === meme && note.reverbPreset && note.reverbPreset !== 'none') note.reverbWet = amount;
+      });
+      saveState();
+      $('#play-status').textContent = `${projectMixer[index].label} 混响量 ${Math.round(amount * 100)}%`;
+    }));
     $$('[data-mix-mute]', host).forEach((button) => button.addEventListener('click', () => {
       const index = Number(button.dataset.mixMute);
       projectMixer[index].mute = !projectMixer[index].mute;
@@ -780,6 +794,7 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
         preset: window.MemeSynth && window.MemeSynth.has(track.preset) ? track.preset : (ACE_KIND_PRESET[track.aceKind] || 'piano'),
         base: Number.isFinite(Number(track.gain)) ? Math.max(.2, Math.min(1.4, Number(track.gain))) : 1,
         gain: Number.isFinite(Number(track.gain)) ? Math.max(.2, Math.min(1.4, Number(track.gain))) : 1,
+        wet: Number.isFinite(Number(track.fx?.wet)) ? Math.max(0, Math.min(1, Number(track.fx.wet))) : 0,
         mute: false
       }));
       lowBoost = 4;
@@ -1438,6 +1453,19 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
     return impulse;
   }
 
+  // 每个混响预设一条总线：音符按自己的 wet 值往总线里送，全局混响 wet 再统一缩放。
+  function reverbInput(preset) {
+    const key = reverbPresets[preset] ? preset : 'plate';
+    if (!reverbSendBuses.has(key)) {
+      const bus = audioCtx.createGain();
+      const conv = audioCtx.createConvolver();
+      conv.buffer = buildImpulse(key);
+      bus.connect(conv).connect(reverbGain);
+      reverbSendBuses.set(key, bus);
+    }
+    return reverbSendBuses.get(key);
+  }
+
   function applyReverb() {
     syncChoiceWheel('#reverb-wheel', reverbPreset);
     syncChoiceWheel('#reverb-wet-wheel', reverbWet);
@@ -1468,28 +1496,16 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
       output.connect(delayGain).connect(padDelaySend);
       temporaryNodes.push(delayGain);
     }
-    if (!preset) {
-      panner.connect(busInput || mixInput);
-    } else {
-      const wet = preset === 'none' ? 0 : clamp(note.reverbWet ?? reverbPresets[preset].wet, 0, .7);
-      const dry = audioCtx.createGain();
-      dry.gain.value = 1 - wet * .35;
-      // 有单独混响的音符也要进入全局混音总线（全局混响 + 主总线 EQ），
-      // 否则它们会从私有混响直接送到 master，听起来就像"没参与全局混响"。
-      panner.connect(dry).connect(busInput || mixInput);
-      temporaryNodes.push(dry);
-      if (wet > 0) {
-        if (!noteConvolvers.has(preset)) {
-          const noteConvolver = audioCtx.createConvolver();
-          noteConvolver.buffer = buildImpulse(preset);
-          noteConvolver.connect(master);
-          noteConvolvers.set(preset, noteConvolver);
-        }
-        const send = audioCtx.createGain();
-        send.gain.value = wet;
-        panner.connect(send).connect(noteConvolvers.get(preset));
-        temporaryNodes.push(send);
-      }
+    const wet = preset === 'none' ? 0 : clamp(note?.reverbWet ?? (preset ? reverbPresets[preset].wet : 1), 0, .8);
+    const dry = audioCtx.createGain();
+    dry.gain.value = 1 - wet * .35;
+    panner.connect(dry).connect(busInput || mixInput);
+    temporaryNodes.push(dry);
+    if (wet > 0) {
+      const send = audioCtx.createGain();
+      send.gain.value = wet;
+      panner.connect(send).connect(reverbInput(preset || reverbPreset));
+      temporaryNodes.push(send);
     }
     const tail = preset && preset !== 'none' ? reverbPresets[preset].seconds : 0;
     const cleanupAfter = Math.max(100, (when - audioCtx.currentTime + duration + tail + .3) * 1000);
@@ -1571,7 +1587,8 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
       masterHPF.connect(lowShelf);
       lowShelf.connect(highShelf);
       highShelf.connect(dryGain).connect(master);
-      highShelf.connect(convolver).connect(reverbGain).connect(master);
+      reverbGain.connect(master);
+      reverbSendBuses = new Map();
       padLimiter = audioCtx.createDynamicsCompressor();
       padLimiter.threshold.value = -6;
       padLimiter.knee.value = 0;
