@@ -20,7 +20,7 @@
  *   emit(detail)                     // 视觉事件：{kick,snare,hat,bass,chord,bar,barOfLoop,swingMs,gain}
  * }
  *
- * 参考曲实测（assets/friend-wine-dj.mp3，130 BPM 连续混音型 DJ 版）：
+ * DJ 混音底奏的律动参考：
  *   - 4-on-the-floor，kick 3.88 次/小节；hat 18.8 次/小节（16 分细分 + 8 分反拍）
  *   - 低频 56%+ 能量在 150Hz 以下（sub 14.4% / 60-150Hz 41.8%），中频 20.5%，空气感只 1.8%
  *   - RMS -15.4 dBFS / peak -1.2 dBFS / crest 14.2 dB；短时 RMS 在 -22~-12 dBFS 之间

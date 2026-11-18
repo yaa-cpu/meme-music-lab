@@ -141,7 +141,8 @@
     ['chicken', 2, 12], ['oiia', 1, 12], ['doro', 7, 12], ['dog', 6, 14], ['nailong', 3, 15], ['doro', 6, 15]
   ];
 
-  const storageKey = 'meme-music-lab-v1';
+  const storageKey = 'meme-music-lab-v2';
+try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old demo state */ }
   let notes = [];
   let selectedId = 'doro';
   let selectedNoteId = null;
