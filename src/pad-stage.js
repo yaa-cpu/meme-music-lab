@@ -196,6 +196,7 @@
   let hitLightTimer = null;
   let buttonHitTimer = null;
   let shakeTimer = null;
+  let lastHit = null;
 
   const HIT_WORDS = {
     kick: ['咚!', 'BANG!'],
@@ -497,6 +498,28 @@
     }
   }
 
+  // 卡拍奖励：卡到底奏拍子上时在按下的键上方冒“完美 / 不错”气泡，并累计连击。
+  function showRating(detail) {
+    if (!detail || (detail.rating !== 'perfect' && detail.rating !== 'good')) return;
+    if (!lastHit || !lastHit.button || !lastHit.button.isConnected) return;
+    const home = $('#pad-home');
+    if (!home) return;
+    const homeRect = home.getBoundingClientRect();
+    const rect = lastHit.button.getBoundingClientRect();
+    const milestone = detail.rating === 'perfect' && detail.combo >= 5 && detail.combo % 5 === 0;
+    const bubble = document.createElement('div');
+    bubble.className = `pad-rating ${detail.rating}${milestone ? ' milestone' : ''}`;
+    bubble.innerHTML = `<strong>${detail.rating === 'perfect' ? '完美！' : '不错！'}</strong><small>×${detail.combo}</small>`;
+    bubble.style.left = `${rect.left - homeRect.left + rect.width / 2}px`;
+    bubble.style.top = `${rect.top - homeRect.top + rect.height * .18}px`;
+    home.appendChild(bubble);
+    setTimeout(() => bubble.remove(), 980);
+    if (milestone) {
+      spawnIcons(lastHit.button, resolveColor(sourceInfo(lastHit.slot).color));
+      spawnBeatIcons(true, false);
+    }
+  }
+
   function burst(button, slot) {
     const stage = $('#pad-playground');
     const source = sourceInfo(slot);
@@ -549,6 +572,7 @@
       studioPaused = false;
       renderBackingSelect();
     }
+    lastHit = { index, button, slot };
     options.hit(slot, index);
     if (backingOn && currentPreset().backing !== 'off') options.setBacking(true, currentPreset().backing);
     if (button) burst(button, slot);
@@ -675,6 +699,7 @@
     if (window.PadBG) window.PadBG.init({ canvas: $('#pad-bg'), stage: $('#pad-home') });
     bindControls();
     window.addEventListener('meme-pad-beat', syncBeatLights);
+    window.addEventListener('meme-pad-rating', (event) => showRating(event.detail));
     renderPads(); renderLibrary(); renderBackingSelect();
   }
 

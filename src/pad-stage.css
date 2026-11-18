@@ -156,3 +156,17 @@ body.fx-snare::after{animation:page-snare .36s ease-out}
   .pad-playground.shake-soft,.pad-playground.shake-hard,.meme-pad.hit{animation:none}.pad-word{display:none}
   body::before,body::after{display:none}.pad-home *{scroll-behavior:auto}
 }
+
+/* 卡拍奖励气泡 */
+.pad-rating{position:absolute;z-index:60;pointer-events:none;display:flex;align-items:baseline;gap:6px;padding:6px 12px;border:2px solid var(--ink);border-radius:999px;background:var(--acid);color:var(--ink);box-shadow:3px 3px 0 var(--ink);white-space:nowrap;transform:translate(-50%,-50%);animation:pad-rating-pop .98s cubic-bezier(.2,.9,.2,1) forwards}
+.pad-rating strong{font:950 17px/1 Arial,"Microsoft YaHei",sans-serif}
+.pad-rating small{font:900 11px/1 Arial,sans-serif;color:oklch(.35 .03 115)}
+.pad-rating.good{background:var(--surface)}
+.pad-rating.milestone{background:oklch(.9 .17 95);box-shadow:4px 4px 0 var(--ink);padding:7px 15px}
+.pad-rating.milestone strong{font-size:21px}
+@keyframes pad-rating-pop{
+  0%{opacity:0;transform:translate(-50%,-16%) scale(.55)}
+  16%{opacity:1;transform:translate(-50%,-50%) scale(1.12)}
+  34%{transform:translate(-50%,-56%) scale(1)}
+  100%{opacity:0;transform:translate(-50%,-150%) scale(.96)}
+}

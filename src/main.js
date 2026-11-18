@@ -179,6 +179,9 @@
   let padDelayWet = null;
   let padLimiter = null;
   let padOpenHatVoice = null;
+  let padBeatTiming = null;
+  let padCombo = 0;
+  const padSampleProgress = new Map();
   const sampleLeads = new Map();
   const padSampleVoices = new Map();
   let padPreloadStarted = false;
@@ -1626,12 +1629,16 @@
       const playbackRate = 2 ** (((note?.midi ?? pitches[row].midi) - 67) / 12);
       const sampleOffset = Math.max(0, Number(note?.offset) || 0) * stepDuration() * playbackRate;
       const lead = sampleLeads.get(id) || 0;
-      const startOffset = Math.min(sampleOffset + lead, buffer.duration);
+      const padHit = Boolean(note?.padHit);
+      // 打击垫不再永远从开头放：默认从 0.2s～结尾随机进；卡准拍子时由 hitPadSource 传进续播位置。
+      const startOffset = Math.min(
+        padHit && Number.isFinite(Number(note?.padOffset)) ? Number(note.padOffset) : sampleOffset + lead,
+        Math.max(0, buffer.duration - .02)
+      );
       const sampleDuration = buffer.duration / playbackRate;
       const availableDuration = Math.max(.01, sampleDuration - startOffset / playbackRate);
-      const padHit = Boolean(note?.padHit);
       const duration = padHit
-        ? Math.min(.26, availableDuration)
+        ? Math.min(Number(note?.padDuration) || 1.1, availableDuration)
         : preview
           ? Math.min(2.7, availableDuration)
           : (note?.length || 1) * stepDuration() * (hasAdjacentNext ? 1 : 1.6);
@@ -1656,15 +1663,17 @@
       source.connect(gain).connect(createSoundBus(note, when, duration));
       source.start(when, startOffset);
       source.stop(stopAt + .08);
-      // 打击垫连击：同一采样被再次敲击时，上一声快速收掉，避免声音叠成一团。
+      // 打击垫连击：普通敲击把上一声快速收掉；卡准拍子时保留上一声，让采样能顺着往下弹。
       if (padHit) {
-        const previous = padSampleVoices.get(id);
-        if (previous) {
-          try {
-            previous.gain.gain.cancelScheduledValues(when);
-            previous.gain.gain.setTargetAtTime(0, when, .004);
-            previous.source.stop(when + .045);
-          } catch (_) { /* 上一声已结束 */ }
+        if (!note?.skipChoke) {
+          const previous = padSampleVoices.get(id);
+          if (previous) {
+            try {
+              previous.gain.gain.cancelScheduledValues(when);
+              previous.gain.gain.setTargetAtTime(0, when, .004);
+              previous.source.stop(when + .045);
+            } catch (_) { /* 上一声已结束 */ }
+          }
         }
         padSampleVoices.set(id, { source, gain });
         source.addEventListener('ended', () => {
@@ -2407,6 +2416,8 @@
   }
 
   function emitPadBeat(step, when, id, flags) {
+    // 记录最近的底奏网格，用于判断打击垫是否卡在拍上
+    padBeatTiming = { at: when, stepDur: padStepDuration(id), id };
     const delay = Math.max(0, (when - audioCtx.currentTime) * 1000);
     setTimeout(() => {
       if (padBackingId !== id) return;
@@ -2650,6 +2661,8 @@
     clearInterval(padBackingTimer);
     padBackingTimer = null;
     padBackingId = null;
+    padBeatTiming = null;
+    padCombo = 0;
   }
 
   async function setPadBacking(enabled, id) {
@@ -2676,6 +2689,22 @@
       await ensureAudio();
       const now = audioCtx.currentTime;
       padDuckForUser(now + .005);
+
+      // 卡拍判定：以底奏最近的 16 分网格为基准，45ms 内算「完美」，90ms 内算「不错」。
+      let rating = null;
+      let errorMs = null;
+      if (padBackingId && padBeatTiming && padBeatTiming.stepDur) {
+        const stepDur = padBeatTiming.stepDur;
+        const phase = ((now - padBeatTiming.at) % stepDur + stepDur) % stepDur;
+        errorMs = Math.min(phase, stepDur - phase) * 1000;
+        rating = errorMs <= 45 ? 'perfect' : errorMs <= 90 ? 'good' : 'off';
+        padCombo = rating === 'off' ? 0 : padCombo + 1;
+        window.dispatchEvent(new CustomEvent('meme-pad-rating', {
+          detail: { rating, combo: padCombo, errorMs: Math.round(errorMs), source: slot.source }
+        }));
+      }
+      const onBeat = rating === 'perfect' || rating === 'good';
+
       if (slot.kind === 'drum') {
         const volumes = { 'drum:kick': .62, 'drum:snare': .55, 'drum:hat': .3, 'drum:clap': .45 };
         padDrumSound(slot.source, now + .005, volumes[slot.source] || .45);
@@ -2687,7 +2716,21 @@
         loadBuffer(slot.source).catch(() => { /* 仍会退回合成音色 */ });
         return;
       }
-      const note = { midi: slot.midi, length: 2, reverbPreset: 'none', padBus: true, padHit: true };
+      // 采样不再永远从 0.1s 处开始：普通敲击从 0.2s～结尾随机进；
+      // 卡准拍子时从上一声的进度继续往结尾弹（skipChoke 让上一声自然收尾）。
+      const buffer = buffers[slot.source];
+      let padOffset;
+      const padDuration = onBeat ? 1.8 : 1.1;
+      if (buffer && buffer.duration > .3) {
+        const progress = padSampleProgress.get(slot.source);
+        if (onBeat && progress && progress.offset < buffer.duration - .3) {
+          padOffset = Math.min(progress.offset + Math.max(.08, now - progress.at), buffer.duration - .12);
+        } else {
+          padOffset = .2 + Math.random() * Math.max(.05, buffer.duration - .32);
+        }
+        padSampleProgress.set(slot.source, { offset: padOffset, at: now });
+      }
+      const note = { midi: slot.midi, length: 2, reverbPreset: 'none', padBus: true, padHit: true, padOffset, padDuration, skipChoke: onBeat };
       triggerSound(slot.source, nearestPitchRow(slot.midi), now + .005, false, note);
       flashMeme(slot.source, nearestPitchRow(slot.midi));
     } catch (_) {
