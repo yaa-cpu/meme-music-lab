@@ -125,15 +125,15 @@ h2{font-size:20px;line-height:1.25;font-weight:900;letter-spacing:-.02em}
 .small-button{min-height:36px;border:1px solid var(--ink);background:var(--surface);border-radius:6px;display:flex;align-items:center;gap:5px;padding:0 9px;font-size:12px;font-weight:700}
 .small-button svg{width:14px;height:14px}
 .small-button:hover{background:var(--acid)}
-.staff-scroll{overflow-x:auto;overscroll-behavior-x:contain;border:1.5px solid var(--ink);border-radius:8px;background:var(--surface);box-shadow:var(--shadow);scrollbar-width:thin;scrollbar-color:var(--ink) var(--surface)}
-.staff-canvas{min-width:790px;position:relative;padding:0 10px 8px}
-.ruler{height:36px;display:grid;grid-template-columns:58px repeat(16,minmax(40px,1fr));align-items:center;border-bottom:1px solid var(--line)}
+.staff-scroll{overflow:auto;max-height:min(54vh,540px);overscroll-behavior:contain;touch-action:pan-y;border:1.5px solid var(--ink);border-radius:8px;background:var(--surface);box-shadow:var(--shadow);scrollbar-width:thin;scrollbar-color:var(--ink) var(--surface)}
+.staff-canvas{min-width:calc(790px * var(--staff-zoom,1));position:relative;padding:0 10px 8px}
+.ruler{height:36px;touch-action:pan-x;display:grid;grid-template-columns:58px repeat(16,minmax(40px,1fr));align-items:center;border-bottom:1px solid var(--line)}
 .ruler-label{height:100%;display:flex;align-items:center;justify-content:center;font:700 10px/1 Arial,sans-serif;color:var(--muted);position:relative}
 .ruler-label.bar-start{color:var(--ink);font-weight:900;justify-content:flex-start;padding-left:7px;border-left:1.5px solid var(--ink)}
 .ruler-label.current{color:var(--danger)}
 .ruler-label.current::after{content:"";position:absolute;bottom:-5px;width:8px;height:8px;background:var(--danger);transform:rotate(45deg);z-index:2}
 .staff-grid{position:relative}
-.staff-row{display:flex;height:50px;border-bottom:1px solid var(--line)}
+.staff-row{display:flex;height:var(--row-h,50px);border-bottom:1px solid var(--line)}
 .staff-row:last-child{border-bottom:0}
 .pitch-label{width:58px;flex:0 0 58px;display:flex;align-items:center;gap:6px;padding-left:4px;font:800 11px/1 Arial,sans-serif;color:var(--muted)}
 .pitch-label span{font-size:9px;color:var(--muted);font-weight:500}
@@ -156,7 +156,7 @@ h2{font-size:20px;line-height:1.25;font-weight:900;letter-spacing:-.02em}
 .placed-note.creating,.placed-note.resizing{cursor:ew-resize}
 .playhead{position:absolute;top:36px;bottom:8px;width:2px;background:var(--danger);left:68px;pointer-events:none;opacity:0;z-index:10}
 .playhead.visible{opacity:1}
-.staff-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;font-size:10px;color:var(--muted)}
+.staff-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:8px;font-size:10px;color:var(--muted)}
 #play-status{text-align:center;color:var(--ink);font-weight:700}
 .performance{margin-top:16px;border-top:1.5px solid var(--ink);padding-top:14px}
 .performance-heading{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-bottom:12px}
@@ -716,7 +716,7 @@ dialog[open]{animation:dialog-in .18s ease-out}
 }
 
 /* ── loop 底奏卡带轨：3 条并行轨，固定在线谱底部，最多 3 行谱面高 ── */
-.tape-strip{position:sticky;bottom:10px;z-index:7;margin-top:10px;height:150px;border:1.5px solid var(--ink);border-radius:10px;background:var(--surface);box-shadow:4px 4px 0 var(--ink),0 -12px 26px oklch(0.5 0.04 115 / .12);overflow:hidden;display:flex;flex-direction:column}
+.tape-strip{position:relative;z-index:7;margin-top:0;height:150px;border:1.5px solid var(--ink);border-top:0;border-radius:0 0 10px 10px;background:var(--surface);box-shadow:4px 4px 0 var(--ink);overflow:hidden;display:flex;flex-direction:column}
 .tape-inner{height:100%;min-width:100%;overflow:hidden;will-change:transform}
 .tape-lane{display:grid;grid-template-columns:58px minmax(0,1fr);height:48px;border-bottom:1px solid var(--line)}
 .tape-lane:last-child{border-bottom:0}

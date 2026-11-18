@@ -1390,6 +1390,55 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
 
   function clearDropTargets() { $$('.drop-target').forEach((track) => track.classList.remove('drop-target')); }
 
+  // 线谱触控：双指拖动=平移，双指水平缩放=时间轴缩放，双指垂直缩放=音轨行高缩放
+  function bindStaffGestures() {
+    const scroll = $('#staff-scroll');
+    const canvas = $('#staff-canvas');
+    if (!scroll || !canvas) return;
+    let pinch = null;
+    const dist = (touches) => Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
+    const mid = (touches) => ({ x: (touches[0].clientX + touches[1].clientX) / 2, y: (touches[0].clientY + touches[1].clientY) / 2 });
+    scroll.addEventListener('touchstart', (event) => {
+      if (event.touches.length !== 2) return;
+      pinch = {
+        dist: dist(event.touches),
+        mid: mid(event.touches),
+        zoom: Number(scroll.dataset.staffZoom) || 1,
+        rowH: Number(scroll.dataset.rowH) || 50,
+        left: scroll.scrollLeft,
+        top: scroll.scrollTop
+      };
+      event.preventDefault();
+    }, { passive: false });
+    scroll.addEventListener('touchmove', (event) => {
+      if (!pinch || event.touches.length !== 2) return;
+      event.preventDefault();
+      const d = dist(event.touches);
+      const m = mid(event.touches);
+      const ratio = pinch.dist > 1 ? d / pinch.dist : 1;
+      const horizontal = Math.abs(event.touches[0].clientX - event.touches[1].clientX) >= Math.abs(event.touches[0].clientY - event.touches[1].clientY);
+      if (Math.abs(ratio - 1) > .02) {
+        if (horizontal) {
+          const zoom = Math.min(3, Math.max(.5, pinch.zoom * ratio));
+          scroll.dataset.staffZoom = String(zoom);
+          canvas.style.setProperty('--staff-zoom', zoom.toFixed(3));
+          $('#play-status').textContent = `线谱缩放 ${Math.round(zoom * 100)}%`;
+        } else {
+          const rowH = Math.min(80, Math.max(34, pinch.rowH * ratio));
+          scroll.dataset.rowH = String(rowH);
+          scroll.style.setProperty('--row-h', `${rowH.toFixed(1)}px`);
+          $('#play-status').textContent = `音轨行高 ${Math.round(rowH)}px`;
+        }
+      } else {
+        scroll.scrollLeft = pinch.left - (m.x - pinch.mid.x);
+        scroll.scrollTop = pinch.top - (m.y - pinch.mid.y);
+      }
+    }, { passive: false });
+    const end = () => { pinch = null; };
+    scroll.addEventListener('touchend', end);
+    scroll.addEventListener('touchcancel', end);
+  }
+
   function bindStaff() {
     const grid = $('#staff-grid');
     grid.addEventListener('pointerdown', (event) => {
@@ -2388,7 +2437,6 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
     record.setAttribute('aria-pressed', String(recording));
     // 循环按钮已移除，播放始终循环
     loop = true;
-    loopButton.disabled = recording || libraryPlaying;
   }
 
   function togglePlay() {
@@ -3112,6 +3160,7 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
   applyReverb();
   bindStaff();
   bindControls();
+  bindStaffGestures();
   bindDialogs();
   initPadStage();
   preloadPadSamples();
