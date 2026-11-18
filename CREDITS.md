@@ -19,6 +19,7 @@ Web Audio 合成仿音为本地代码生成，只在原声加载失败时作为�
 十二张逐音卡共用本地原创猫咪音符插图（`assets/hachimi.svg`），不含真人图片。当前使用用户在“采样音频／已裁剪好”中提供的“哈基米南北绿豆1–12.mp3”，原始素材来自 [B站《哈基米之歌》BV1WfFJzyEjv](https://www.bilibili.com/video/BV1WfFJzyEjv/?t=3)。切分点与首尾处理以用户文件为准。
 
 《朋友的酒 DJ》在歌单「先来一首熟悉的」中作为逐音合成演示工程出现（载入线谱自动播放，不直接播放原曲）。旋律按原曲公开简谱（1=A4）重编为主歌+副歌 16 小节（130 BPM，和弦/低音按旋律在 A 大调内自动配置），简谱参考：[曲谱查询网 · 朋友的酒](https://www.qpcxw.com/xyp/168914319418053.html)。用户提供的裁剪音频 `assets/friend-wine-dj.mp3` 仅作为参考素材保留在素材库中，原始素材来自 [B站 BV1kFar6KE4t](https://www.bilibili.com/video/BV1kFar6KE4t/)。完整未截切音轨另存于“采样音频／源文件”。
+另外，用 ACE Studio 2.1.9 的 AI 乐器（弦乐组、低音提琴、长号、圆号、小号、萨克斯、笛子等）把该曲编成无 vocals 的器乐工程（10 轨 / 306 音符 / 129.89 BPM），导出的 MIDI 位于 `assets/ace/friendwine_instrumental.mid`；ACE 工程本身保存在工作区 `_ace/friendwine_instrumental/`，仅供本地工作流使用。
 
 ## 乐器、混响与演示谱面
 

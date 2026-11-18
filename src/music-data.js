@@ -49,7 +49,22 @@
     { id: 'sax', title: '萨克斯', symbol: '∿', color: '#e6a987', description: '温暖簧片与轻微气息' },
     { id: 'synth', title: '合成器', symbol: '⌁', color: '#c7b4e6', description: '复古方波与滤波延音' },
     { id: '8bit', title: '8-bit', symbol: '▦', color: '#8fd6c2', description: '芯片方波与像素质感' },
-    { id: 'pad', title: '氛围 Pad', symbol: '≈', color: '#a9b9df', description: '缓慢起伏的柔和音垫' }
+    { id: 'pad', title: '氛围 Pad', symbol: '≈', color: '#a9b9df', description: '缓慢起伏的柔和音垫' },
+    // 参照 ACE Studio 的音源分类补齐流行编曲常用声部（弦乐组/铜管/木管/键盘/拨弦/鼓组）
+    { id: 'stringsHigh', title: '弦乐组·高', symbol: '𝄞', color: '#efabc2', description: 'ACE 风格弦乐组高音区' },
+    { id: 'stringsMid', title: '弦乐组·中', symbol: '𝄡', color: '#e9b6d3', description: '厚实的中音区弦乐' },
+    { id: 'stringsLow', title: '弦乐组·低', symbol: '𝄢', color: '#c7b4e6', description: '低音区弦乐铺底' },
+    { id: 'cello', title: '大提琴', symbol: '◒', color: '#e6a987', description: '温暖弓弦与揉弦' },
+    { id: 'contrabass', title: '低音提琴', symbol: '⊂', color: '#a9b9df', description: '深沉拨弦与低音' },
+    { id: 'trombone', title: '长号', symbol: '≣', color: '#f2c365', description: '宽厚铜管与滑音感' },
+    { id: 'horn', title: '圆号', symbol: '◠', color: '#e9a56f', description: '柔和圆润的铜管' },
+    { id: 'clarinet', title: '单簧管', symbol: '❧', color: '#b9dcae', description: '木质簧片与圆润中音' },
+    { id: 'dizi', title: '笛子', symbol: '〽', color: '#91cfe8', description: '竹笛亮音与气声' },
+    { id: 'electricPiano', title: '电钢琴', symbol: '☰', color: '#a9b9df', description: 'FM 电钢与钟形泛音' },
+    { id: 'synthLead', title: '合成 Lead', symbol: '⇞', color: '#c7b4e6', description: '流行合成主音' },
+    { id: 'ukulele', title: '尤克里里', symbol: '⚲', color: '#f2d468', description: '轻快拨弦' },
+    { id: 'drumkit', title: '鼓组', symbol: '▣', color: '#efabc2', description: '按音高触发底鼓/军鼓/踩镲' },
+    { id: 'subBass', title: 'Sub 贝斯', symbol: '⊏', color: '#e9a56f', description: '超低频正弦贝斯' }
   ];
 
   function makeEvents(notation) {

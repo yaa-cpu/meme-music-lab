@@ -122,8 +122,12 @@
     { name: '大狗叫逐音', items: memeItems(['dog-1', 'dog-2', 'dog-3', 'dog-4']) },
     { name: '哈基米逐音 01', items: memeItems(['hachimi-ha', 'hachimi-ji', 'hachimi-mi', 'hachimi-nan', 'hachimi-bei', 'hachimi-lv', 'hachimi-dou', 'hachimi-8']) },
     { name: '哈基米逐音 02', items: memeItems(['hachimi-9', 'hachimi-10', 'hachimi-11', 'hachimi-12']) },
-    { name: '键盘与弦乐', items: instrumentItems(['piano', 'guitar', 'violin', 'bass', 'marimba', 'harp', 'organ']) },
-    { name: '管乐与电子', items: instrumentItems(['flute', 'trumpet', 'sax', 'synth', '8bit', 'pad']) }
+    // 参照 ACE Studio 的音源分类重排：弦乐组 / 铜管木管 / 键盘合成 / 吉他与拨弦 / 鼓组贝斯
+    { name: '弦乐组 · ACE 标准', items: instrumentItems(['violin', 'cello', 'stringsHigh', 'stringsMid', 'stringsLow', 'contrabass']) },
+    { name: '铜管与木管 · ACE 标准', items: instrumentItems(['trumpet', 'trombone', 'horn', 'sax', 'clarinet', 'flute', 'dizi']) },
+    { name: '键盘与合成 · 流行', items: instrumentItems(['piano', 'electricPiano', 'organ', 'synth', 'synthLead', 'pad']) },
+    { name: '吉他与拨弦', items: instrumentItems(['guitar', 'ukulele', 'harp', 'marimba', '8bit']) },
+    { name: '鼓组与贝斯', items: instrumentItems(['drumkit', 'bass', 'subBass']) }
   ];
   let cartridgeIndex = 0;
   let cartridgeGesture = null;
@@ -435,8 +439,11 @@
     { type: 'free', cover: './assets/dog.png', symbol: '', colors: ['#f2d468', '#efabc2'] },
     { type: 'follow', cover: './assets/hachimi.svg', symbol: '', colors: ['#c7b4e6', '#91cfe8'] },
     { type: 'share', cover: './assets/hachimi.svg', symbol: '', colors: ['#efabc2', '#f2d468'] },
-    { type: 'free', cover: '', symbol: '♩', colors: ['#b9dcae', '#d9ef68'] },
-    { type: 'repost', cover: '', symbol: '⌁', colors: ['#91cfe8', '#c7b4e6'] }
+    { type: 'free', cover: '', symbol: '𝄞', colors: ['#efabc2', '#c7b4e6'] },
+    { type: 'free', cover: '', symbol: '♯', colors: ['#f2c365', '#e6a987'] },
+    { type: 'follow', cover: '', symbol: '⌨', colors: ['#91cfe8', '#c7b4e6'] },
+    { type: 'repost', cover: '', symbol: '♪', colors: ['#b9dcae', '#d9ef68'] },
+    { type: 'free', cover: '', symbol: '▣', colors: ['#e9a56f', '#efabc2'] }
   ];
   const rewardNames = { follow: '关注作者', share: '今日分享', repost: '今日转发' };
   let recordingLoopStep = null;
@@ -1576,7 +1583,7 @@
       gain.gain.exponentialRampToValueAtTime(.0001, end);
       oscillator.connect(filter).connect(gain).connect(soundOutput || mixInput);
       oscillator.start(when); oscillator.stop(end + .04);
-      if (kind === 'violin' || kind === 'sax') {
+      if (kind === 'violin' || kind === 'sax' || kind === 'cello' || kind === 'dizi' || kind.startsWith('strings')) {
         const vibrato = trackSource(audioCtx.createOscillator());
         const vibratoDepth = audioCtx.createGain();
         vibrato.frequency.value = 5.4; vibratoDepth.gain.value = frequency * .009;
@@ -1610,6 +1617,37 @@
       voice('square', 1, .16, .002, .32, 0, 6500); voice('square', 2, .045, .002, .2); voice('sine', .5, .045, .003, .3);
     } else if (kind === 'pad') {
       voice('sawtooth', 1, .055, .28, .82, -7, 1200); voice('sawtooth', 1, .055, .3, .8, 7, 1200); voice('sine', 1, .13, .25, .85);
+    } else if (kind === 'stringsHigh' || kind === 'stringsMid' || kind === 'stringsLow') {
+      const octave = kind === 'stringsHigh' ? 1 : kind === 'stringsMid' ? .5 : .25;
+      voice('sawtooth', octave, .07, .17, .78, -6, kind === 'stringsHigh' ? 4200 : 2600);
+      voice('sawtooth', octave, .065, .19, .76, 6, 3000);
+      voice('sawtooth', octave * 2, .03, .2, .7, 0, 2400);
+      voice('triangle', octave, .055, .15, .8, 0, 2200);
+    } else if (kind === 'cello') {
+      voice('sawtooth', .5, .11, .1, .75, -4, 2200); voice('triangle', .5, .1, .09, .78, 4, 2600); voice('sine', 1, .04, .12, .7);
+    } else if (kind === 'contrabass') {
+      voice('sine', .25, .28, .02, .6); voice('sawtooth', .25, .07, .03, .4, 0, 900); voice('triangle', .5, .05, .02, .5);
+    } else if (kind === 'trombone') {
+      voice('sawtooth', 1, .12, .07, .7, -3, 1600); voice('square', 1, .05, .06, .62, 3, 1500); voice('sine', .5, .06, .08, .65);
+    } else if (kind === 'horn') {
+      voice('sine', 1, .22, .12, .72); voice('triangle', 1, .1, .1, .7, 3); voice('sine', 2, .05, .14, .6);
+    } else if (kind === 'clarinet') {
+      voice('square', 1, .1, .06, .72, 0, 2600); voice('triangle', 1, .16, .07, .74, 3, 2200); voice('sine', 2, .04, .08, .6);
+    } else if (kind === 'dizi') {
+      voice('sine', 1, .28, .04, .72); voice('triangle', 2, .05, .05, .6, 3);
+      noise(when, Math.min(duration, .22), frequency * 2.4, .02);
+    } else if (kind === 'electricPiano') {
+      voice('sine', 1, .28, .004, .35); voice('sine', 2, .1, .003, .2); voice('sine', 3, .05, .002, .12); voice('sine', .5, .07, .006, .45);
+    } else if (kind === 'synthLead') {
+      voice('sawtooth', 1, .13, .02, .7, -4, 3200); voice('square', 1, .05, .015, .6, 4, 2800); voice('sine', .5, .06, .02, .62);
+    } else if (kind === 'ukulele') {
+      voice('triangle', 1, .26, .003, .14, 0, 3000); voice('sawtooth', 2, .05, .002, .09, 2, 2400); voice('sine', .5, .06, .003, .18);
+    } else if (kind === 'subBass') {
+      voice('sine', .5, .34, .01, .7); voice('sine', 1, .12, .012, .6); voice('triangle', .5, .05, .02, .5);
+    } else if (kind === 'drumkit') {
+      const drumMap = ['drum:kick', 'drum:kick', 'drum:snare', 'drum:snare', 'drum:hat', 'drum:hat', 'drum:clap', 'drum:clap', 'drum:openhat', 'drum:rim', 'drum:kick', 'drum:snare'];
+      padDrumSound(drumMap[((midi % 12) + 12) % 12], when, .85, false);
+      return;
     } else {
       voice('square', 1, .13, .018, .48, -5, 2100); voice('sawtooth', 1, .12, .025, .42, 5, 1800); voice('sine', .5, .08, .02, .5);
     }
