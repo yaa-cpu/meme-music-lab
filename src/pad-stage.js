@@ -139,6 +139,7 @@
     });
     renderPresets();
     renderSlotPicker();
+    ensureDanceState(visibleSlots().length);
     if (window.PadLeds) window.PadLeds.layout();
   }
 
@@ -267,6 +268,7 @@
     if (window.PadBG) window.PadBG.beat(detail);
     pulsePage(kick, snare);
     spawnBeatIcons(kick, snare);
+    applyDanceBeat(detail);
   }
 
   function renderBackingSelect() {
@@ -283,6 +285,8 @@
     $('span', toggle).textContent = active ? '底奏开' : '底奏关';
     if (window.PadLeds) window.PadLeds.setActive(active);
     if (window.PadBG) window.PadBG.setActive(active);
+    dance.active = active;
+    if (active) ensureDanceLoop();
     if (!active) resetBeatVisuals();
   }
 
@@ -343,8 +347,103 @@
     shakeTimer = setTimeout(() => stage.classList.remove('shake-soft', 'shake-hard'), 340);
   }
 
-  const PAD_ICONS = ['i-note', 'i-spark', 'i-play', 'i-loop', 'i-record', 'i-keyboard'];
+  const PAD_ICONS = [
+    'i-note', 'i-eighth', 'i-spark', 'i-sparkle', 'i-play', 'i-loop', 'i-record', 'i-keyboard',
+    'i-star', 'i-bolt', 'i-heart', 'i-flame', 'i-paw', 'i-diamond', 'i-crown', 'i-cat',
+    'i-sun', 'i-bubble', 'i-dice', 'i-eye', 'i-moon', 'i-cloud'
+  ];
   const BEAT_ICON_COLORS = ['#d9ef68', '#efabc2', '#91cfe8', '#f2a25a'];
+
+  // ---- 图案律动引擎：底鼓跳、军鼓甩、踩镲颠、贝斯压、和弦扭，敲击给一记大力 ----
+  const dance = { rafId: 0, last: 0, time: 0, active: false, states: [] };
+
+  function ensureDanceState(count) {
+    if (dance.states.length === count) return;
+    dance.states = Array.from({ length: count }, () => ({ y: 0, vy: 0, rot: 0, vr: 0, sc: 0, vs: 0 }));
+  }
+
+  function clampDance(state) {
+    state.y = Math.max(-80, Math.min(30, state.y));
+    state.rot = Math.max(-30, Math.min(30, state.rot));
+    state.sc = Math.max(-.2, Math.min(.22, state.sc));
+  }
+
+  function ensureDanceLoop() {
+    if (reducedMotion()) return;
+    if (dance.rafId) return;
+    dance.last = 0;
+    dance.rafId = requestAnimationFrame(danceTick);
+  }
+
+  function danceTick(now) {
+    dance.rafId = 0;
+    const dt = dance.last ? Math.min(.05, (now - dance.last) / 1000) : .016;
+    dance.last = now;
+    dance.time += dt;
+    const images = $$('.pad-image');
+    let moving = false;
+    for (let index = 0; index < images.length; index++) {
+      const state = dance.states[index];
+      if (!state) continue;
+      state.vy += (-150 * state.y - 13 * state.vy) * dt;
+      state.vr += (-150 * state.rot - 12 * state.vr) * dt;
+      state.vs += (-170 * state.sc - 13 * state.vs) * dt;
+      state.y += state.vy * dt;
+      state.rot += state.vr * dt;
+      state.sc += state.vs * dt;
+      clampDance(state);
+      const idleY = dance.active ? Math.sin(dance.time * 2 + index * .85) * 2.2 : 0;
+      const idleRot = dance.active ? Math.sin(dance.time * 1.25 + index * 1.1) * 2.6 : 0;
+      const y = state.y + idleY;
+      const rot = state.rot + idleRot;
+      images[index].style.transform = `translate(-50%,-50%) translateY(${y.toFixed(2)}px) rotate(${rot.toFixed(2)}deg) scale(${(1 + state.sc).toFixed(3)})`;
+      if (Math.abs(state.y) > .25 || Math.abs(state.vy) > 5 || Math.abs(state.rot) > .3 || Math.abs(state.vr) > 6 || Math.abs(state.sc) > .004) moving = true;
+    }
+    if (moving || dance.active) {
+      dance.rafId = requestAnimationFrame(danceTick);
+    } else {
+      images.forEach((image) => { image.style.transform = ''; });
+      dance.states.forEach((state) => { state.y = 0; state.vy = 0; state.rot = 0; state.vr = 0; state.sc = 0; state.vs = 0; });
+      dance.last = 0;
+    }
+  }
+
+  // 每个键的舞步不一样：跳、甩头、压扁、扭身四种动作轮着来，幅度也跟着乐器走。
+  function applyDanceBeat(detail) {
+    if (reducedMotion()) return;
+    ensureDanceLoop();
+    const step = Number(detail.step) || 0;
+    dance.states.forEach((state, index) => {
+      const row = Math.floor(index / 3);
+      const move = (index + row) % 4;
+      if (detail.kick) {
+        if (move === 0) state.vy -= 300 + row * 40;
+        else if (move === 1) state.vr += (index % 2 ? 1 : -1) * 170;
+        else if (move === 2) state.vs += 1.15;
+        else { state.vy -= 150; state.vs -= .5; }
+      }
+      if (detail.snare) {
+        state.vr += (index % 2 ? 1 : -1) * (300 + Math.random() * 90);
+        state.vs += .35;
+      }
+      if (detail.hat) state.vy -= 90 + Math.random() * 60;
+      if (detail.bass) state.vs -= 1.1;
+      if (detail.chord && step % 8 === 0) {
+        state.vr += Math.sin(index * .9 + step) * 210;
+        state.vy -= 110;
+      }
+    });
+  }
+
+  function applyDanceHit(index) {
+    if (reducedMotion()) return;
+    ensureDanceLoop();
+    const state = dance.states[index];
+    if (!state) return;
+    state.vy -= 520;
+    state.vs += 2.2;
+    state.vr += (Math.random() * 2 - 1) * 380;
+  }
 
   function spawnIconAt(x, y, color, size) {
     const home = $('#pad-home');
@@ -371,12 +470,12 @@
     const rect = button.getBoundingClientRect();
     const centerX = rect.left - homeRect.left + rect.width / 2;
     const centerY = rect.top - homeRect.top + rect.height / 2;
-    for (let index = 0; index < 5; index++) {
+    for (let index = 0; index < 9; index++) {
       spawnIconAt(
-        centerX + (Math.random() * 2 - 1) * rect.width * .3,
-        centerY + (Math.random() * 2 - 1) * rect.height * .22,
+        centerX + (Math.random() * 2 - 1) * rect.width * .38,
+        centerY + (Math.random() * 2 - 1) * rect.height * .26,
         color,
-        18 + Math.random() * 20
+        14 + Math.random() * 26
       );
     }
   }
@@ -385,13 +484,13 @@
     if (reducedMotion()) return;
     const home = $('#pad-home');
     if (!home) return;
-    const count = kick ? 2 : snare ? 1 : 0;
+    const count = kick ? 3 : snare ? 2 : 0;
     for (let index = 0; index < count; index++) {
       spawnIconAt(
         Math.random() * home.clientWidth,
-        90 + Math.random() * 230,
+        80 + Math.random() * 240,
         BEAT_ICON_COLORS[Math.floor(Math.random() * BEAT_ICON_COLORS.length)],
-        14 + Math.random() * 16
+        14 + Math.random() * 20
       );
     }
   }
@@ -430,6 +529,7 @@
       });
     }
     spawnIcons(button, color);
+    applyDanceHit(Number(button.dataset.padIndex));
     spawnWord(button, slot);
     shakeStage(heavy ? 'hard' : 'soft');
   }

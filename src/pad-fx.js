@@ -24,6 +24,7 @@
   const rings = [];
   const bolts = [];
   const flashes = [];
+  const streaks = [];
 
   function init(options) {
     canvas = options.canvas;
@@ -51,7 +52,7 @@
   }
 
   function alive() {
-    return particles.length > 0 || rings.length > 0 || bolts.length > 0 || flashes.length > 0;
+    return particles.length > 0 || rings.length > 0 || bolts.length > 0 || flashes.length > 0 || streaks.length > 0;
   }
 
   // canvas 的渐变不接受 var() 之类的 CSS 变量，这里兜底一次，避免一个坏颜色打断整个动画循环。
@@ -97,7 +98,21 @@
     rings.push({ x, y, from: radius * 0.1, to: radius * 1.5, born: now + 52, life: 330, color, width: 2 });
     rings.push({ x, y, from: radius, to: Math.hypot(width, height) * 0.98, born: now + 18, life: 620, color, width: 2.5 });
 
-    const count = heavy ? 38 : 24;
+    // 放射状反馈线条：从按键中心往外甩，越靠外越细。
+    const streakCount = 14;
+    for (let index = 0; index < streakCount; index++) {
+      streaks.push({
+        x, y,
+        angle: (Math.PI * 2 * index) / streakCount + rand(-0.12, 0.12),
+        len: rand(radius * 1.1, radius * 2.4),
+        width: rand(3, 10),
+        color: pick([color, color, HOT, '#d7ed62']),
+        born: now + index * 5,
+        life: rand(220, 380)
+      });
+    }
+
+    const count = heavy ? 52 : 32;
     for (let index = 0; index < count && particles.length < MAX_PARTICLES; index++) {
       const angle = (Math.PI * 2 * index) / count + rand(-0.34, 0.34);
       const speed = rand(220, heavy ? 1180 : 780);
@@ -113,32 +128,32 @@
         rot: rand(0, Math.PI * 2),
         vr: rand(-11, 11),
         color: pick([color, color, HOT, '#d7ed62', '#ff8a3d', '#ff4d6d']),
-        shape: pick(['square', 'square', 'triangle', 'circle']),
+        shape: pick(['square', 'square', 'triangle', 'circle', 'star', 'diamond']),
         born: now,
         life: rand(380, 760)
       });
     }
 
     // 从按键图案里往上飘的粒子：贴着画面升起，像图案本身在掉渣。
-    const riseCount = 14;
+    const riseCount = 26;
     for (let index = 0; index < riseCount && particles.length < MAX_PARTICLES; index++) {
-      const startX = x + rand(-w * .32, w * .32);
-      const startY = y + rand(-h * .22, h * .2);
+      const startX = x + rand(-w * .36, w * .36);
+      const startY = y + rand(-h * .26, h * .22);
       particles.push({
         x: startX,
         y: startY,
         prevX: startX,
         prevY: startY,
-        vx: rand(-32, 32),
-        vy: rand(-200, -80),
-        gravity: -46,
-        size: rand(2.4, 6.5),
+        vx: rand(-38, 38),
+        vy: rand(-230, -90),
+        gravity: -52,
+        size: rand(2.4, 8),
         rot: rand(0, Math.PI * 2),
-        vr: rand(-8, 8),
-        color: pick([color, HOT, '#d7ed62']),
-        shape: pick(['circle', 'square', 'triangle']),
+        vr: rand(-9, 9),
+        color: pick([color, HOT, '#d7ed62', '#efabc2']),
+        shape: pick(['circle', 'square', 'triangle', 'star', 'sparkle']),
         born: now,
-        life: rand(520, 900)
+        life: rand(520, 980)
       });
     }
 
@@ -291,6 +306,27 @@
     ctx.restore();
   }
 
+  function drawStreak(entry, now) {
+    const progress = (now - entry.born) / entry.life;
+    if (progress < 0 || progress >= 1) return;
+    const fade = 1 - progress;
+    const length = entry.len * (0.4 + progress * 0.85);
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = entry.color;
+    ctx.beginPath();
+    ctx.moveTo(entry.x, entry.y);
+    ctx.lineTo(entry.x + Math.cos(entry.angle) * length, entry.y + Math.sin(entry.angle) * length);
+    ctx.globalAlpha = fade * 0.42;
+    ctx.lineWidth = Math.max(2, entry.width * 2.6 * fade);
+    ctx.stroke();
+    ctx.globalAlpha = fade * 0.75;
+    ctx.lineWidth = Math.max(1, entry.width * fade);
+    ctx.stroke();
+    ctx.restore();
+  }
+
   function tick(now) {
     rafId = 0;
     const dt = lastTime ? Math.min(0.05, (now - lastTime) / 1000) : 0.016;
@@ -308,6 +344,10 @@
     for (let index = bolts.length - 1; index >= 0; index--) {
       drawBolt(bolts[index], now);
       if ((now - bolts[index].born) / bolts[index].life >= 1) bolts.splice(index, 1);
+    }
+    for (let index = streaks.length - 1; index >= 0; index--) {
+      drawStreak(streaks[index], now);
+      if ((now - streaks[index].born) / streaks[index].life >= 1) streaks.splice(index, 1);
     }
 
     for (let index = particles.length - 1; index >= 0; index--) {
@@ -345,6 +385,37 @@
         ctx.moveTo(0, -size * 0.7);
         ctx.lineTo(size * 0.62, size * 0.5);
         ctx.lineTo(-size * 0.62, size * 0.5);
+        ctx.closePath();
+        ctx.fill();
+      } else if (particle.shape === 'star') {
+        ctx.beginPath();
+        for (let step = 0; step < 10; step++) {
+          const r = step % 2 === 0 ? size * 0.9 : size * 0.36;
+          const a = (Math.PI * step) / 5;
+          const px = Math.cos(a) * r;
+          const py = Math.sin(a) * r;
+          if (step === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.fill();
+      } else if (particle.shape === 'diamond') {
+        ctx.beginPath();
+        ctx.moveTo(0, -size * 0.85);
+        ctx.lineTo(size * 0.52, 0);
+        ctx.lineTo(0, size * 0.85);
+        ctx.lineTo(-size * 0.52, 0);
+        ctx.closePath();
+        ctx.fill();
+      } else if (particle.shape === 'sparkle') {
+        ctx.beginPath();
+        ctx.moveTo(0, -size);
+        ctx.lineTo(size * 0.26, -size * 0.26);
+        ctx.lineTo(size, 0);
+        ctx.lineTo(size * 0.26, size * 0.26);
+        ctx.lineTo(0, size);
+        ctx.lineTo(-size * 0.26, size * 0.26);
+        ctx.lineTo(-size, 0);
+        ctx.lineTo(-size * 0.26, -size * 0.26);
         ctx.closePath();
         ctx.fill();
       } else {
