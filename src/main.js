@@ -154,7 +154,7 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
   let reverbSendBuses = new Map();
   let reverbDecayScale = 1;
   let reverbPreDelaySec = .02;
-  let reverbDamping = 6200;
+  let reverbDamping = 6000;
   let bpm = 112;
   let outputVolume = 70;
   let loop = true;
@@ -2996,21 +2996,24 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
       await ensureAudio(); applyReverb(); saveState();
       $('#play-status').textContent = `全局湿声 ${Math.round(reverbWet * 100)}%`;
     });
-    $('#reverb-decay')?.addEventListener('input', (event) => {
-      reverbDecayScale = Number(event.target.value) / 100;
+    bindChoiceWheel('#reverb-decay-wheel', () => Math.round(reverbDecayScale * 100), (value) => {
+      reverbDecayScale = Number(value) / 100;
       refreshReverbImpulses();
-      $('#play-status').textContent = `混响衰减 ${Math.round(reverbDecayScale * 100)}%`;
+      $('#play-status').textContent = `混响衰减 ${value}%`;
     });
-    $('#reverb-predelay')?.addEventListener('input', (event) => {
-      reverbPreDelaySec = Number(event.target.value) / 1000;
+    bindChoiceWheel('#reverb-predelay-wheel', () => Math.round(reverbPreDelaySec * 1000), (value) => {
+      reverbPreDelaySec = Number(value) / 1000;
       refreshReverbImpulses();
-      $('#play-status').textContent = `混响预延迟 ${event.target.value}ms`;
+      $('#play-status').textContent = `混响预延迟 ${value}ms`;
     });
-    $('#reverb-damp')?.addEventListener('input', (event) => {
-      reverbDamping = Number(event.target.value);
+    bindChoiceWheel('#reverb-damp-wheel', () => Math.round(reverbDamping), (value) => {
+      reverbDamping = Number(value);
       refreshReverbImpulses();
-      $('#play-status').textContent = `混响亮度 ${reverbDamping}Hz`;
+      $('#play-status').textContent = `混响亮度 ${value}Hz`;
     });
+    syncChoiceWheel('#reverb-decay-wheel', Math.round(reverbDecayScale * 100));
+    syncChoiceWheel('#reverb-predelay-wheel', Math.round(reverbPreDelaySec * 1000));
+    syncChoiceWheel('#reverb-damp-wheel', Math.round(reverbDamping));
     bindChoiceWheel('#note-fx-preset-wheel', () => notes.find((item) => item.id === selectedNoteId)?.reverbPreset || 'inherit', (value) => {
       const note = notes.find((item) => item.id === selectedNoteId);
       if (!note || value === (note.reverbPreset || 'inherit')) return;

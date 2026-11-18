@@ -113,14 +113,9 @@
             <div class="mini-wheel-control"><span>混响</span><div class="mini-wheel reverb-wheel" id="reverb-wheel" role="slider" tabindex="0" aria-label="混响预设，拖动或滚动切换" aria-valuemin="1" aria-valuemax="5" aria-valuenow="1" aria-valuetext="无混响"><div class="mini-wheel-track"><span data-value="none" class="active"><strong>DRY</strong><small>无混响</small></span><span data-value="room"><strong>ROOM</strong><small>小房间</small></span><span data-value="hall"><strong>HALL</strong><small>大厅</small></span><span data-value="church"><strong>CHURCH</strong><small>教堂</small></span><span data-value="plate"><strong>PLATE</strong><small>金属板</small></span></div></div></div>
             <div class="mini-wheel-control"><span>湿声</span><div class="mini-wheel" id="reverb-wet-wheel" role="slider" tabindex="0" aria-label="全局混响湿声百分比，拖动或滚动切换" aria-valuemin="1" aria-valuemax="8" aria-valuenow="1" aria-valuetext="0%"><div class="mini-wheel-track"><span data-value="0" class="active"><strong>0%</strong></span><span data-value="0.1"><strong>10%</strong></span><span data-value="0.2"><strong>20%</strong></span><span data-value="0.3"><strong>30%</strong></span><span data-value="0.4"><strong>40%</strong></span><span data-value="0.5"><strong>50%</strong></span><span data-value="0.6"><strong>60%</strong></span><span data-value="0.7"><strong>70%</strong></span></div></div></div>
           </div>
-          <div class="mini-wheel-control reverb-shape" aria-label="全局混响形状：衰减、预延迟、亮度">
-      <span>混响塑造</span>
-      <div class="reverb-shape-row">
-        <label>衰减<input id="reverb-decay" type="range" min="50" max="200" value="100" aria-label="混响衰减百分比"></label>
-        <label>预延迟<input id="reverb-predelay" type="range" min="0" max="80" step="5" value="20" aria-label="混响预延迟毫秒"></label>
-        <label>亮度<input id="reverb-damp" type="range" min="2000" max="12000" step="500" value="6200" aria-label="混响亮度赫兹"></label>
-      </div>
-    </div>
+    <div class="mini-wheel-control"><span>衰减</span><div class="mini-wheel" id="reverb-decay-wheel" role="slider" tabindex="0" aria-label="混响衰减百分比，拖动或滚动切换"><div class="mini-wheel-track" data-min="50" data-max="200" data-step="10" data-unit="%"></div></div></div>
+    <div class="mini-wheel-control"><span>预延迟</span><div class="mini-wheel" id="reverb-predelay-wheel" role="slider" tabindex="0" aria-label="混响预延迟毫秒，拖动或滚动切换"><div class="mini-wheel-track" data-min="0" data-max="80" data-step="5" data-unit="ms"></div></div></div>
+    <div class="mini-wheel-control"><span>亮度</span><div class="mini-wheel" id="reverb-damp-wheel" role="slider" tabindex="0" aria-label="混响亮度赫兹，拖动或滚动切换"><div class="mini-wheel-track" data-min="2000" data-max="12000" data-step="500" data-unit="Hz"></div></div></div>
     <div class="transport-options">
             <div class="mini-wheel-control"><span>BPM</span><div class="mini-wheel" id="bpm-wheel" role="slider" tabindex="0" aria-label="每分钟节拍数，拖动或滚动切换" aria-valuemin="1" aria-valuemax="121" aria-valuenow="91" aria-valuetext="150"><div class="mini-wheel-track" data-min="60" data-max="180" data-step="1"></div></div></div>
             <button class="control-button active" id="loop-button" type="button" aria-pressed="true"><svg><use href="#i-loop"/></svg><span>循环</span></button>
