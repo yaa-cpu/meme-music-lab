@@ -134,39 +134,41 @@
           </div>
         </div>
         <div class="staff-footer"><span id="note-count">0 个音符</span><span id="play-status" role="status">准备好了，先试听一张梗卡</span><span>自动保存在此浏览器</span></div>
+
+        <section class="loop-lab loop-lab-inline" id="loop-lab" aria-labelledby="loop-title">
+          <div class="loop-inline-head">
+            <span class="section-index">02</span>
+            <h3 id="loop-title">循环底奏</h3>
+            <p id="loop-range-summary">在线谱里编辑声音，再选择需要重复的一段。</p>
+          </div>
+          <div class="loop-console">
+            <div class="loop-range-panel">
+              <div class="loop-range-inputs">
+                <label>开始步<input id="loop-range-start" type="number" min="0" step="0.25" value="0" inputmode="decimal"></label>
+                <span aria-hidden="true">→</span>
+                <label>结束步<input id="loop-range-end" type="number" min="0.25" step="0.25" value="16" inputmode="decimal"></label>
+                <button class="loop-merge-button" id="loop-merge" type="button"><svg><use href="#i-loop"/></svg>合并</button>
+                <button id="loop-range-all" type="button" class="loop-mini-button">全选</button>
+              </div>
+            </div>
+            <div class="loop-clip-panel" id="loop-clip-panel">
+              <div class="loop-waveform" id="loop-waveform" aria-hidden="true"></div>
+              <div class="loop-clip-text">
+                <strong id="loop-clip-status">尚未合并</strong>
+                <small id="loop-clip-meta">合并后独立播放，不改动原线谱。</small>
+              </div>
+            </div>
+            <div class="loop-mix-panel" aria-label="循环片段独立混音">
+              <div class="mini-wheel-control"><span>底奏音量</span><div class="mini-wheel" id="loop-volume-wheel" role="slider" tabindex="0" aria-label="循环底奏音量，拖动或滚动切换" aria-valuemin="1" aria-valuemax="21" aria-valuenow="15"><div class="mini-wheel-track" data-min="0" data-max="100" data-step="5" data-unit="%"></div></div></div>
+              <div class="mini-wheel-control"><span>底奏混响</span><div class="mini-wheel reverb-wheel" id="loop-reverb-wheel" role="slider" tabindex="0" aria-label="循环底奏混响预设，拖动或滚动切换" aria-valuemin="1" aria-valuemax="5" aria-valuenow="1"><div class="mini-wheel-track"><span data-value="none"><strong>DRY</strong><small>无混响</small></span><span data-value="room"><strong>ROOM</strong><small>小房间</small></span><span data-value="hall"><strong>HALL</strong><small>大厅</small></span><span data-value="church"><strong>CHURCH</strong><small>教堂</small></span><span data-value="plate"><strong>PLATE</strong><small>金属板</small></span></div></div></div>
+              <div class="mini-wheel-control"><span>底奏湿声</span><div class="mini-wheel" id="loop-wet-wheel" role="slider" tabindex="0" aria-label="循环底奏湿声比例，拖动或滚动切换" aria-valuemin="1" aria-valuemax="8" aria-valuenow="3"><div class="mini-wheel-track"><span data-value="0"><strong>0%</strong></span><span data-value="0.1"><strong>10%</strong></span><span data-value="0.2"><strong>20%</strong></span><span data-value="0.3"><strong>30%</strong></span><span data-value="0.4"><strong>40%</strong></span><span data-value="0.5"><strong>50%</strong></span><span data-value="0.6"><strong>60%</strong></span><span data-value="0.7"><strong>70%</strong></span></div></div></div>
+            </div>
+            <div class="loop-actions"><button class="small-button" id="loop-preview" type="button"><svg><use href="#i-play"/></svg>试听循环</button><button class="small-button" id="loop-toggle" type="button" aria-pressed="false"><svg><use href="#i-loop"/></svg><span>底奏关</span></button></div>
+          </div>
+        </section>
       </section>
 
     </div>
-
-    <section class="loop-lab" id="loop-lab" aria-labelledby="loop-title">
-      <div class="performance-heading">
-        <div><span class="section-index">02</span><h2 id="loop-title">循环底奏工作台</h2></div>
-        <p>把自己的线谱选段合并为音频循环 · 独立音量与混响</p>
-      </div>
-      <div class="loop-console">
-        <div class="loop-range-panel">
-          <div class="loop-panel-heading"><strong>01 选择线谱片段</strong><button id="loop-range-all" type="button">选取全部线谱</button></div>
-          <div class="loop-range-inputs">
-            <label>开始步<input id="loop-range-start" type="number" min="0" step="0.25" value="0" inputmode="decimal"></label>
-            <span aria-hidden="true">→</span>
-            <label>结束步<input id="loop-range-end" type="number" min="0.25" step="0.25" value="16" inputmode="decimal"></label>
-            <button class="loop-merge-button" id="loop-merge" type="button"><svg><use href="#i-loop"/></svg>合并为循环</button>
-          </div>
-          <p id="loop-range-summary">在线谱里编辑声音，再在这里选择需要重复的一段。</p>
-        </div>
-        <div class="loop-clip-panel" id="loop-clip-panel">
-          <div class="loop-panel-heading"><strong>02 合并后的循环片段</strong><span id="loop-clip-status">尚未合并</span></div>
-          <div class="loop-waveform" id="loop-waveform" aria-hidden="true"></div>
-          <p id="loop-clip-meta">合并后不会改动原线谱，循环片段在线谱之外独立播放。</p>
-        </div>
-        <div class="loop-mix-panel" aria-label="循环片段独立混音">
-          <div class="mini-wheel-control"><span>底奏音量</span><div class="mini-wheel" id="loop-volume-wheel" role="slider" tabindex="0" aria-label="循环底奏音量，拖动或滚动切换" aria-valuemin="1" aria-valuemax="21" aria-valuenow="15"><div class="mini-wheel-track" data-min="0" data-max="100" data-step="5" data-unit="%"></div></div></div>
-          <div class="mini-wheel-control"><span>底奏混响</span><div class="mini-wheel reverb-wheel" id="loop-reverb-wheel" role="slider" tabindex="0" aria-label="循环底奏混响预设，拖动或滚动切换" aria-valuemin="1" aria-valuemax="5" aria-valuenow="1"><div class="mini-wheel-track"><span data-value="none"><strong>DRY</strong><small>无混响</small></span><span data-value="room"><strong>ROOM</strong><small>小房间</small></span><span data-value="hall"><strong>HALL</strong><small>大厅</small></span><span data-value="church"><strong>CHURCH</strong><small>教堂</small></span><span data-value="plate"><strong>PLATE</strong><small>金属板</small></span></div></div></div>
-          <div class="mini-wheel-control"><span>底奏湿声</span><div class="mini-wheel" id="loop-wet-wheel" role="slider" tabindex="0" aria-label="循环底奏湿声比例，拖动或滚动切换" aria-valuemin="1" aria-valuemax="8" aria-valuenow="3"><div class="mini-wheel-track"><span data-value="0"><strong>0%</strong></span><span data-value="0.1"><strong>10%</strong></span><span data-value="0.2"><strong>20%</strong></span><span data-value="0.3"><strong>30%</strong></span><span data-value="0.4"><strong>40%</strong></span><span data-value="0.5"><strong>50%</strong></span><span data-value="0.6"><strong>60%</strong></span><span data-value="0.7"><strong>70%</strong></span></div></div></div>
-        </div>
-        <div class="loop-actions"><button class="small-button" id="loop-preview" type="button"><svg><use href="#i-play"/></svg>试听循环</button><button class="small-button" id="loop-toggle" type="button" aria-pressed="false"><svg><use href="#i-loop"/></svg><span>底奏关</span></button></div>
-      </div>
-    </section>
 
     <section class="performance" aria-labelledby="performance-title">
       <div class="performance-heading">

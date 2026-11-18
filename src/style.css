@@ -647,3 +647,59 @@ dialog[open]{animation:dialog-in .18s ease-out}
   .record-piano-keyboard .fall-key.black-key{height:58px}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+/* ── 循环底奏：并入线谱音序器底部，最多占 3 行谱面高度（3 × 50px） ── */
+.loop-lab-inline{position:sticky;bottom:10px;z-index:8;margin-top:10px;max-height:150px;padding:8px 10px 9px;border:1.5px solid var(--ink);border-radius:10px;background:var(--surface);box-shadow:4px 4px 0 var(--ink),0 -12px 26px oklch(0.5 0.04 115 / .12);overflow:hidden}
+.loop-lab-inline .loop-inline-head{display:flex;align-items:center;gap:8px;min-height:22px;margin-bottom:6px}
+.loop-lab-inline .loop-inline-head .section-index{position:static}
+.loop-lab-inline h3{margin:0;font-size:13px;letter-spacing:.02em;white-space:nowrap}
+.loop-lab-inline #loop-range-summary{flex:1;min-width:0;margin:0;font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.loop-lab-inline .loop-console{display:flex;align-items:center;gap:14px;max-height:106px;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin}
+.loop-lab-inline .loop-range-panel,
+.loop-lab-inline .loop-clip-panel,
+.loop-lab-inline .loop-mix-panel,
+.loop-lab-inline .loop-actions{flex:0 0 auto;min-width:0}
+.loop-lab-inline .loop-range-inputs{display:flex;align-items:center;gap:6px}
+.loop-lab-inline .loop-range-inputs>span{height:auto;color:var(--muted);font-size:11px}
+.loop-lab-inline .loop-range-inputs label{display:grid;gap:2px;font-size:9px;font-weight:700;color:var(--muted)}
+.loop-lab-inline .loop-range-inputs input{width:58px;height:36px;padding:0 6px;font-size:12px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)}
+.loop-lab-inline .loop-merge-button{height:36px;min-height:36px;padding:0 10px;font-size:11px;border:1.5px solid var(--ink);border-radius:7px;background:var(--acid);color:var(--ink);box-shadow:2px 2px 0 var(--ink);display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.loop-lab-inline .loop-merge-button svg{width:13px;height:13px}
+.loop-lab-inline .loop-mini-button{height:36px;padding:0 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font-size:10px;font-weight:800;white-space:nowrap}
+.loop-lab-inline .loop-mini-button:hover{border-color:var(--ink);background:var(--acid)}
+.loop-lab-inline .loop-clip-panel{display:flex;align-items:center;gap:8px}
+.loop-lab-inline .loop-waveform{width:150px;height:40px;padding:4px 6px;overflow:hidden;border:1px solid var(--line);border-radius:6px;background:#1d231a}
+.loop-lab-inline .loop-waveform::after{top:3px;bottom:3px}
+.loop-lab-inline .loop-waveform i{height:10%}
+.loop-lab-inline .loop-clip-text{display:grid;gap:2px;max-width:190px}
+.loop-lab-inline .loop-clip-text strong{font-size:11px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.loop-lab-inline .loop-clip-text small{font-size:9px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.loop-lab-inline .loop-mix-panel{display:flex;align-items:center;gap:10px;padding:0;border:0}
+.loop-lab-inline .loop-mix-panel .mini-wheel-control{flex:0 0 auto;height:44px}
+.loop-lab-inline .loop-mix-panel .mini-wheel-control>span{min-width:44px;color:var(--muted);font-size:9px}
+.loop-lab-inline .loop-mix-panel .mini-wheel{width:78px;flex-basis:78px}
+.loop-lab-inline .loop-actions{display:flex;align-items:center;gap:6px;justify-content:flex-end}
+.loop-lab-inline .loop-actions .small-button{height:36px;min-height:36px;min-width:96px;justify-content:center;border:1.5px solid var(--ink);background:var(--surface);color:var(--ink);box-shadow:2px 2px 0 var(--ink);font-size:11px}
+.loop-lab-inline .loop-actions .small-button:not(:disabled):hover{background:var(--acid);color:var(--ink)}
+@media(max-width:820px){
+  .loop-lab-inline .loop-console{gap:10px}
+  .loop-lab-inline .loop-clip-text{max-width:140px}
+}
+@media(max-width:560px){
+  .loop-lab-inline{max-height:150px;padding:7px 8px 8px}
+  .loop-lab-inline #loop-range-summary{display:none}
+  .loop-lab-inline .loop-waveform{width:110px}
+  .loop-lab-inline .loop-clip-text small{display:none}
+}
+
+.loop-lab-inline .loop-mix-panel{display:flex;flex-wrap:nowrap;align-items:center;gap:10px;padding:0;border:0}
+.loop-lab-inline .loop-mix-panel .mini-wheel-control>span{white-space:nowrap}
+
+@media(min-width:821px){
+  .loop-lab-inline .loop-console{gap:12px}
+  .loop-lab-inline .loop-waveform{width:120px}
+  .loop-lab-inline .loop-clip-text{max-width:150px}
+  .loop-lab-inline .loop-mix-panel{gap:8px}
+  .loop-lab-inline .loop-mix-panel .mini-wheel{width:70px;flex-basis:70px}
+  .loop-lab-inline .loop-actions .small-button{min-width:86px}
+}
