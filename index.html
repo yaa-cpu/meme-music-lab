@@ -151,18 +151,22 @@
       </div>
       <div class="performance-console cartridge-console">
         <div class="sample-console">
-        <div class="cartridge-changer">
-          <div class="cartridge-heading"><span>音符卡带</span><small>拖动 / 滑动换盒</small></div>
-          <div class="cartridge-wheel-shell">
-            <span class="wheel-groove groove-top" aria-hidden="true"></span>
-            <div class="cartridge-wheel" id="cartridge-wheel" role="slider" tabindex="0" aria-label="切换音符卡带，拖动、滚动或使用上下方向键" aria-valuemin="1" aria-valuemax="6" aria-valuenow="1" aria-valuetext="抽象梗采样">
-              <div class="cartridge-wheel-track" id="cartridge-wheel-track"></div>
-            </div>
-            <span class="wheel-groove groove-bottom" aria-hidden="true"></span>
+          <div class="sample-console-head">
+            <strong>音符卡带</strong>
+            <strong id="cartridge-name">抽象梗采样</strong>
+            <small id="cartridge-status" role="status">01 / 06 · 8 张采样</small>
+            <span class="sample-console-hint">拖动轮盘或按字母键换卡带 · 点音符试听</span>
           </div>
-          <div class="cartridge-meta"><strong id="cartridge-name">抽象梗采样</strong><small id="cartridge-status" role="status">01 / 06 · 8 张采样</small></div>
-        </div>
-        <div class="meme-grid sample-note-row" id="meme-grid" aria-label="当前卡带的全部音符，数量不限"></div>
+          <div class="cartridge-changer">
+            <div class="cartridge-wheel-shell">
+              <span class="wheel-groove groove-top" aria-hidden="true"></span>
+              <div class="cartridge-wheel" id="cartridge-wheel" role="slider" tabindex="0" aria-label="切换音符卡带，拖动、滚动或使用上下方向键" aria-valuemin="1" aria-valuemax="6" aria-valuenow="1" aria-valuetext="抽象梗采样">
+                <div class="cartridge-wheel-track" id="cartridge-wheel-track"></div>
+              </div>
+              <span class="wheel-groove groove-bottom" aria-hidden="true"></span>
+            </div>
+          </div>
+          <div class="meme-grid sample-note-row" id="meme-grid" aria-label="当前卡带的全部音符，数量不限"></div>
         </div>
         <div class="performance-body">
           <div class="now-playing">

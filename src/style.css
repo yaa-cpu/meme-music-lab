@@ -726,3 +726,28 @@ dialog[open]{animation:dialog-in .18s ease-out}
   .tape-block-meta{display:none}
   .tape-lane{height:48px}
 }
+
+/* ── 采样与音阶操作台：压缩卡带区留白 ── */
+.cartridge-console .sample-console{display:grid;grid-template-columns:92px minmax(0,1fr);grid-template-rows:auto auto;gap:6px 10px;align-items:center;padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid var(--line)}
+.sample-console-head{grid-column:1/-1;grid-row:1;display:flex;align-items:baseline;gap:10px;min-width:0;flex-wrap:wrap}
+.sample-console-head>strong{font-size:12px;font-weight:950;white-space:nowrap}
+.sample-console-head #cartridge-name{font-size:13px;color:var(--ink);font-weight:950}
+.sample-console-head #cartridge-status{font-size:10px;color:var(--muted);white-space:nowrap}
+.sample-console-hint{margin-left:auto;font-size:9px;color:var(--muted);white-space:nowrap}
+.cartridge-console .cartridge-changer{grid-column:1;grid-row:2;display:flex;align-items:center;justify-content:center;padding:0 10px 0 0;border-right:1px solid var(--line);gap:0}
+.cartridge-console .cartridge-wheel-shell{width:86px;height:92px;flex-basis:92px}
+.cartridge-console .cartridge-wheel{inset:6px 5px;height:78px}
+.cartridge-console .meme-grid.sample-note-row{grid-column:2;grid-row:2;align-content:center;padding:0 0 4px}
+.cartridge-console .sample-note{height:64px;min-height:64px}
+@media(max-width:820px){
+  .sample-console-hint{display:none}
+  .cartridge-console .sample-console{grid-template-columns:80px minmax(0,1fr)}
+  .cartridge-console .cartridge-wheel-shell{width:76px;height:84px;flex-basis:84px}
+  .cartridge-console .cartridge-wheel{height:70px}
+}
+@media(max-width:560px){
+  .cartridge-console .sample-console{grid-template-columns:70px minmax(0,1fr);gap:4px 8px}
+  .cartridge-console .cartridge-wheel-shell{width:66px;height:76px;flex-basis:76px}
+  .cartridge-console .cartridge-wheel{height:62px;inset:5px 4px}
+  .cartridge-console .cartridge-changer{padding-right:6px}
+}
