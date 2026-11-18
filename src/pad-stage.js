@@ -195,6 +195,47 @@
   }
 
   let hitLightTimer = null;
+  let buttonHitTimer = null;
+  let shakeTimer = null;
+
+  const HIT_WORDS = {
+    kick: ['咚!', 'BANG!'],
+    snare: ['啪!', 'POW!'],
+    hat: ['嚓!', 'TSS!'],
+    openhat: ['嚓——!', 'TSSS!'],
+    clap: ['啪!', 'CLAP!'],
+    sample: ['哈!', 'WA!', '嘿嘿!', '哇!'],
+    note: ['叮!', 'DING!', '嘀!'],
+    loop: ['嗡!', 'LOOP!']
+  };
+
+  const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // 卡片颜色在数据里是 CSS 变量（var(--p-yellow)），canvas 不认，先解析成真实颜色并缓存。
+  const colorCache = new Map();
+  let colorProbe = null;
+  const FALLBACK_COLOR = '#d7ed62';
+
+  function resolveColor(value) {
+    if (!value) return FALLBACK_COLOR;
+    if (!String(value).includes('var(')) return value;
+    if (colorCache.has(value)) return colorCache.get(value);
+    const probe = document.createElement('span');
+    probe.style.display = 'none';
+    probe.style.color = value;
+    document.body.append(probe);
+    const computed = getComputedStyle(probe).color;
+    probe.remove();
+    let resolved = FALLBACK_COLOR;
+    if (computed) {
+      colorProbe = colorProbe || document.createElement('canvas').getContext('2d');
+      colorProbe.fillStyle = '#000000';
+      colorProbe.fillStyle = computed;
+      resolved = colorProbe.fillStyle || FALLBACK_COLOR;
+    }
+    colorCache.set(value, resolved);
+    return resolved;
+  }
 
   function buildLightStrips() {
     ['#pad-light-strip', '#pad-light-strip-bottom'].forEach((selector) => {
@@ -234,32 +275,87 @@
     if (!backingOn || preset.backing === 'off') clearBeatLights();
   }
 
+  function hitGeometry(button) {
+    const stage = $('#pad-playground');
+    const origin = ($('#pad-fx') || stage).getBoundingClientRect();
+    const rect = button.getBoundingClientRect();
+    return {
+      x: rect.left - origin.left + rect.width / 2,
+      y: rect.top - origin.top + rect.height / 2,
+      w: rect.width,
+      h: rect.height,
+      neighborRects: [...button.parentElement.children].filter((pad) => pad !== button).map((pad) => {
+        const box = pad.getBoundingClientRect();
+        return { x: box.left - origin.left, y: box.top - origin.top, w: box.width, h: box.height };
+      })
+    };
+  }
+
+  function neighborPulses(button, hit) {
+    const selfX = hit.x;
+    const selfY = hit.y;
+    const distances = hit.neighborRects.map((rect) => Math.hypot(rect.x + rect.w / 2 - selfX, rect.y + rect.h / 2 - selfY));
+    const farthest = Math.max(...distances, 1);
+    return hit.neighborRects.map((rect, index) => ({
+      x: rect.x, y: rect.y, w: rect.w, h: rect.h,
+      delay: 26 + (distances[index] / farthest) * 130
+    }));
+  }
+
+  function spawnWord(button, slot) {
+    if (reducedMotion()) return;
+    const stage = $('#pad-playground');
+    const hit = hitGeometry(button);
+    const list = slot.kind === 'drum'
+      ? HIT_WORDS[slot.source.replace('drum:', '')] || HIT_WORDS.snare
+      : HIT_WORDS[slot.kind] || HIT_WORDS.sample;
+    const text = list[Math.floor(Math.random() * list.length)];
+    const word = document.createElement('b');
+    word.className = 'pad-word';
+    word.setAttribute('aria-hidden', 'true');
+    word.textContent = text;
+    if (/[\u3400-\u9fff]/.test(text)) word.classList.add('is-cjk');
+    word.style.left = `${hit.x}px`;
+    word.style.top = `${hit.y}px`;
+    word.style.setProperty('--word-rotate', `${(Math.random() * 20 - 10).toFixed(1)}deg`);
+    stage.append(word);
+    setTimeout(() => word.remove(), 700);
+  }
+
+  function shakeStage(strength) {
+    if (reducedMotion()) return;
+    const stage = $('#pad-playground');
+    stage.classList.remove('shake-soft', 'shake-hard');
+    void stage.offsetWidth;
+    stage.classList.add(strength === 'hard' ? 'shake-hard' : 'shake-soft');
+    clearTimeout(shakeTimer);
+    shakeTimer = setTimeout(() => stage.classList.remove('shake-soft', 'shake-hard'), 340);
+  }
+
   function burst(button, slot) {
     const stage = $('#pad-playground');
     const source = sourceInfo(slot);
-    const stageRect = stage.getBoundingClientRect();
-    const rect = button.getBoundingClientRect();
-    const x = rect.left - stageRect.left + rect.width / 2;
-    const y = rect.top - stageRect.top + rect.height / 2;
+    const hit = hitGeometry(button);
+    const heavy = slot.kind === 'drum' || slot.kind === 'sample';
+
     stage.style.setProperty('--hit-color', source.color);
     stage.classList.remove('hit');
     void stage.offsetWidth;
     stage.classList.add('hit');
     clearTimeout(hitLightTimer);
-    hitLightTimer = setTimeout(() => stage.classList.remove('hit'), 420);
-    for (let index = 0; index < 12; index++) {
-      const particle = document.createElement('i');
-      const angle = Math.PI * 2 * index / 12;
-      const distance = 62 + (index % 3) * 22;
-      particle.className = 'pad-particle';
-      particle.style.cssText = `left:${x}px;top:${y}px;--particle-color:${source.color};--particle-x:${Math.cos(angle) * distance}px;--particle-y:${Math.sin(angle) * distance}px;--particle-rotate:${index * 47}deg`;
-      stage.append(particle);
-      setTimeout(() => particle.remove(), 650);
-    }
+    hitLightTimer = setTimeout(() => stage.classList.remove('hit'), 540);
+
     button.classList.remove('hit');
     void button.offsetWidth;
     button.classList.add('hit');
-    setTimeout(() => button.classList.remove('hit'), 280);
+    clearTimeout(buttonHitTimer);
+    buttonHitTimer = setTimeout(() => button.classList.remove('hit'), 350);
+
+    if (window.PadFX) {
+      window.PadFX.burst({ x: hit.x, y: hit.y, w: hit.w, h: hit.h, color: resolveColor(source.color), kind: slot.kind, neighbors: neighborPulses(button, hit) });
+    }
+    spawnWord(button, slot);
+    shakeStage(heavy ? 'hard' : 'soft');
   }
 
   async function hitPad(index, button) {
@@ -381,6 +477,7 @@
     options = initOptions;
     loadState();
     buildLightStrips();
+    if (window.PadFX) window.PadFX.init({ canvas: $('#pad-fx'), stage: $('#pad-playground') });
     bindControls();
     window.addEventListener('meme-pad-beat', syncBeatLights);
     renderPads(); renderLibrary(); renderBackingSelect();

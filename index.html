@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="./src/pad-stage.css">
   <script defer src="./src/music-data.js"></script>
   <script defer src="./src/record-stage.js"></script>
+  <script defer src="./src/pad-fx.js"></script>
   <script defer src="./src/pad-stage.js"></script>
   <script defer src="./src/main.js"></script>
 </head>
@@ -54,20 +55,24 @@
           <h1 id="page-title">先<span>敲</span>一下。</h1>
           <a class="pad-editor-link" href="#sequencer-title">去线谱 <svg><use href="#i-arrow"/></svg></a>
         </div>
-        <div class="pad-playground" id="pad-playground">
-          <div class="pad-light-strip" id="pad-light-strip" aria-hidden="true"></div>
-          <div class="pad-console-top">
-            <div class="pad-preset-readout"><strong id="pad-preset-name">梗图派对</strong></div>
-            <button class="pad-console-button active" id="pad-loop-toggle" type="button" aria-pressed="true" title="原创合成底奏，首次敲击自动开始"><svg><use href="#i-loop"/></svg><span>Loop 开</span></button>
-            <button class="pad-console-button pad-console-primary" id="pad-backpack-open" type="button"><svg><use href="#i-spark"/></svg><span>换装</span></button>
+        <div class="pad-toolbar">
+          <div class="pad-preset-chip">
+            <span class="pad-preset-label">预设</span>
+            <strong id="pad-preset-name">梗图派对</strong>
           </div>
-          <div class="drum-pad-grid" id="drum-pad-grid" aria-label="梗图音乐打击垫"></div>
-          <div class="pad-light-strip pad-light-strip-bottom" id="pad-light-strip-bottom" aria-hidden="true"></div>
-          <div class="pad-console-bottom">
-            <p id="pad-live-status" role="status"><strong>随便敲。</strong><span id="pad-backing-name">柑橘跳跳糖</span></p>
+          <div class="pad-toolbar-actions">
+            <button class="pad-chip-button active" id="pad-loop-toggle" type="button" aria-pressed="true" title="原创合成底奏，首次敲击自动开始"><svg><use href="#i-loop"/></svg><span>Loop 开</span></button>
+            <button class="pad-chip-button pad-chip-primary" id="pad-backpack-open" type="button"><svg><use href="#i-spark"/></svg><span>换装</span></button>
             <div class="pad-layout-switch" id="pad-layout" aria-label="打击垫布局"><button type="button" data-layout="4" aria-pressed="false">2 × 2</button><button type="button" data-layout="9" class="active" aria-pressed="true">3 × 3</button></div>
           </div>
         </div>
+        <div class="pad-playground" id="pad-playground">
+          <div class="pad-light-strip" id="pad-light-strip" aria-hidden="true"></div>
+          <div class="drum-pad-grid" id="drum-pad-grid" aria-label="梗图音乐打击垫"></div>
+          <div class="pad-light-strip pad-light-strip-bottom" id="pad-light-strip-bottom" aria-hidden="true"></div>
+          <canvas class="pad-fx" id="pad-fx" aria-hidden="true"></canvas>
+        </div>
+        <p class="pad-status" id="pad-live-status" role="status"><strong>随便敲。</strong><span id="pad-backing-name">柑橘跳跳糖</span></p>
       </div>
       <button class="pad-surprise" id="pad-surprise" type="button" aria-label="切换下一套打击垫预设" title="换一套玩玩">换一套</button>
     </section>
