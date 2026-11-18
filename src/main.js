@@ -2686,17 +2686,22 @@
     }
   }
 
-  // 松开手指：没有下一次触发时，采样最多放到 0.22s 就收掉；长按超过 0.2s 则放完整段。
+  // 松开手指：短按最多卡到 0.2s 再收；长按松开则立刻停（不拖到采样结尾）。
   function releasePadSample(slot) {
     const id = slot && slot.source;
     const held = id ? padHeldSamples.get(id) : null;
     if (!held || !audioCtx) return;
     padHeldSamples.delete(id);
-    const limit = held.start + .2;
-    if (audioCtx.currentTime >= limit) return; // 已经按够久，放完整段
+    const now = audioCtx.currentTime;
+    const tapLimit = held.start + .2;
     try {
-      held.gain.gain.setTargetAtTime(0, limit, .008);
-      held.source.stop(limit + .03);
+      if (now < tapLimit) {
+        held.gain.gain.setTargetAtTime(0, tapLimit, .008);
+        held.source.stop(tapLimit + .03);
+      } else {
+        held.gain.gain.setTargetAtTime(0, now, .006);
+        held.source.stop(now + .025);
+      }
     } catch (_) { /* 已经自然结束 */ }
   }
 

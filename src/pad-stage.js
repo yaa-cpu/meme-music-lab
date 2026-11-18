@@ -564,6 +564,8 @@
 
   function releasePad(index) {
     const slot = currentPreset().slots[index];
+    const button = $(`.meme-pad[data-pad-index="${index}"]`);
+    if (button) button.classList.remove('holding');
     if (!slot) return;
     options.release?.(slot, index);
   }
@@ -582,6 +584,7 @@
       renderBackingSelect();
     }
     lastHit = { index, button, slot };
+    if (button) button.classList.add('holding');
     options.hit(slot, index);
     if (backingOn && currentPreset().backing !== 'off') options.setBacking(true, currentPreset().backing);
     if (button) burst(button, slot);
@@ -704,6 +707,7 @@
       releasePad(Number(event.key) - 1);
     }, true);
     window.addEventListener('pointerup', () => { if (lastHit) releasePad(lastHit.index); });
+    window.addEventListener('pointercancel', () => { if (lastHit) releasePad(lastHit.index); });
   }
 
   function init(initOptions) {
