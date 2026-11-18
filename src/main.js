@@ -181,6 +181,7 @@
   let padOpenHatVoice = null;
   let padBeatTiming = null;
   let padCombo = 0;
+  const padHeldSamples = new Map();
   const sampleLeads = new Map();
   const padSampleVoices = new Map();
   let padPreloadStarted = false;
@@ -1676,6 +1677,7 @@
           } catch (_) { /* 上一声已结束 */ }
         }
         padSampleVoices.set(id, { source, gain });
+        padHeldSamples.set(id, { source, gain, start: when, end: stopAt });
         source.addEventListener('ended', () => {
           if (padSampleVoices.get(id)?.source === source) padSampleVoices.delete(id);
         }, { once: true });
@@ -2684,6 +2686,20 @@
     }
   }
 
+  // 松开手指：没有下一次触发时，采样最多放到 0.22s 就收掉；长按超过 0.2s 则放完整段。
+  function releasePadSample(slot) {
+    const id = slot && slot.source;
+    const held = id ? padHeldSamples.get(id) : null;
+    if (!held || !audioCtx) return;
+    padHeldSamples.delete(id);
+    const limit = held.start + .2;
+    if (audioCtx.currentTime >= limit) return; // 已经按够久，放完整段
+    try {
+      held.gain.gain.setTargetAtTime(0, limit, .008);
+      held.source.stop(limit + .03);
+    } catch (_) { /* 已经自然结束 */ }
+  }
+
   async function hitPadSource(slot) {
     try {
       await ensureAudio();
@@ -2733,6 +2749,7 @@
       sourceInfo: padSourceInfo,
       isUnlocked: padSourceUnlocked,
       hit: hitPadSource,
+      release: releasePadSample,
       setBacking: setPadBacking,
       currentBacking: () => padBackingId,
       loopName: (id) => padLoopNames[id] || padLoopNames.sunny,

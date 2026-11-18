@@ -128,6 +128,9 @@
         if (event.button !== 0) return;
         hitPad(Number(button.dataset.padIndex), button);
       });
+      const release = () => releasePad(Number(button.dataset.padIndex));
+      button.addEventListener('pointerup', release);
+      button.addEventListener('pointercancel', release);
       button.addEventListener('click', (event) => {
         if (event.detail === 0) hitPad(Number(button.dataset.padIndex), button);
       });
@@ -559,6 +562,12 @@
     shakeStage(heavy ? 'hard' : 'soft');
   }
 
+  function releasePad(index) {
+    const slot = currentPreset().slots[index];
+    if (!slot) return;
+    options.release?.(slot, index);
+  }
+
   async function hitPad(index, button) {
     const preset = currentPreset();
     const slot = preset.slots[index];
@@ -689,6 +698,12 @@
       event.preventDefault(); event.stopPropagation();
       hitPad(index, button);
     }, true);
+    document.addEventListener('keyup', (event) => {
+      if (event.ctrlKey || event.metaKey || event.altKey || /INPUT|TEXTAREA|SELECT/.test(event.target.tagName)) return;
+      if (!/^[1-9]$/.test(event.key)) return;
+      releasePad(Number(event.key) - 1);
+    }, true);
+    window.addEventListener('pointerup', () => { if (lastHit) releasePad(lastHit.index); });
   }
 
   function init(initOptions) {
