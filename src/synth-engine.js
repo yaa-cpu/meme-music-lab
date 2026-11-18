@@ -392,67 +392,94 @@
     return buffer;
   }
 
+  // 每个鼓点做轻微饱和与压缩，让鼓皮/响弦更"实"，不靠共享总线也能避免沙子感。
+  function drumShape(ctx, out, destination) {
+    const shaper = ctx.createWaveShaper();
+    const curve = new Float32Array(1024);
+    for (let i = 0; i < curve.length; i++) {
+      const x = (i / (curve.length - 1)) * 2 - 1;
+      curve[i] = Math.tanh(x * 1.7) / Math.tanh(1.7);
+    }
+    shaper.curve = curve;
+    shaper.oversample = '2x';
+    const comp = ctx.createDynamicsCompressor();
+    comp.threshold.value = -22;
+    comp.knee.value = 6;
+    comp.ratio.value = 3;
+    comp.attack.value = .002;
+    comp.release.value = .12;
+    out.connect(shaper).connect(comp).connect(destination);
+  }
+
   function playDrum(ctx, destination, kind, when, volume, noiseBuffer, trackSource) {
     const out = ctx.createGain();
     out.gain.value = volume;
-    out.connect(destination);
+    drumShape(ctx, out, destination);
     const register = (node) => (trackSource ? trackSource(node) : node);
-    const osc = (type, freq, dur, gain, endFreq) => {
+    const variation = 0.97 + Math.random() * 0.06;   // 轻微轮换，避免机关枪感
+    const osc = (type, freq, dur, gain, endFreq, filterType, filterFreq) => {
       const o = register(ctx.createOscillator());
       const g = ctx.createGain();
       o.type = type;
-      o.frequency.setValueAtTime(Math.max(20, freq), when);
-      if (endFreq) o.frequency.exponentialRampToValueAtTime(Math.max(20, endFreq), when + dur);
+      o.frequency.setValueAtTime(Math.max(18, freq), when);
+      if (endFreq) o.frequency.exponentialRampToValueAtTime(Math.max(18, endFreq), when + Math.min(dur * .6, .12));
       g.gain.setValueAtTime(0.0001, when);
-      g.gain.exponentialRampToValueAtTime(gain, when + .004);
-      g.gain.exponentialRampToValueAtTime(0.0001, when + dur);
-      o.connect(g).connect(out);
-      o.start(when); o.stop(when + dur + .02);
+      g.gain.exponentialRampToValueAtTime(Math.max(.0002, gain), when + .0025);
+      g.gain.exponentialRampToValueAtTime(0.0001, when + dur * variation);
+      let node = o;
+      if (filterType) {
+        const f = ctx.createBiquadFilter();
+        f.type = filterType; f.frequency.value = filterFreq || 2000; f.Q.value = .7;
+        o.connect(f); node = f;
+      }
+      node.connect(g).connect(out);
+      o.start(when); o.stop(when + dur * variation + .05);
     };
-    const noise = (dur, freq, gain, type) => {
-      const s = register(ctx.createBufferSource());
+    const noise = (dur, type, freq, q, gain, attack = .002) => {
+      const src = register(ctx.createBufferSource());
+      src.buffer = noiseBuffer;
       const f = ctx.createBiquadFilter();
-      const g = ctx.createGain();
-      s.buffer = noiseBuffer;
       f.type = type || 'bandpass';
-      f.frequency.value = freq;
-      f.Q.value = .8;
+      f.frequency.value = freq || 2000;
+      f.Q.value = q == null ? .8 : q;
+      const g = ctx.createGain();
       g.gain.setValueAtTime(0.0001, when);
-      g.gain.exponentialRampToValueAtTime(gain, when + .006);
-      g.gain.exponentialRampToValueAtTime(0.0001, when + dur);
-      s.connect(f).connect(g).connect(out);
-      s.start(when); s.stop(when + dur + .02);
+      g.gain.exponentialRampToValueAtTime(Math.max(.0002, gain), when + attack);
+      g.gain.exponentialRampToValueAtTime(0.0001, when + dur * variation);
+      src.connect(f).connect(g).connect(out);
+      src.start(when); src.stop(when + dur * variation + .03);
     };
     if (kind === 'kick') {
-      osc('sine', 160, .34, 1.0, 42);
-      osc('triangle', 85, .12, .22, 40);
-      noise(.008, 3600, .12);
+      osc('sine', 150, .42, 1.0, 46, 'lowpass', 400);         // 音高下坠的鼓皮
+      osc('sine', 56, .5, .55, 40);                            // 低频鼓腔
+      noise(.012, 'highpass', 2400, .7, .12);                  // 鼓槌点击
     } else if (kind === 'snare') {
-      noise(.2, 1900, .5);
-      noise(.05, 5200, .16);
-      osc('triangle', 190, .1, .2, 110);
+      osc('triangle', 195, .12, .34, 150);                     // 鼓皮音高
+      osc('triangle', 330, .08, .18, 280);
+      noise(.24, 'bandpass', 1900, .55, .5);                   // 响弦主体
+      noise(.05, 'highpass', 5200, .7, .22);                   // 瞬态
     } else if (kind === 'hat') {
-      noise(.07, 7600, .2);
-      noise(.03, 10800, .09);
+      noise(.06, 'highpass', 7200, .7, .5);
+      noise(.035, 'bandpass', 9800, 1.6, .24);
     } else if (kind === 'openhat') {
-      noise(.2, 7600, .2);
-      noise(.14, 10800, .09);
+      noise(.26, 'highpass', 6800, .7, .42);
+      noise(.16, 'bandpass', 9200, 1.4, .18);
     } else if (kind === 'clap') {
-      [0, .02, .045].forEach((offset, index) => {
-        const s = register(ctx.createBufferSource());
+      [0, .012, .026].forEach((offset, index) => {
+        const src = register(ctx.createBufferSource());
+        src.buffer = noiseBuffer;
         const f = ctx.createBiquadFilter();
+        f.type = 'bandpass'; f.frequency.value = 1350 + index * 260; f.Q.value = .9;
         const g = ctx.createGain();
-        s.buffer = noiseBuffer;
-        f.type = 'bandpass'; f.frequency.value = 1450 + index * 420; f.Q.value = .8;
         g.gain.setValueAtTime(0.0001, when + offset);
-        g.gain.exponentialRampToValueAtTime(.24, when + offset + .005);
-        g.gain.exponentialRampToValueAtTime(0.0001, when + offset + .11 - index * .012);
-        s.connect(f).connect(g).connect(out);
-        s.start(when + offset); s.stop(when + offset + .14);
+        g.gain.exponentialRampToValueAtTime(.3 - index * .05, when + offset + .004);
+        g.gain.exponentialRampToValueAtTime(0.0001, when + offset + .1 - index * .012);
+        src.connect(f).connect(g).connect(out);
+        src.start(when + offset); src.stop(when + offset + .13);
       });
     } else if (kind === 'rim') {
-      osc('triangle', 780, .012, .3);
-      noise(.02, 3200, .18);
+      osc('triangle', 820, .02, .3, 620);
+      noise(.02, 'bandpass', 3200, 1.2, .14);
     }
   }
 
