@@ -347,7 +347,7 @@
     },
 
     // ── 鼓组（按音高触发，音高取 midi%12）──
-    drumkit: { drumkit: true, gain: .9 }
+    drumkit: { drumkit: true, gain: 1.15 }
   };
 
   const drumKinds = ['kick', 'snare', 'hat', 'clap', 'openhat', 'rim'];

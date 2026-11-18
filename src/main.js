@@ -146,6 +146,8 @@
   let selectedId = 'doro';
   let selectedNoteId = null;
   let projectMixer = null;
+  let lowShelf = null;
+  let lowBoost = 0;
   let bpm = 112;
   let outputVolume = 70;
   let loop = true;
@@ -700,12 +702,16 @@
     saveState();
   }
 
+  function applyLowBoost() {
+    if (lowShelf && audioCtx) lowShelf.gain.setTargetAtTime(lowBoost, audioCtx.currentTime, .05);
+  }
+
   function renderProjectMixer() {
     const host = $('#project-mixer');
     if (!host) return;
     if (!projectMixer || !projectMixer.length) { host.hidden = true; host.innerHTML = ''; return; }
     host.hidden = false;
-    host.innerHTML = `<div class="mixer-title"><span>工程分轨混音 · 低音轻就拉高贝斯，觉得哪轨怪就静音</span><small>${projectMixer.length} 轨</small></div>` + projectMixer.map((track, index) => `
+    host.innerHTML = `<div class="mixer-title"><span>工程分轨混音 · 低音轻就拉高贝斯，觉得哪轨怪就静音</span><span style="display:flex;gap:8px;align-items:center"><button class="mixer-mute" id="mix-low-boost" type="button" aria-pressed="${lowBoost > 0}">${lowBoost > 0 ? `低音增强 +${lowBoost}dB` : '低音增强 +4dB'}</button><small>${projectMixer.length} 轨</small></span></div>` + projectMixer.map((track, index) => `
       <div class="mixer-row${track.mute ? ' muted' : ''}" data-mix-index="${index}">
         <strong>${track.label}</strong>
         <input type="range" min="0" max="150" step="1" value="${Math.round(track.gain / track.base * 100)}" aria-label="${track.label} 音量">
@@ -718,6 +724,12 @@
       applyProjectMix();
       $('#play-status').textContent = `${projectMixer[index].label} 音量 ${percent}%`;
     }));
+    $('#mix-low-boost')?.addEventListener('click', () => {
+      lowBoost = lowBoost ? 0 : 4;
+      applyLowBoost();
+      renderProjectMixer();
+      showToast(lowBoost ? `低音增强 +${lowBoost}dB 已开启` : '低音增强已关闭');
+    });
     $$('[data-mix-mute]', host).forEach((button) => button.addEventListener('click', () => {
       const index = Number(button.dataset.mixMute);
       projectMixer[index].mute = !projectMixer[index].mute;
@@ -767,6 +779,8 @@
         gain: Number.isFinite(Number(track.gain)) ? Math.max(.2, Math.min(1.4, Number(track.gain))) : 1,
         mute: false
       }));
+      lowBoost = 4;
+      applyLowBoost();
       renderProjectMixer();
       $('#play-status').textContent = `《${project.name || '合成器工程'}》已载入 · ${project.tracks.length} 轨 / ${notes.length} 个音符`;
       showToast(`ACE 分轨已映射：${mapped.join('，')}`);
@@ -1480,6 +1494,10 @@
       mixInput = audioCtx.createGain();
       master = audioCtx.createGain();
       dryGain = audioCtx.createGain();
+      lowShelf = audioCtx.createBiquadFilter();
+      lowShelf.type = 'lowshelf';
+      lowShelf.frequency.value = 110;
+      lowShelf.gain.value = 0;
       convolver = audioCtx.createConvolver();
       reverbGain = audioCtx.createGain();
       padMixInput = audioCtx.createGain();
@@ -1524,8 +1542,9 @@
       padDelayTone.connect(padDelayWet).connect(padBackingFilter);
       padMixInput.connect(padCompressor).connect(padOutput).connect(master);
       master.gain.value = outputVolume / 100;
-      mixInput.connect(dryGain).connect(master);
-      mixInput.connect(convolver).connect(reverbGain).connect(master);
+      mixInput.connect(lowShelf);
+      lowShelf.connect(dryGain).connect(master);
+      lowShelf.connect(convolver).connect(reverbGain).connect(master);
       padLimiter = audioCtx.createDynamicsCompressor();
       padLimiter.threshold.value = -6;
       padLimiter.knee.value = 0;
@@ -2335,6 +2354,8 @@
     });
     selectMeme(song.instrument);
     projectMixer = null;
+    lowBoost = 0;
+    applyLowBoost();
     renderProjectMixer();
     renderRuler(); renderStaff(); saveState();
     $('#play-status').textContent = `正在播放《${song.title}》· ${notes.length} 个多轨合成音符`;
