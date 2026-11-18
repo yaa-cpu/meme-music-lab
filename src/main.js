@@ -16,11 +16,6 @@
   };
   let reverbPreset = 'none';
   let reverbWet = 0;
-  let loopEnabled = false;
-  let loopClip = null;
-  let loopVolume = 70;
-  let loopReverbPreset = 'none';
-  let loopReverbWet = .2;
   let loopClockStep = 0;
   let followedAuthor = false;
   let rewardClaims = { share: '', repost: '' };
@@ -259,21 +254,17 @@
       });
       reverbPreset = reverbPresets[saved.reverbPreset] ? saved.reverbPreset : 'none';
       reverbWet = Math.round(clamp(Number(saved.reverbWet) || 0, 0, .7) * 10) / 10;
-      if (saved.loopClip && Number(saved.loopClip.duration) > 0 && Array.isArray(saved.loopClip.notes)) {
-        const duration = clamp(Number(saved.loopClip.duration), .05, 4096);
-        loopClip = {
-          duration,
-          sourceStart: Math.max(0, Number(saved.loopClip.sourceStart) || 0),
-          sourceEnd: Math.max(0, Number(saved.loopClip.sourceEnd) || duration),
-          notes: saved.loopClip.notes.filter((note) => validSource(note.meme) && Number(note.row) >= 0 && Number(note.row) < 88 && Number(note.col) >= 0 && Number(note.col) < duration && Number(note.length) > 0).map((note) => ({
-            meme: note.meme, row: Number(note.row), col: Number(note.col), length: clamp(Number(note.length), .05, duration - Number(note.col)), offset: Math.max(0, Number(note.offset) || 0), ...(Number.isFinite(Number(note.midi)) ? { midi: Number(note.midi) } : { midi: pitches[Number(note.row)]?.midi })
-          }))
-        };
-      }
-      loopEnabled = saved.loopEnabled === true && Boolean(loopClip?.notes.length);
-      loopVolume = Number.isFinite(Number(saved.loopVolume)) ? clamp(Number(saved.loopVolume), 0, 100) : 70;
-      loopReverbPreset = reverbPresets[saved.loopReverbPreset] ? saved.loopReverbPreset : 'none';
-      loopReverbWet = Math.round(clamp(Number(saved.loopReverbWet) || 0, 0, .7) * 10) / 10;
+      loopTapes = Array.isArray(saved.loopTapes) ? saved.loopTapes.filter((tape) => tape && Number.isInteger(Number(tape.lane)) && Number(tape.lane) >= 0 && Number(tape.lane) < 3 && Number(tape.length) > 0 && Array.isArray(tape.items) && tape.items.length).map((tape) => ({
+        id: String(tape.id || `tape-${uid()}`),
+        name: String(tape.name || '卡带'),
+        lane: Number(tape.lane),
+        col: Math.max(0, Number(tape.col) || 0),
+        length: clamp(Number(tape.length), .05, 4096),
+        items: tape.items.filter((note) => note && validSource(note.meme) && Number(note.row) >= 0 && Number(note.row) < 88 && Number(note.col) >= 0 && Number(note.length) > 0).map((note) => ({
+          meme: note.meme, row: Number(note.row), col: Number(note.col), length: clamp(Number(note.length), .05, 4096),
+          ...(Number.isFinite(Number(note.midi)) ? { midi: Number(note.midi) } : {})
+        }))
+      })) : [];
       followedAuthor = saved.followedAuthor === true;
       rewardClaims = { share: saved.rewardClaims?.share || '', repost: saved.rewardClaims?.repost || '' };
     } else {
@@ -282,7 +273,7 @@
   }
 
   function saveState() {
-    try { localStorage.setItem(storageKey, JSON.stringify({ notes, bpm, volume: outputVolume, loop, selectedId, pitchCount, reverbPreset, reverbWet, loopEnabled, loopClip, loopVolume, loopReverbPreset, loopReverbWet, followedAuthor, rewardClaims })); } catch (_) { /* private mode */ }
+    try { localStorage.setItem(storageKey, JSON.stringify({ notes, bpm, volume: outputVolume, loop, selectedId, pitchCount, reverbPreset, reverbWet, loopTapes, followedAuthor, rewardClaims })); } catch (_) { /* private mode */ }
   }
 
   function showToast(message) {
@@ -444,11 +435,6 @@
     { type: 'repost', cover: '', symbol: '⌁', colors: ['#91cfe8', '#c7b4e6'] }
   ];
   const rewardNames = { follow: '关注作者', share: '今日分享', repost: '今日转发' };
-  let loopPreviewing = false;
-  let loopPreviewGeneration = 0;
-  let loopPreviewNextStep = 0;
-  let loopPreviewNextTime = 0;
-  const loopPreviewTimers = new Set();
   let recordingLoopStep = null;
 
   function isCartridgeUnlocked(index) {
@@ -462,138 +448,154 @@
     return `${rewardNames[cartridgeRewards[index]?.type] || '任务'}后解锁`;
   }
 
-  function loopRange() {
-    const start = clamp(Number($('#loop-range-start').value) || 0, 0, 4096);
-    const end = clamp(Number($('#loop-range-end').value) || 16, start + .05, 4096);
-    return { start: precise(start), end: precise(end) };
+  // ── loop 底奏卡带：点左侧音阶名选中轨道 → 合成卡带 → 摆到下方 3 条卡带轨 ──
+  const TAPE_LANES = 3;
+  let loopTapes = [];
+  const selectedRows = new Set();
+  let tapeDrag = null;
+  let tapeSeq = 0;
+
+  function selectedRowsList() { return [...selectedRows]; }
+
+  function toggleRowSelection(row) {
+    if (!Number.isInteger(row) || row < 0 || row >= pitchCount) return;
+    if (selectedRows.has(row)) selectedRows.delete(row); else selectedRows.add(row);
+    $$('#staff-grid .pitch-label').forEach((label) => label.classList.toggle('selected', selectedRows.has(Number(label.dataset.row))));
+    const button = $('#make-tape');
+    if (button) button.disabled = selectedRows.size === 0;
+    updateTapeHint();
   }
 
-  function notesForLoopRange(start, end) {
-    return notes.filter((note) => note.col < end && note.col + note.length > start).map((note) => {
-      const clippedStart = Math.max(note.col, start);
-      const clippedEnd = Math.min(note.col + note.length, end);
-      return {
-        meme: note.meme, row: note.row, col: precise(clippedStart - start), length: precise(clippedEnd - clippedStart),
-        offset: precise(Math.max(0, start - note.col)),
-        ...(Number.isFinite(Number(note.midi)) ? { midi: Number(note.midi) } : {})
-      };
-    }).filter((note) => note.length > 0);
+  function updateTapeHint() {
+    const hint = $('#tape-hint');
+    if (!hint) return;
+    if (selectedRows.size) hint.textContent = `已选 ${selectedRows.size} 条轨道，点「合成卡带」`;
+    else if (loopTapes.length) hint.textContent = `下方 ${loopTapes.length} 条底奏卡带，按住拖动可换位置`;
+    else hint.textContent = '点左侧音阶名选中轨道，再合成 loop 底奏卡带';
   }
 
-  function updateLoopRangeSummary() {
-    const summary = $('#loop-range-summary');
-    if (!summary) return;
-    const { start, end } = loopRange();
-    const count = notesForLoopRange(start, end).length;
-    summary.textContent = count
-      ? `选段 ${formatLength(start)}–${formatLength(end)} 步，包含 ${count} 个音符；跨边界的声音会裁到选段边缘。`
-      : '这个范围暂时没有音符，请调整起止位置或先在线谱里放入声音。';
+  function makeTape() {
+    const rows = selectedRowsList();
+    if (!rows.length) { showToast('先点左侧音阶名，选中要合成的轨道'); return; }
+    const sheetNotes = notes.filter((note) => rows.includes(note.row));
+    if (!sheetNotes.length) { showToast('选中的轨道上还没有音符'); return; }
+    const start = Math.min(...sheetNotes.map((note) => note.col));
+    const end = Math.max(...sheetNotes.map((note) => note.col + note.length));
+    const length = precise(Math.max(1, end - start));
+    const items = sheetNotes.map((note) => ({
+      meme: note.meme,
+      row: note.row,
+      col: precise(note.col - start),
+      length: precise(Math.max(.05, note.length)),
+      ...(Number.isFinite(Number(note.midi)) ? { midi: Number(note.midi) } : {})
+    })).sort((a, b) => a.col - b.col);
+    const counts = [0, 1, 2].map((lane) => loopTapes.filter((tape) => tape.lane === lane).length);
+    const lane = counts.indexOf(Math.min(...counts));
+    tapeSeq += 1;
+    const tape = {
+      id: `tape-${Date.now()}-${tapeSeq}`,
+      name: `卡带 ${loopTapes.length + 1}`,
+      lane,
+      col: 0,
+      length,
+      items
+    };
+    loopTapes.push(tape);
+    saveState();
+    renderTapeStrip();
+    showToast(`已把 ${rows.length} 条轨道合成「${tape.name}」，拖到下方卡带轨摆放`);
   }
 
-  function updateLoopUI() {
-    const hasClip = Boolean(loopClip?.notes.length);
-    const toggle = $('#loop-toggle');
-    toggle.classList.toggle('active', loopEnabled && hasClip);
-    toggle.setAttribute('aria-pressed', String(loopEnabled && hasClip));
-    toggle.disabled = !hasClip;
-    $('span', toggle).textContent = loopEnabled && hasClip ? '底奏开' : '底奏关';
-    const preview = $('#loop-preview');
-    preview.disabled = !hasClip;
-    preview.innerHTML = `${icon(loopPreviewing ? 'stop' : 'play')}${loopPreviewing ? '停止试听' : '试听循环'}`;
-    preview.setAttribute('aria-pressed', String(loopPreviewing));
-    $('#loop-clip-status').textContent = hasClip ? `${formatLength(loopClip.duration)} 步 · ${loopClip.notes.length} 个音符` : '尚未合并';
-    $('#loop-clip-meta').textContent = hasClip
-      ? `来自线谱 ${formatLength(loopClip.sourceStart)}–${formatLength(loopClip.sourceEnd)} 步 · 独立循环，不改动原线谱`
-      : '合并后不会改动原线谱，循环片段在线谱之外独立播放。';
-    const bars = Array.from({ length: 48 }, (_, index) => {
-      const position = hasClip ? (index + .5) / 48 * loopClip.duration : 0;
-      const voices = hasClip ? loopClip.notes.filter((note) => position >= note.col && position <= note.col + note.length) : [];
-      const height = voices.length ? Math.min(94, 25 + voices.length * 18 + (voices[0].row || 0) * 4) : 8;
-      return `<i style="height:${height}%"></i>`;
+  function removeTape(id) {
+    loopTapes = loopTapes.filter((tape) => tape.id !== id);
+    saveState();
+    renderTapeStrip();
+  }
+
+  function renderTapeStrip() {
+    const inner = $('#tape-inner');
+    if (!inner) return;
+    const length = Math.max(1, timelineLength());
+    inner.innerHTML = Array.from({ length: TAPE_LANES }, (_, lane) => {
+      const blocks = loopTapes.filter((tape) => tape.lane === lane).map((tape) => {
+        const left = (tape.col / length) * 100;
+        const width = Math.max(2, (tape.length / length) * 100);
+        return `<div class="tape-block" data-id="${tape.id}" style="left:${left}%;width:${width}%">
+          <span class="tape-block-name">${tape.name}</span><span class="tape-block-meta">${tape.items.length} 音</span>
+          <button class="tape-remove" type="button" data-id="${tape.id}" aria-label="移除 ${tape.name}">×</button></div>`;
+      }).join('');
+      return `<div class="tape-lane" data-lane="${lane}"><span class="tape-lane-label">LOOP<br>${lane + 1}</span><div class="tape-track" data-lane="${lane}" data-length="${length}" style="--tape-steps:${length}">${blocks}</div></div>`;
     }).join('');
-    $('#loop-waveform').innerHTML = bars;
-    $('#loop-waveform').classList.toggle('has-clip', hasClip);
-    syncChoiceWheel('#loop-volume-wheel', loopVolume);
-    syncChoiceWheel('#loop-reverb-wheel', loopReverbPreset);
-    syncChoiceWheel('#loop-wet-wheel', loopReverbWet);
-    $('#loop-wet-wheel').setAttribute('aria-disabled', String(loopReverbPreset === 'none'));
-    updateLoopRangeSummary();
+    $$('#tape-inner .tape-block').forEach((block) => block.addEventListener('pointerdown', (event) => {
+      if (event.target.closest('.tape-remove')) return;
+      beginTapeDrag(event, block);
+    }));
+    $$('#tape-inner .tape-remove').forEach((button) => button.addEventListener('click', (event) => {
+      event.stopPropagation();
+      removeTape(button.dataset.id);
+    }));
+    syncTapeScroll();
+    const button = $('#make-tape');
+    if (button) button.disabled = selectedRows.size === 0;
+    updateTapeHint();
   }
 
-  function renderLoopLab() {
-    if (loopClip) {
-      $('#loop-range-start').value = loopClip.sourceStart;
-      $('#loop-range-end').value = loopClip.sourceEnd;
-    } else {
-      $('#loop-range-end').value = Math.max(1, precise(noteEnd() || 16));
-    }
-    updateLoopUI();
+  function syncTapeScroll() {
+    const scroller = $('#staff-scroll');
+    const inner = $('#tape-inner');
+    const canvas = $('#staff-canvas');
+    if (!scroller || !inner || !canvas) return;
+    inner.style.width = `${Math.max(canvas.scrollWidth, scroller.clientWidth)}px`;
+    inner.style.transform = `translateX(${-scroller.scrollLeft}px)`;
   }
 
-  function mergeLoopClip() {
-    const { start, end } = loopRange();
-    if (end <= start) { showToast('结束步必须晚于开始步'); return; }
-    const clipNotes = notesForLoopRange(start, end);
-    if (!clipNotes.length) { showToast('选段里没有音符，请先调整范围'); return; }
-    stopLoopPreview();
-    loopClip = { duration: precise(end - start), sourceStart: start, sourceEnd: end, notes: clipNotes };
-    loopEnabled = true;
-    saveState(); updateLoopUI();
-    showToast(`已合并 ${clipNotes.length} 个音符为 ${formatLength(loopClip.duration)} 步循环`);
+  function beginTapeDrag(event, block) {
+    const tape = loopTapes.find((item) => item.id === block.dataset.id);
+    const track = block.closest('.tape-track');
+    if (!tape || !track) return;
+    const rect = track.getBoundingClientRect();
+    const perStep = rect.width / Math.max(1, Number(track.dataset.length));
+    tapeDrag = { tape, block, startX: event.clientX, startCol: tape.col, perStep, moved: false };
+    block.classList.add('dragging');
+    const onMove = (moveEvent) => {
+      if (!tapeDrag) return;
+      const deltaCol = Math.round((moveEvent.clientX - tapeDrag.startX) / tapeDrag.perStep * 4) / 4;
+      const maxCol = Math.max(0, Number(track.dataset.length) - tape.length);
+      tape.col = clamp(tapeDrag.startCol + deltaCol, 0, maxCol);
+      const laneIndex = $$('#tape-inner .tape-lane').findIndex((laneEl) => {
+        const box = laneEl.getBoundingClientRect();
+        return moveEvent.clientY >= box.top && moveEvent.clientY <= box.bottom;
+      });
+      if (laneIndex >= 0) tape.lane = laneIndex;
+      const length = Math.max(1, timelineLength());
+      block.style.left = `${(tape.col / length) * 100}%`;
+      tapeDrag.moved = true;
+    };
+    const onUp = () => {
+      if (!tapeDrag) return;
+      block.classList.remove('dragging');
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      if (tapeDrag.moved) { saveState(); renderTapeStrip(); }
+      tapeDrag = null;
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    event.preventDefault();
   }
 
-  function triggerLoopStep(step, when, force = false) {
-    if ((!loopEnabled && !force) || !audioCtx || !loopClip?.notes.length) return;
-    const duration = loopClip.duration;
-    const position = ((step % duration) + duration) % duration;
-    loopClip.notes.filter((note) => note.col >= position && note.col < position + 1).forEach((clipNote) => {
-      const noteWhen = when + (clipNote.col - position) * stepDuration();
-      const loopNote = { ...clipNote, reverbPreset: loopReverbPreset, reverbWet: loopReverbWet, loopVolume: loopVolume / 100 };
-      triggerSound(loopNote.meme, loopNote.row, noteWhen, false, loopNote, false);
+  // 卡带和线谱音符一样按“步”播放：播放头进入卡带块时，把块内音符按偏移排出去。
+  function triggerTapeStep(step, when) {
+    if (!audioCtx || !loopTapes.length) return;
+    loopTapes.forEach((tape) => {
+      if (!(tape.col >= step && tape.col < step + 1)) return;
+      const blockOffset = (tape.col - step) * stepDuration();
+      tape.items.forEach((note) => {
+        const noteWhen = when + blockOffset + note.col * stepDuration();
+        if (noteWhen < audioCtx.currentTime - .06) return;
+        triggerSound(note.meme, note.row, noteWhen, false, { ...note, loopVolume: 1, reverbPreset: 'none' }, false);
+      });
     });
-    if (loopPreviewing) {
-      const timer = setTimeout(() => {
-        $('#loop-waveform').style.setProperty('--loop-position', `${position / duration * 100}%`);
-        loopPreviewTimers.delete(timer);
-      }, Math.max(0, (when - audioCtx.currentTime) * 1000));
-      loopPreviewTimers.add(timer);
-    }
-  }
-
-  function stopLoopPreview() {
-    loopPreviewGeneration += 1;
-    loopPreviewing = false;
-    loopPreviewTimers.forEach((timer) => { clearTimeout(timer); clearInterval(timer); });
-    loopPreviewTimers.clear();
-    if ($('#loop-waveform')) $('#loop-waveform').style.setProperty('--loop-position', '0%');
-    if ($('#loop-toggle')) updateLoopUI();
-  }
-
-  function runLoopPreview(generation) {
-    if (!loopPreviewing || generation !== loopPreviewGeneration || !audioCtx) return;
-    while (loopPreviewNextTime < audioCtx.currentTime + .12) {
-      triggerLoopStep(loopPreviewNextStep, loopPreviewNextTime, true);
-      loopPreviewNextStep += 1;
-      loopPreviewNextTime += stepDuration();
-    }
-  }
-
-  async function previewLoop() {
-    if (loopPreviewing) { stopLoopPreview(); return; }
-    if (!loopClip?.notes.length) { showToast('先把一段线谱合并为循环'); return; }
-    if (isPlaying) { showToast(loopEnabled ? '循环底奏正随线谱播放' : '先打开底奏，再播放线谱'); return; }
-    try {
-      await ensureAudio();
-      await Promise.all([...new Set(loopClip.notes.filter((note) => !note.meme.startsWith('instrument:')).map((note) => note.meme))].map((id) => loadBuffer(id).catch(() => null)));
-      loopPreviewing = true;
-      const generation = ++loopPreviewGeneration;
-      loopPreviewNextStep = 0;
-      loopPreviewNextTime = audioCtx.currentTime + .06;
-      updateLoopUI();
-      runLoopPreview(generation);
-      const timer = setInterval(() => runLoopPreview(generation), 25);
-      loopPreviewTimers.add(timer);
-    } catch (_) { showToast('声音引擎未启动，请再点击一次'); }
   }
 
   function renderBackpack() {
@@ -831,7 +833,7 @@
     const nextPitches = musicData.getPitches(nextCount);
     if (nextCount !== pitchCount) {
       remapNoteRows(notes, pitches, nextPitches);
-      if (loopClip) remapNoteRows(loopClip.notes, pitches, nextPitches);
+      loopTapes.forEach((tape) => remapNoteRows(tape.items, pitches, nextPitches));
     }
     pitchCount = nextCount;
     pitches = nextPitches;
@@ -975,7 +977,7 @@
   function renderStaff() {
     syncTimelineDimensions();
     $('#staff-grid').innerHTML = pitches.map((pitch, row) => `
-      <div class="staff-row"><div class="pitch-label">${pitch.name}<span>${pitch.name === 'G4' ? '原调' : ''}</span></div>
+      <div class="staff-row"><div class="pitch-label${selectedRows.has(row) ? ' selected' : ''}" data-row="${row}" role="button" tabindex="0" title="点一下选中这条轨道，用于合成 loop 底奏卡带">${pitch.name}<span>${pitch.name === 'G4' ? '原调' : ''}</span></div>
       <div class="rail-track" data-row="${row}" tabindex="0" aria-label="${pitch.name} 滑轨，在空白处按下并向右拖动，放入并延长 ${sourceInfo(selectedId).title}">${notes.filter((note) => note.row === row).map(noteMarkup).join('')}</div></div>`).join('');
     $('#note-count').textContent = `${notes.length} 个音符 · ${Math.ceil(timelineLength() / 4)} 小节`;
 
@@ -984,9 +986,17 @@
       noteEl.addEventListener('pointerdown', (event) => beginMoveGesture(event, noteEl));
       $('.note-resize', noteEl).addEventListener('pointerdown', (event) => beginResizeGesture(event, noteEl));
     });
+    $$('#staff-grid .pitch-label').forEach((label) => {
+      label.addEventListener('click', () => toggleRowSelection(Number(label.dataset.row)));
+      label.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        toggleRowSelection(Number(label.dataset.row));
+      });
+    });
     syncNoteFx();
     updatePlayhead();
-    updateLoopRangeSummary();
+    renderTapeStrip();
   }
 
   function renderPitchPad() {
@@ -1781,7 +1791,7 @@
       currentStep = Math.floor(recordingPosition + .0001);
       if (currentStep !== recordingLoopStep) {
         recordingLoopStep = currentStep;
-        triggerLoopStep(currentStep, now + .005);
+        triggerTapeStep(currentStep, now + .005);
       }
       notes.filter((note) => !recordingTriggeredIds.has(note.id) && note.row < pitchCount && note.col >= previous - .0001 && note.col <= recordingPosition + .0001).forEach((note) => {
         recordingTriggeredIds.add(note.id);
@@ -1834,7 +1844,7 @@
   }
 
   function scheduleStep(step, when, generation, absoluteStep) {
-    triggerLoopStep(absoluteStep, when);
+    triggerTapeStep(absoluteStep, when);
     const delay = Math.max(0, (when - audioCtx.currentTime) * 1000);
     const timer = setTimeout(() => {
       setCurrentStep(step, generation, when);
@@ -1879,7 +1889,6 @@
   async function startPlayback() {
     if (isPlaying) return;
     stopLibraryTrack();
-    stopLoopPreview();
     try {
       await ensureAudio();
       if (micBlob && !micBuffer) {
@@ -1926,7 +1935,6 @@
     activePerformances.clear();
     if (micRecording) stopMicrophone(true);
     stopLibraryTrack();
-    stopLoopPreview();
     isPlaying = false; recording = false;
     scheduleGeneration += 1;
     clearInterval(schedulerTimer); clearTimeout(endTimer);
@@ -2212,8 +2220,6 @@
       const [degree, col, length, midi] = event;
       return { id: uid(), meme: song.instrument, row: 7 - degree, col, length, midi };
     });
-    loopEnabled = false;
-    updateLoopUI();
     selectMeme(song.instrument);
     renderRuler(); renderStaff(); saveState();
     $('#play-status').textContent = `正在播放《${song.title}》· ${notes.length} 个多轨合成音符`;
@@ -2768,37 +2774,9 @@
       showToast('已清空线谱与人声');
     });
     $('#demo-button').addEventListener('click', loadDemo);
-    $('#loop-range-all').addEventListener('click', () => {
-      $('#loop-range-start').value = 0;
-      $('#loop-range-end').value = Math.max(1, precise(noteEnd() || 16));
-      updateLoopRangeSummary();
-    });
-    ['#loop-range-start', '#loop-range-end'].forEach((id) => $(id).addEventListener('input', updateLoopRangeSummary));
-    $('#loop-merge').addEventListener('click', mergeLoopClip);
-    bindChoiceWheel('#loop-volume-wheel', () => loopVolume, (value) => {
-      loopVolume = Number(value);
-      saveState(); syncChoiceWheel('#loop-volume-wheel', loopVolume);
-      $('#loop-clip-status').textContent = `音量 ${loopVolume}%${loopClip ? ` · ${formatLength(loopClip.duration)} 步` : ''}`;
-    });
-    bindChoiceWheel('#loop-reverb-wheel', () => loopReverbPreset, (value) => {
-      if (value === loopReverbPreset) return;
-      loopReverbPreset = value;
-      saveState(); updateLoopUI();
-      const names = { none: '无混响', room: '小房间', hall: '大厅', church: '教堂', plate: '金属板' };
-      showToast(`底奏混响：${names[value]}`);
-    });
-    bindChoiceWheel('#loop-wet-wheel', () => loopReverbWet, (value) => {
-      if (loopReverbPreset === 'none') return;
-      loopReverbWet = clamp(Number(value), 0, .7);
-      saveState(); syncChoiceWheel('#loop-wet-wheel', loopReverbWet);
-      $('#loop-clip-status').textContent = `底奏湿声 ${Math.round(loopReverbWet * 100)}%`;
-    });
-    $('#loop-preview').addEventListener('click', previewLoop);
-    $('#loop-toggle').addEventListener('click', () => {
-      loopEnabled = !loopEnabled;
-      saveState(); updateLoopUI();
-      showToast(loopEnabled ? '循环底奏已开启，将随线谱独立循环' : '循环底奏已关闭');
-    });
+    $('#make-tape').addEventListener('click', makeTape);
+    $('#staff-scroll').addEventListener('scroll', syncTapeScroll, { passive: true });
+    window.addEventListener('resize', syncTapeScroll, { passive: true });
     $('#follow-task').addEventListener('click', () => {
       followedAuthor = !followedAuthor;
       if (!followedAuthor && !isCartridgeUnlocked(cartridgeIndex)) setCartridge(0);
@@ -2849,7 +2827,7 @@
   bindCartridgeWheel();
   renderCredits();
   renderSongs();
-  renderLoopLab();
+  renderTapeStrip();
   renderBackpack();
   refreshScale(pitchCount, false);
   applyReverb();

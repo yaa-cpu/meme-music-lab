@@ -120,8 +120,9 @@
         </div>
 
         <div class="staff-toolbar">
-          <p><span class="selection-swatch" id="selection-swatch"></span>当前音符：<strong id="selected-name">Doro</strong><span class="toolbar-divider"></span>空白处右滑：放入＋延长 · 点击音符：单独设置混响</p>
+          <p><span class="selection-swatch" id="selection-swatch"></span>当前音符：<strong id="selected-name">Doro</strong><span class="toolbar-divider"></span>空白处右滑：放入＋延长 · 点左侧音阶名选中轨道<span class="toolbar-divider"></span><span id="tape-hint">点左侧音阶名选中轨道，再合成 loop 底奏卡带</span></p>
           <div>
+            <button class="small-button" id="make-tape" type="button" disabled><svg><use href="#i-loop"/></svg>合成卡带</button>
             <button class="small-button" id="demo-button" type="button"><svg><use href="#i-spark"/></svg>来点抽象</button>
             <button class="small-button" id="clear-button" type="button"><svg><use href="#i-trash"/></svg>清空</button>
           </div>
@@ -136,37 +137,9 @@
         </div>
         <div class="staff-footer"><span id="note-count">0 个音符</span><span id="play-status" role="status">准备好了，先试听一张梗卡</span><span>自动保存在此浏览器</span></div>
 
-        <section class="loop-lab loop-lab-inline" id="loop-lab" aria-labelledby="loop-title">
-          <div class="loop-inline-head">
-            <span class="section-index">02</span>
-            <h3 id="loop-title">循环底奏</h3>
-            <p id="loop-range-summary">在线谱里编辑声音，再选择需要重复的一段。</p>
-          </div>
-          <div class="loop-console">
-            <div class="loop-range-panel">
-              <div class="loop-range-inputs">
-                <label>开始步<input id="loop-range-start" type="number" min="0" step="0.25" value="0" inputmode="decimal"></label>
-                <span aria-hidden="true">→</span>
-                <label>结束步<input id="loop-range-end" type="number" min="0.25" step="0.25" value="16" inputmode="decimal"></label>
-                <button class="loop-merge-button" id="loop-merge" type="button"><svg><use href="#i-loop"/></svg>合并</button>
-                <button id="loop-range-all" type="button" class="loop-mini-button">全选</button>
-              </div>
-            </div>
-            <div class="loop-clip-panel" id="loop-clip-panel">
-              <div class="loop-waveform" id="loop-waveform" aria-hidden="true"></div>
-              <div class="loop-clip-text">
-                <strong id="loop-clip-status">尚未合并</strong>
-                <small id="loop-clip-meta">合并后独立播放，不改动原线谱。</small>
-              </div>
-            </div>
-            <div class="loop-mix-panel" aria-label="循环片段独立混音">
-              <div class="mini-wheel-control"><span>底奏音量</span><div class="mini-wheel" id="loop-volume-wheel" role="slider" tabindex="0" aria-label="循环底奏音量，拖动或滚动切换" aria-valuemin="1" aria-valuemax="21" aria-valuenow="15"><div class="mini-wheel-track" data-min="0" data-max="100" data-step="5" data-unit="%"></div></div></div>
-              <div class="mini-wheel-control"><span>底奏混响</span><div class="mini-wheel reverb-wheel" id="loop-reverb-wheel" role="slider" tabindex="0" aria-label="循环底奏混响预设，拖动或滚动切换" aria-valuemin="1" aria-valuemax="5" aria-valuenow="1"><div class="mini-wheel-track"><span data-value="none"><strong>DRY</strong><small>无混响</small></span><span data-value="room"><strong>ROOM</strong><small>小房间</small></span><span data-value="hall"><strong>HALL</strong><small>大厅</small></span><span data-value="church"><strong>CHURCH</strong><small>教堂</small></span><span data-value="plate"><strong>PLATE</strong><small>金属板</small></span></div></div></div>
-              <div class="mini-wheel-control"><span>底奏湿声</span><div class="mini-wheel" id="loop-wet-wheel" role="slider" tabindex="0" aria-label="循环底奏湿声比例，拖动或滚动切换" aria-valuemin="1" aria-valuemax="8" aria-valuenow="3"><div class="mini-wheel-track"><span data-value="0"><strong>0%</strong></span><span data-value="0.1"><strong>10%</strong></span><span data-value="0.2"><strong>20%</strong></span><span data-value="0.3"><strong>30%</strong></span><span data-value="0.4"><strong>40%</strong></span><span data-value="0.5"><strong>50%</strong></span><span data-value="0.6"><strong>60%</strong></span><span data-value="0.7"><strong>70%</strong></span></div></div></div>
-            </div>
-            <div class="loop-actions"><button class="small-button" id="loop-preview" type="button"><svg><use href="#i-play"/></svg>试听循环</button><button class="small-button" id="loop-toggle" type="button" aria-pressed="false"><svg><use href="#i-loop"/></svg><span>底奏关</span></button></div>
-          </div>
-        </section>
+        <div class="tape-strip" id="tape-strip" aria-label="loop 底奏卡带轨">
+          <div class="tape-inner" id="tape-inner"></div>
+        </div>
       </section>
 
     </div>
