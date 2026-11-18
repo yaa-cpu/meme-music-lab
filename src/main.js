@@ -1474,7 +1474,9 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
       const wet = preset === 'none' ? 0 : clamp(note.reverbWet ?? reverbPresets[preset].wet, 0, .7);
       const dry = audioCtx.createGain();
       dry.gain.value = 1 - wet * .35;
-      panner.connect(dry).connect(destination);
+      // 有单独混响的音符也要进入全局混音总线（全局混响 + 主总线 EQ），
+      // 否则它们会从私有混响直接送到 master，听起来就像"没参与全局混响"。
+      panner.connect(dry).connect(busInput || mixInput);
       temporaryNodes.push(dry);
       if (wet > 0) {
         if (!noteConvolvers.has(preset)) {
