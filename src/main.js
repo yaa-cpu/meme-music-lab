@@ -871,7 +871,19 @@
     if (!wheel) return;
     const items = $$('.mini-wheel-track > span', wheel);
     if (!items.length) return;
-    const index = Math.max(0, items.findIndex((item) => item.dataset.value === String(value)));
+    let index = items.findIndex((item) => item.dataset.value === String(value));
+    if (index === -1 && Number.isFinite(Number(value))) {
+      // 工程 BPM 可能是 129.795 这类小数：滚轮只有整数档，选最近的显示，不改真实值
+      let best = Infinity;
+      items.forEach((item, itemIndex) => {
+        const numeric = Number(item.dataset.value);
+        if (Number.isFinite(numeric)) {
+          const distance = Math.abs(numeric - Number(value));
+          if (distance < best) { best = distance; index = itemIndex; }
+        }
+      });
+    }
+    index = Math.max(0, index);
     $('.mini-wheel-track', wheel).style.transform = `translateY(${10 - index * 24}px)`;
     items.forEach((item, itemIndex) => item.classList.toggle('active', itemIndex === index));
     wheel.setAttribute('aria-valuenow', String(index + 1));
