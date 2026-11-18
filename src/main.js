@@ -784,6 +784,8 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
           notes.push({
             id: uid(), meme: `instrument:${preset}`, row, col: Number(col), length: Number(length), midi,
             velocity: Number.isFinite(Number(velocity)) ? Math.max(.2, Math.min(1, Number(velocity))) : undefined,
+            aceKind: track.aceKind || '',
+            trackLabel: track.label || '',
             loopVolume: gain,
             ...(fx ? { reverbPreset: fx.reverb, reverbWet: fx.wet, delaySend: fx.delay } : {})
           });
@@ -1437,6 +1439,64 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
     const end = () => { pinch = null; };
     scroll.addEventListener('touchend', end);
     scroll.addEventListener('touchcancel', end);
+  }
+
+  // 找到"主旋律"音符：优先按工程轨道语义，其次按音高最高的声部
+  function melodyNotes() {
+    const tagged = notes.filter((note) => note.aceKind === '旋律' || (note.trackLabel || '').includes('主旋律'));
+    if (tagged.length) return tagged;
+    const groups = new Map();
+    notes.forEach((note) => {
+      const midi = Number.isFinite(Number(note.midi)) ? Number(note.midi) : (pitches[note.row]?.midi || 0);
+      const list = groups.get(note.meme) || { sum: 0, count: 0, notes: [] };
+      list.sum += midi; list.count += 1; list.notes.push(note);
+      groups.set(note.meme, list);
+    });
+    let best = null;
+    groups.forEach((group) => {
+      const average = group.sum / Math.max(1, group.count);
+      if (!best || average > best.average) best = { average, notes: group.notes };
+    });
+    return best ? best.notes : [];
+  }
+
+  // 空线谱：按 4/4 随机铺采样节奏（每拍/反拍/切分）
+  function sprinkleSampleRhythm(meme) {
+    const bars = 4;
+    const rows = Math.max(1, Math.min(3, pitchCount));
+    const pickRow = () => Math.max(0, pitchCount - 1 - Math.floor(Math.random() * rows));
+    const out = [];
+    for (let bar = 0; bar < bars; bar++) {
+      const base = bar * 8;
+      out.push({ id: uid(), meme, row: pickRow(), col: base, length: 1 });
+      out.push({ id: uid(), meme, row: pickRow(), col: base + 4, length: 1 });
+      if (Math.random() < .7) out.push({ id: uid(), meme, row: pickRow(), col: base + 2, length: .5 });
+      if (Math.random() < .5) out.push({ id: uid(), meme, row: pickRow(), col: base + 6, length: .5 });
+      [1, 3, 5, 7].forEach((offset) => {
+        if (Math.random() < .28) out.push({ id: uid(), meme, row: pickRow(), col: base + offset, length: .5 });
+      });
+    }
+    return out;
+  }
+
+  function replaceMainMelodyWithSelection() {
+    const meme = selectedId;
+    if (!validSource(meme)) { showToast('先选一个采样或乐器'); return; }
+    const title = sourceInfo(meme).title;
+    if (!notes.length) {
+      const generated = sprinkleSampleRhythm(meme);
+      notes.push(...generated);
+      renderRuler(); renderStaff(); saveState();
+      $('#play-status').textContent = `空线谱已按 4/4 随机铺入 ${generated.length} 个「${title}」采样`;
+      showToast(`按 4/4 随机铺入 ${generated.length} 个${title}`);
+      return;
+    }
+    const target = melodyNotes();
+    if (!target.length) { showToast('没找到主旋律，先往线谱里放几个音'); return; }
+    target.forEach((note) => { note.meme = meme; delete note.midi; });
+    renderRuler(); renderStaff(); saveState();
+    $('#play-status').textContent = `主旋律 ${target.length} 个音已换成「${title}」`;
+    showToast(`主旋律已换成「${title}」`);
   }
 
   function bindStaff() {
@@ -3088,6 +3148,7 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
       $('#play-status').textContent = '谱面与人声已清空，放一颗音符开始吧';
       showToast('已清空线谱与人声');
     });
+    $('#replace-melody').addEventListener('click', replaceMainMelodyWithSelection);
     $('#demo-button').addEventListener('click', loadDemo);
     $('#import-project').addEventListener('click', () => $('#project-file').click());
     $('#project-file').addEventListener('change', async (event) => {
