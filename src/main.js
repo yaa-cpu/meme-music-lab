@@ -718,7 +718,7 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
     if (!host) return;
     if (!projectMixer || !projectMixer.length) { host.hidden = true; host.innerHTML = ''; return; }
     host.hidden = false;
-    host.innerHTML = `<div class="mixer-title"><span>工程分轨混音 · 低音轻就拉高贝斯，觉得哪轨怪就静音</span><span style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-weight:700"><label style="display:flex;align-items:center;gap:4px">衰减<input id="reverb-decay" type="range" min="50" max="200" value="${Math.round(reverbDecayScale * 100)}" style="width:70px"></label><label style="display:flex;align-items:center;gap:4px">预延迟<input id="reverb-predelay" type="range" min="0" max="80" step="5" value="${Math.round(reverbPreDelaySec * 1000)}" style="width:70px"></label><label style="display:flex;align-items:center;gap:4px">亮度<input id="reverb-damp" type="range" min="2000" max="12000" step="500" value="${Math.round(reverbDamping)}" style="width:70px"></label><button class="mixer-mute" id="mix-low-boost" type="button" aria-pressed="${lowBoost > 0}">${lowBoost > 0 ? `低音增强 +${lowBoost}dB` : '低音增强 +4dB'}</button><small>${projectMixer.length} 轨</small></span></div>` + projectMixer.map((track, index) => `
+    host.innerHTML = `<div class="mixer-title"><span>工程分轨混音 · 低音轻就拉高贝斯，觉得哪轨怪就静音</span><span style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-weight:700"><button class="mixer-mute" id="mix-low-boost" type="button" aria-pressed="${lowBoost > 0}">${lowBoost > 0 ? `低音增强 +${lowBoost}dB` : '低音增强 +4dB'}</button><small>${projectMixer.length} 轨</small></span></div>` + projectMixer.map((track, index) => `
       <div class="mixer-row${track.mute ? ' muted' : ''}" data-mix-index="${index}">
         <strong>${track.label}</strong>
         <input type="range" min="0" max="150" step="1" value="${Math.round(track.gain / track.base * 100)}" aria-label="${track.label} 音量" title="音量">
@@ -732,21 +732,6 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
       applyProjectMix();
       $('#play-status').textContent = `${projectMixer[index].label} 音量 ${percent}%`;
     }));
-    $('#reverb-decay')?.addEventListener('input', (event) => {
-      reverbDecayScale = Number(event.target.value) / 100;
-      refreshReverbImpulses();
-      $('#play-status').textContent = `混响衰减 ${Math.round(reverbDecayScale * 100)}%`;
-    });
-    $('#reverb-predelay')?.addEventListener('input', (event) => {
-      reverbPreDelaySec = Number(event.target.value) / 1000;
-      refreshReverbImpulses();
-      $('#play-status').textContent = `混响预延迟 ${event.target.value}ms`;
-    });
-    $('#reverb-damp')?.addEventListener('input', (event) => {
-      reverbDamping = Number(event.target.value);
-      refreshReverbImpulses();
-      $('#play-status').textContent = `混响亮度 ${reverbDamping}Hz`;
-    });
     $('#mix-low-boost')?.addEventListener('click', () => {
       lowBoost = lowBoost ? 0 : 4;
       applyLowBoost();
@@ -3003,6 +2988,21 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
       reverbWet = clamp(wet, 0, .7);
       await ensureAudio(); applyReverb(); saveState();
       $('#play-status').textContent = `全局湿声 ${Math.round(reverbWet * 100)}%`;
+    });
+    $('#reverb-decay')?.addEventListener('input', (event) => {
+      reverbDecayScale = Number(event.target.value) / 100;
+      refreshReverbImpulses();
+      $('#play-status').textContent = `混响衰减 ${Math.round(reverbDecayScale * 100)}%`;
+    });
+    $('#reverb-predelay')?.addEventListener('input', (event) => {
+      reverbPreDelaySec = Number(event.target.value) / 1000;
+      refreshReverbImpulses();
+      $('#play-status').textContent = `混响预延迟 ${event.target.value}ms`;
+    });
+    $('#reverb-damp')?.addEventListener('input', (event) => {
+      reverbDamping = Number(event.target.value);
+      refreshReverbImpulses();
+      $('#play-status').textContent = `混响亮度 ${reverbDamping}Hz`;
     });
     bindChoiceWheel('#note-fx-preset-wheel', () => notes.find((item) => item.id === selectedNoteId)?.reverbPreset || 'inherit', (value) => {
       const note = notes.find((item) => item.id === selectedNoteId);
