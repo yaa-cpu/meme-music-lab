@@ -802,6 +802,13 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
       }));
       lowBoost = 4;
       applyLowBoost();
+      if (reverbPreset === 'none' || reverbWet === 0) {
+        reverbPreset = 'plate';
+        reverbWet = .4;
+      }
+      syncChoiceWheel('#reverb-wheel', reverbPreset);
+      syncChoiceWheel('#reverb-wet-wheel', reverbWet);
+      applyReverb();
       renderProjectMixer();
       $('#play-status').textContent = `《${project.name || '合成器工程'}》已载入 · ${project.tracks.length} 轨 / ${notes.length} 个音符`;
       showToast(`ACE 分轨已映射：${mapped.join('，')}`);

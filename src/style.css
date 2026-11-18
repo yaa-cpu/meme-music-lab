@@ -778,7 +778,11 @@ dialog[open]{animation:dialog-in .18s ease-out}
 .project-mixer .mixer-mute{grid-column:2/3;grid-row:1/4;align-self:center;border:1.5px solid var(--ink);border-radius:8px;background:var(--surface);font:900 10px/1 Arial,sans-serif;padding:5px 7px;cursor:pointer}
 .project-mixer .mixer-mute[aria-pressed="true"]{background:var(--danger);color:var(--paper)}
 
-/* 运输栏里的全局混响形状参数 */
-.reverb-shape .reverb-shape-row{display:flex;align-items:center;gap:8px}
-.reverb-shape .reverb-shape-row label{display:flex;align-items:center;gap:4px;font-size:9px;font-weight:800;white-space:nowrap}
-.reverb-shape .reverb-shape-row input[type=range]{width:54px;accent-color:var(--ink)}
+/* 运输栏里的全局混响形状参数：沿用 mini-wheel 的深色胶囊样式 */
+.reverb-shape{display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:4px 8px;border:2px solid var(--ink);border-radius:13px;background:var(--ink);color:var(--paper);box-shadow:2px 2px 0 oklch(0 0 0 / .25)}
+.reverb-shape>span{font:900 9px/1 Arial,sans-serif;letter-spacing:.06em;color:#f5e9a8}
+.reverb-shape .reverb-shape-row{display:flex;align-items:center;gap:10px}
+.reverb-shape .reverb-shape-row label{display:flex;align-items:center;gap:5px;font:900 9px/1 Arial,sans-serif;white-space:nowrap;color:#f5e9a8}
+.reverb-shape .reverb-shape-row input[type=range]{width:62px;height:14px;accent-color:#f5e9a8;background:transparent;cursor:pointer}
+.reverb-shape .reverb-shape-row input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:4px;background:#5a5340}
+.reverb-shape .reverb-shape-row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;margin-top:-4px;border:2px solid var(--ink);border-radius:50%;background:#f5e9a8;box-shadow:0 0 0 1px #f5e9a8}
