@@ -756,3 +756,12 @@ dialog[open]{animation:dialog-in .18s ease-out}
 .songbook-actions{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap}
 .songbook-actions>p{margin:0;color:var(--muted);font-size:12px}
 .songbook-actions .small-button{flex:0 0 auto;white-space:nowrap}
+
+/* 同一线谱/时间点允许叠放多个音符：按 data-stack 分层错位，避免完全遮挡 */
+.placed-note{--stack:0;top:calc(6px + var(--stack) * 4px);bottom:calc(6px + var(--stack) * 4px);z-index:calc(3 + var(--stack))}
+.placed-note[data-stack="1"],.placed-note.stacked{--stack:1}
+.placed-note[data-stack="2"]{--stack:2}
+.placed-note[data-stack="3"]{--stack:3}
+.placed-note[data-stack="4"]{--stack:4}
+.placed-note[data-stack="5"],.placed-note[data-stack="6"]{--stack:5}
+.placed-note.stacked:not(.dragging):not(.resizing):not(.creating){box-shadow:2px 2px 0 var(--ink),-2px -2px 0 oklch(1 0 0 / .5)}

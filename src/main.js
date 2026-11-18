@@ -1020,9 +1020,12 @@
     const compact = note.length < .7 ? ' compact' : '';
     const selected = note.id === selectedNoteId ? ' selected' : '';
     const override = note.reverbPreset ? ' fx-override' : '';
+    const stack = noteStacks.get(note.id) || 0;
+    const stackClass = stack > 0 ? ' stacked' : '';
+    const stackAttr = stack > 0 ? ` data-stack="${stack}"` : '';
     const length = timelineLength();
     const image = source.image ? `<img src="${source.image}" alt="" draggable="false">` : `<span class="note-instrument-symbol" aria-hidden="true">${source.symbol}</span>`;
-    return `<span class="placed-note${compact}${selected}${override}" data-note-id="${note.id}" style="--note-color:${source.color};left:${note.col / length * 100}%;width:${note.length / length * 100}%" tabindex="0" role="button" aria-pressed="${note.id === selectedNoteId}" aria-label="${source.title}，位置 ${note.col.toFixed(2)} 步，长度 ${note.length.toFixed(2)} 步。拖动移动，右缘调整长度，点击设置独立混响" title="${source.title} · ${note.col.toFixed(2)} 步 · 长度 ${formatLength(note.length)} · 点击设置混响">${image}<span class="note-name">${source.title}</span>${icon('note')}<small class="note-fx-badge" ${note.reverbPreset ? '' : 'hidden'}>${note.reverbPreset === 'none' ? 'DRY' : 'FX'}</small><small class="note-length" ${Math.abs(note.length - 1) < .04 || note.length < .7 ? 'hidden' : ''}>×${formatLength(note.length)}</small><span class="note-resize" data-resize-id="${note.id}" aria-hidden="true"></span></span>`;
+    return `<span class="placed-note${compact}${selected}${override}${stackClass}" data-note-id="${note.id}"${stackAttr} style="--note-color:${source.color};left:${note.col / length * 100}%;width:${note.length / length * 100}%" tabindex="0" role="button" aria-pressed="${note.id === selectedNoteId}" aria-label="${source.title}，位置 ${note.col.toFixed(2)} 步，长度 ${note.length.toFixed(2)} 步。拖动移动，右缘调整长度，点击设置独立混响" title="${source.title} · ${note.col.toFixed(2)} 步 · 长度 ${formatLength(note.length)} · 点击设置混响">${image}<span class="note-name">${source.title}</span>${icon('note')}<small class="note-fx-badge" ${note.reverbPreset ? '' : 'hidden'}>${note.reverbPreset === 'none' ? 'DRY' : 'FX'}</small><small class="note-length" ${Math.abs(note.length - 1) < .04 || note.length < .7 ? 'hidden' : ''}>×${formatLength(note.length)}</small><span class="note-resize" data-resize-id="${note.id}" aria-hidden="true"></span></span>`;
   }
 
   function createNoteElement(note) {
@@ -1041,8 +1044,22 @@
     badge.hidden = Math.abs(note.length - 1) < .04 || note.length < .7;
   }
 
+  // 同一个音高线/时间点允许多个音符叠放（不同乐器常在同一线谱上重合），渲染时给它们分层偏移。
+  const noteStacks = new Map();
+
   function renderStaff() {
     syncTimelineDimensions();
+    noteStacks.clear();
+    pitches.forEach((pitch, row) => {
+      const rowNotes = notes.filter((note) => note.row === row).sort((a, b) => a.col - b.col || a.length - b.length);
+      const levels = [];
+      rowNotes.forEach((note) => {
+        let level = 0;
+        while (levels[level] && levels[level].some((other) => note.col < other.col + other.length - .001 && note.col + note.length - .001 > other.col)) level += 1;
+        (levels[level] ||= []).push(note);
+        noteStacks.set(note.id, level);
+      });
+    });
     $('#staff-grid').innerHTML = pitches.map((pitch, row) => `
       <div class="staff-row"><div class="pitch-label${selectedRows.has(row) ? ' selected' : ''}" data-row="${row}" role="button" tabindex="0" title="点一下选中这条轨道，用于合成 loop 底奏卡带">${pitch.name}<span>${pitch.name === 'G4' ? '原调' : ''}</span></div>
       <div class="rail-track" data-row="${row}" tabindex="0" aria-label="${pitch.name} 滑轨，在空白处按下并向右拖动，放入并延长 ${sourceInfo(selectedId).title}">${notes.filter((note) => note.row === row).map(noteMarkup).join('')}</div></div>`).join('');
@@ -1122,7 +1139,6 @@
     row = clamp(Number(row), 0, pitchCount - 1);
     col = precise(Math.max(0, Number(col) || 0));
     length = precise(Math.max(.05, Number(length) || 1));
-    notes = notes.filter((note) => !overlaps(row, col, length, note));
     const note = { id: uid(), meme: memeId, row, col, length, reverbPreset: null, reverbWet: null };
     notes.push(note);
     renderRuler(); renderStaff(); saveState();
@@ -1162,7 +1178,6 @@
     if (!note) return;
     const row = clamp(note.row + rowDelta, 0, pitchCount - 1);
     const col = precise(Math.max(0, note.col + colDelta));
-    notes = notes.filter((item) => item.id === id || !overlaps(row, col, note.length, item));
     note.row = row; note.col = col; delete note.midi;
     renderRuler(); renderStaff(); saveState(); focusNote(id);
     $('#play-status').textContent = `${sourceInfo(note.meme).title} · 位置 ${col.toFixed(2)} 步`;
@@ -1263,7 +1278,6 @@
       note.length = precise(state.length);
     } else {
       note.row = state.row; note.col = precise(state.col); delete note.midi;
-      notes = notes.filter((item) => item.id === note.id || !overlaps(note.row, note.col, note.length, item));
     }
     renderRuler(); renderStaff(); saveState(); selectNoteById(note.id); focusNote(note.id);
     $('#play-status').textContent = state.type === 'resize'
@@ -2076,7 +2090,6 @@
     const now = audioCtx.currentTime;
     const col = precise(playPosition());
     const note = { id: uid(), meme: id, row, col, length: .05, reverbPreset: null, reverbWet: null };
-    notes = notes.filter((item) => !overlaps(row, col, .05, item));
     notes.push(note);
     const performance = { note, startTime: now, live: null };
     activePerformances.set(token, performance);
