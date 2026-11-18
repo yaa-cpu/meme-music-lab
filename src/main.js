@@ -152,6 +152,9 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
   let masterHPF = null;
   let lowBoost = 0;
   let reverbSendBuses = new Map();
+  let reverbDecayScale = 1;
+  let reverbPreDelaySec = .02;
+  let reverbDamping = 6200;
   let bpm = 112;
   let outputVolume = 70;
   let loop = true;
@@ -715,7 +718,7 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
     if (!host) return;
     if (!projectMixer || !projectMixer.length) { host.hidden = true; host.innerHTML = ''; return; }
     host.hidden = false;
-    host.innerHTML = `<div class="mixer-title"><span>工程分轨混音 · 低音轻就拉高贝斯，觉得哪轨怪就静音</span><span style="display:flex;gap:8px;align-items:center"><button class="mixer-mute" id="mix-low-boost" type="button" aria-pressed="${lowBoost > 0}">${lowBoost > 0 ? `低音增强 +${lowBoost}dB` : '低音增强 +4dB'}</button><small>${projectMixer.length} 轨</small></span></div>` + projectMixer.map((track, index) => `
+    host.innerHTML = `<div class="mixer-title"><span>工程分轨混音 · 低音轻就拉高贝斯，觉得哪轨怪就静音</span><span style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-weight:700"><label style="display:flex;align-items:center;gap:4px">衰减<input id="reverb-decay" type="range" min="50" max="200" value="${Math.round(reverbDecayScale * 100)}" style="width:70px"></label><label style="display:flex;align-items:center;gap:4px">预延迟<input id="reverb-predelay" type="range" min="0" max="80" step="5" value="${Math.round(reverbPreDelaySec * 1000)}" style="width:70px"></label><label style="display:flex;align-items:center;gap:4px">亮度<input id="reverb-damp" type="range" min="2000" max="12000" step="500" value="${Math.round(reverbDamping)}" style="width:70px"></label><button class="mixer-mute" id="mix-low-boost" type="button" aria-pressed="${lowBoost > 0}">${lowBoost > 0 ? `低音增强 +${lowBoost}dB` : '低音增强 +4dB'}</button><small>${projectMixer.length} 轨</small></span></div>` + projectMixer.map((track, index) => `
       <div class="mixer-row${track.mute ? ' muted' : ''}" data-mix-index="${index}">
         <strong>${track.label}</strong>
         <input type="range" min="0" max="150" step="1" value="${Math.round(track.gain / track.base * 100)}" aria-label="${track.label} 音量" title="音量">
@@ -729,6 +732,21 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
       applyProjectMix();
       $('#play-status').textContent = `${projectMixer[index].label} 音量 ${percent}%`;
     }));
+    $('#reverb-decay')?.addEventListener('input', (event) => {
+      reverbDecayScale = Number(event.target.value) / 100;
+      refreshReverbImpulses();
+      $('#play-status').textContent = `混响衰减 ${Math.round(reverbDecayScale * 100)}%`;
+    });
+    $('#reverb-predelay')?.addEventListener('input', (event) => {
+      reverbPreDelaySec = Number(event.target.value) / 1000;
+      refreshReverbImpulses();
+      $('#play-status').textContent = `混响预延迟 ${event.target.value}ms`;
+    });
+    $('#reverb-damp')?.addEventListener('input', (event) => {
+      reverbDamping = Number(event.target.value);
+      refreshReverbImpulses();
+      $('#play-status').textContent = `混响亮度 ${reverbDamping}Hz`;
+    });
     $('#mix-low-boost')?.addEventListener('click', () => {
       lowBoost = lowBoost ? 0 : 4;
       applyLowBoost();
@@ -1436,21 +1454,41 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
   function buildImpulse(preset) {
     if (impulseBuffers.has(preset)) return impulseBuffers.get(preset);
     const settings = reverbPresets[preset];
-    const length = Math.max(2, Math.floor(audioCtx.sampleRate * settings.seconds));
-    const impulse = audioCtx.createBuffer(2, length, audioCtx.sampleRate);
+    const sr = audioCtx.sampleRate;
+    const pre = Math.floor(sr * Math.max(0, reverbPreDelaySec));
+    const body = Math.max(2, Math.floor(sr * settings.seconds * reverbDecayScale));
+    const length = pre + body;
+    const impulse = audioCtx.createBuffer(2, length, sr);
+    const dampAlpha = 1 - Math.exp(-2 * Math.PI * Math.max(800, reverbDamping) / sr);
     for (let channel = 0; channel < 2; channel++) {
       const data = impulse.getChannelData(channel);
       let previous = 0;
+      let damped = 0;
       for (let i = 0; i < length; i++) {
-        const envelope = (1 - i / length) ** settings.decay;
+        if (i < pre) { data[i] = 0; continue; }
+        const k = i - pre;
+        const envelope = (1 - k / body) ** settings.decay;
         const white = Math.random() * 2 - 1;
         previous = preset === 'plate' ? white * .72 + previous * .28 : white;
-        const early = i < audioCtx.sampleRate * .025 && preset !== 'none' ? .35 : 1;
-        data[i] = previous * envelope * early;
+        damped += dampAlpha * (previous - damped);
+        const early = k < sr * .025 && preset !== 'none' ? .35 : 1;
+        data[i] = damped * envelope * early;
       }
     }
     impulseBuffers.set(preset, impulse);
     return impulse;
+  }
+
+  // 混响参数变化后重建所有脉冲响应
+  function refreshReverbImpulses() {
+    if (!audioCtx) return;
+    impulseBuffers.clear();
+    reverbSendBuses.forEach((entry) => {
+      try { entry.conv.buffer = buildImpulse(entry.preset); } catch (_) { /* ignore */ }
+    });
+    if (convolver) {
+      try { convolver.buffer = buildImpulse(reverbPreset); } catch (_) { /* ignore */ }
+    }
   }
 
   // 每个混响预设一条总线：音符按自己的 wet 值往总线里送，全局混响 wet 再统一缩放。
@@ -1461,9 +1499,9 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
       const conv = audioCtx.createConvolver();
       conv.buffer = buildImpulse(key);
       bus.connect(conv).connect(reverbGain);
-      reverbSendBuses.set(key, bus);
+      reverbSendBuses.set(key, { bus, conv, preset: key });
     }
-    return reverbSendBuses.get(key);
+    return reverbSendBuses.get(key).bus;
   }
 
   function applyReverb() {
