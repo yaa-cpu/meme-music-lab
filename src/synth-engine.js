@@ -450,21 +450,31 @@
       src.start(when); src.stop(when + dur * variation + .03);
     };
     if (kind === 'kick') {
-      osc('sine', 150, .42, 1.0, 46, 'lowpass', 400);         // 音高下坠的鼓皮
-      osc('sine', 56, .5, .55, 40);                            // 低频鼓腔
-      osc('triangle', 120, .09, .34, 78);                      // 100–200Hz boxy 层：小喇叭也能听到鼓
-      noise(.014, 'highpass', 2400, .7, .16);                  // 鼓槌点击
+      osc('sine', 112, .4, 1.0, 45, 'lowpass', 300);         // 音高下坠的鼓皮
+      osc('sine', 55, .55, .45, 38);                            // 低频鼓腔
+      osc('triangle', 125, .07, .12, 80);                      // 少量 boxy 层（太多会变成"啪"）
+      osc('square', 700, .025, .10, 380);                      // 鼓槌点击的中频
+      noise(.012, 'highpass', 2400, .7, .14);                  // 鼓槌点击
+      noise(.02, 'bandpass', 1900, .9, .14);                   // 1–2kHz 打击感
     } else if (kind === 'snare') {
-      osc('triangle', 195, .12, .34, 150);                     // 鼓皮音高
-      osc('triangle', 330, .08, .18, 280);
-      noise(.24, 'bandpass', 1900, .55, .5);                   // 响弦主体
-      noise(.05, 'highpass', 5200, .7, .22);                   // 瞬态
+      osc('triangle', 195, .14, .42, 150);                     // 鼓皮音高
+      osc('triangle', 330, .1, .26, 280);
+      osc('triangle', 520, .07, .34, 400);
+      osc('triangle', 720, .05, .16, 560);                     // 300–800Hz 鼓腔
+      noise(.14, 'bandpass', 1900, .55, .5);                   // 响弦主体
+      noise(.14, 'bandpass', 900, .7, .36);
+      noise(.1, 'bandpass', 1400, .8, .2);                    // 中频鼓身
+      noise(.05, 'highpass', 5200, .7, .28);                   // 瞬态
     } else if (kind === 'hat') {
-      noise(.06, 'highpass', 7200, .7, .5);
-      noise(.035, 'bandpass', 9800, 1.6, .24);
+      osc('square', 5300, .05, .09, null, 'highpass', 6500);
+      osc('square', 7100, .045, .065, null, 'highpass', 6500);
+      osc('square', 9400, .04, .05, null, 'highpass', 7000);
+      noise(.03, 'highpass', 9000, .7, .05);
     } else if (kind === 'openhat') {
-      noise(.26, 'highpass', 6800, .7, .42);
-      noise(.16, 'bandpass', 9200, 1.4, .18);
+      osc('square', 5300, .18, .06, null, 'highpass', 6500);
+      osc('square', 7100, .16, .045, null, 'highpass', 6500);
+      osc('square', 9400, .14, .035, null, 'highpass', 7000);
+      noise(.12, 'highpass', 9000, .7, .05);
     } else if (kind === 'clap') {
       [0, .012, .026].forEach((offset, index) => {
         const src = register(ctx.createBufferSource());
