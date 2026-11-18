@@ -63,6 +63,13 @@
 .pad-word.is-cjk{font-family:"Microsoft YaHei","PingFang SC","Noto Sans SC",Arial,sans-serif;font-weight:900;font-size:clamp(34px,5.4vw,64px);letter-spacing:.02em;-webkit-text-stroke:0;text-shadow:2px 0 0 var(--ink),-2px 0 0 var(--ink),0 2px 0 var(--ink),0 -2px 0 var(--ink),2px 3px 0 var(--ink),4px 5px 0 var(--ink)}
 .pad-playground.shake-soft{animation:pad-shake-soft .24s ease-out}
 .pad-playground.shake-hard{animation:pad-shake-hard .3s ease-out}
+.pad-icon{position:absolute;z-index:3;width:var(--icon-size,20px);height:var(--icon-size,20px);pointer-events:none;opacity:0;transform:translate(-50%,-50%);animation:pad-icon-drift 1s cubic-bezier(.2,.8,.3,1) forwards}
+.pad-icon svg{display:block;width:100%;height:100%;filter:drop-shadow(2px 2px 0 oklch(0.24 0.02 115 / .32))}
+@keyframes pad-icon-drift{
+  0%{opacity:0;transform:translate(-50%,-50%) translateY(4px) scale(.35) rotate(var(--icon-rot,0deg))}
+  18%{opacity:1;transform:translate(-50%,-50%) translateY(-14px) scale(1.15) rotate(var(--icon-rot,0deg))}
+  100%{opacity:0;transform:translate(calc(-50% + var(--icon-drift-x,0px)),calc(-50% - 120px)) scale(.8) rotate(calc(var(--icon-rot,0deg) + 46deg))}
+}
 .pad-status{display:flex;align-items:center;justify-content:center;gap:8px;min-height:18px;margin:0;padding:0 4px;font-size:11px;color:var(--muted);line-height:1.5;text-align:center}
 .pad-status strong{font-weight:950;color:var(--ink)}
 .pad-status span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60%}

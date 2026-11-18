@@ -119,6 +119,29 @@
       });
     }
 
+    // 从按键图案里往上飘的粒子：贴着画面升起，像图案本身在掉渣。
+    const riseCount = 14;
+    for (let index = 0; index < riseCount && particles.length < MAX_PARTICLES; index++) {
+      const startX = x + rand(-w * .32, w * .32);
+      const startY = y + rand(-h * .22, h * .2);
+      particles.push({
+        x: startX,
+        y: startY,
+        prevX: startX,
+        prevY: startY,
+        vx: rand(-32, 32),
+        vy: rand(-200, -80),
+        gravity: -46,
+        size: rand(2.4, 6.5),
+        rot: rand(0, Math.PI * 2),
+        vr: rand(-8, 8),
+        color: pick([color, HOT, '#d7ed62']),
+        shape: pick(['circle', 'square', 'triangle']),
+        born: now,
+        life: rand(520, 900)
+      });
+    }
+
     if (heavy) {
       const boltCount = kind === 'drum' ? 4 : 2;
       for (let index = 0; index < boltCount && bolts.length < MAX_BOLTS; index++) {

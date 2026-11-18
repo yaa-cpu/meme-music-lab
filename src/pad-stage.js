@@ -266,6 +266,7 @@
     if (window.PadLeds) window.PadLeds.beat(detail);
     if (window.PadBG) window.PadBG.beat(detail);
     pulsePage(kick, snare);
+    spawnBeatIcons(kick, snare);
   }
 
   function renderBackingSelect() {
@@ -342,11 +343,65 @@
     shakeTimer = setTimeout(() => stage.classList.remove('shake-soft', 'shake-hard'), 340);
   }
 
+  const PAD_ICONS = ['i-note', 'i-spark', 'i-play', 'i-loop', 'i-record', 'i-keyboard'];
+  const BEAT_ICON_COLORS = ['#d9ef68', '#efabc2', '#91cfe8', '#f2a25a'];
+
+  function spawnIconAt(x, y, color, size) {
+    const home = $('#pad-home');
+    if (!home) return;
+    const icon = document.createElement('span');
+    icon.className = 'pad-icon';
+    icon.setAttribute('aria-hidden', 'true');
+    icon.style.left = `${x}px`;
+    icon.style.top = `${y}px`;
+    icon.style.color = color;
+    icon.style.setProperty('--icon-size', `${size}px`);
+    icon.style.setProperty('--icon-rot', `${(Math.random() * 90 - 45).toFixed(0)}deg`);
+    icon.style.setProperty('--icon-drift-x', `${(Math.random() * 150 - 75).toFixed(0)}px`);
+    icon.innerHTML = `<svg><use href="#${PAD_ICONS[Math.floor(Math.random() * PAD_ICONS.length)]}"/></svg>`;
+    home.append(icon);
+    setTimeout(() => icon.remove(), 1200);
+  }
+
+  function spawnIcons(button, color) {
+    if (reducedMotion()) return;
+    const home = $('#pad-home');
+    if (!home) return;
+    const homeRect = home.getBoundingClientRect();
+    const rect = button.getBoundingClientRect();
+    const centerX = rect.left - homeRect.left + rect.width / 2;
+    const centerY = rect.top - homeRect.top + rect.height / 2;
+    for (let index = 0; index < 5; index++) {
+      spawnIconAt(
+        centerX + (Math.random() * 2 - 1) * rect.width * .3,
+        centerY + (Math.random() * 2 - 1) * rect.height * .22,
+        color,
+        18 + Math.random() * 20
+      );
+    }
+  }
+
+  function spawnBeatIcons(kick, snare) {
+    if (reducedMotion()) return;
+    const home = $('#pad-home');
+    if (!home) return;
+    const count = kick ? 2 : snare ? 1 : 0;
+    for (let index = 0; index < count; index++) {
+      spawnIconAt(
+        Math.random() * home.clientWidth,
+        90 + Math.random() * 230,
+        BEAT_ICON_COLORS[Math.floor(Math.random() * BEAT_ICON_COLORS.length)],
+        14 + Math.random() * 16
+      );
+    }
+  }
+
   function burst(button, slot) {
     const stage = $('#pad-playground');
     const source = sourceInfo(slot);
     const hit = hitGeometry(button);
     const heavy = slot.kind === 'drum' || slot.kind === 'sample';
+    const color = resolveColor(source.color);
 
     stage.style.setProperty('--hit-color', source.color);
     stage.classList.remove('hit');
@@ -362,10 +417,19 @@
     buttonHitTimer = setTimeout(() => button.classList.remove('hit'), 350);
 
     if (window.PadFX) {
-      window.PadFX.burst({ x: hit.x, y: hit.y, w: hit.w, h: hit.h, color: resolveColor(source.color), kind: slot.kind, neighbors: neighborPulses(button, hit) });
+      window.PadFX.burst({ x: hit.x, y: hit.y, w: hit.w, h: hit.h, color, kind: slot.kind, neighbors: neighborPulses(button, hit) });
     }
-    if (window.PadLeds) window.PadLeds.hit(Number(button.dataset.padIndex), resolveColor(source.color));
-    if (window.PadBG) window.PadBG.hit(resolveColor(source.color));
+    if (window.PadLeds) window.PadLeds.hit(Number(button.dataset.padIndex), color);
+    if (window.PadBG) {
+      const homeRect = $('#pad-home').getBoundingClientRect();
+      const rect = button.getBoundingClientRect();
+      window.PadBG.hit({
+        x: rect.left - homeRect.left + rect.width / 2,
+        y: rect.top - homeRect.top + rect.height / 2,
+        color
+      });
+    }
+    spawnIcons(button, color);
     spawnWord(button, slot);
     shakeStage(heavy ? 'hard' : 'soft');
   }
