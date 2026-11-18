@@ -464,11 +464,11 @@
       noise(.085, 'bandpass', 2000, .8, .82);                 // 响弦（短促）
       noise(.025, 'highpass', 6000, .7, .42);                 // 瞬态
     } else if (kind === 'hat') {
-      [0, 1.41, 1.93].forEach((m) => osc('square', 6400 * m, 0, .038, .2, 'highpass', 7000));
-      noise(.018, 'highpass', 9500, .7, .16);
+      noise(.075, 'bandpass', 8200, 1.4, .22);
+      noise(.04, 'highpass', 10000, .7, .05);
     } else if (kind === 'openhat') {
-      [0, 1.41, 1.93].forEach((m) => osc('square', 6400 * m, 0, .22, .18, 'highpass', 7000));
-      noise(.09, 'highpass', 9500, .7, .14);
+      noise(.28, 'bandpass', 8000, 1.2, .2);
+      noise(.16, 'highpass', 9500, .7, .04);
     } else if (kind === 'clap') {
       [0, .012, .026].forEach((offset, index) => {
         const src = register(ctx.createBufferSource());

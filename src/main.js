@@ -147,6 +147,8 @@
   let selectedNoteId = null;
   let projectMixer = null;
   let lowShelf = null;
+  let highShelf = null;
+  let masterHPF = null;
   let lowBoost = 0;
   let bpm = 112;
   let outputVolume = 70;
@@ -1510,6 +1512,14 @@
       lowShelf.type = 'lowshelf';
       lowShelf.frequency.value = 110;
       lowShelf.gain.value = 0;
+      highShelf = audioCtx.createBiquadFilter();
+      highShelf.type = 'highshelf';
+      highShelf.frequency.value = 10000;
+      highShelf.gain.value = -2.5;
+      masterHPF = audioCtx.createBiquadFilter();
+      masterHPF.type = 'highpass';
+      masterHPF.frequency.value = 32;
+      masterHPF.Q.value = .7;
       convolver = audioCtx.createConvolver();
       reverbGain = audioCtx.createGain();
       padMixInput = audioCtx.createGain();
@@ -1554,9 +1564,11 @@
       padDelayTone.connect(padDelayWet).connect(padBackingFilter);
       padMixInput.connect(padCompressor).connect(padOutput).connect(master);
       master.gain.value = outputVolume / 100;
-      mixInput.connect(lowShelf);
-      lowShelf.connect(dryGain).connect(master);
-      lowShelf.connect(convolver).connect(reverbGain).connect(master);
+      mixInput.connect(masterHPF);
+      masterHPF.connect(lowShelf);
+      lowShelf.connect(highShelf);
+      highShelf.connect(dryGain).connect(master);
+      highShelf.connect(convolver).connect(reverbGain).connect(master);
       padLimiter = audioCtx.createDynamicsCompressor();
       padLimiter.threshold.value = -6;
       padLimiter.knee.value = 0;
