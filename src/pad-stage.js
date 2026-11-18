@@ -16,7 +16,7 @@
         { kind: 'sample', source: 'dog-1', midi: 60 }, { kind: 'sample', source: 'dog-3', midi: 67 },
         { kind: 'drum', source: 'drum:hat' }, { kind: 'drum', source: 'drum:clap' },
         { kind: 'sample', source: 'dog-2', midi: 64 }, { kind: 'sample', source: 'dog-4', midi: 69 },
-        { kind: 'loop', source: 'loop:bounce' }
+        { kind: 'note', source: 'instrument:8bit', midi: 76 }
       ]
     },
     {
@@ -56,7 +56,7 @@
       layout: Number(preset.layout) === 4 ? 4 : 9,
       backing: ['sunny', 'bounce', 'chill', 'off'].includes(preset.backing) ? preset.backing : 'sunny',
       slots: slots.map((slot, index) => ({
-        kind: ['sample', 'note', 'drum', 'loop'].includes(slot.kind) ? slot.kind : 'sample',
+        kind: ['sample', 'note', 'drum'].includes(slot.kind) ? slot.kind : 'sample',
         source: String(slot.source || fallback.slots[index].source),
         midi: Number.isFinite(Number(slot.midi)) ? Math.max(36, Math.min(96, Number(slot.midi))) : SCALE[index]
       }))
@@ -106,13 +106,14 @@
     const preset = currentPreset();
     const grid = $('#drum-pad-grid');
     grid.style.setProperty('--pad-columns', preset.layout === 4 ? 2 : 3);
+    grid.style.setProperty('--pad-rows', preset.layout === 4 ? 2 : 3);
     grid.classList.toggle('four-pads', preset.layout === 4);
     grid.innerHTML = visibleSlots().map((slot, index) => {
       const source = sourceInfo(slot);
       const visual = source.image
         ? `<img src="${source.image}" alt="" draggable="false">`
         : `<span class="pad-source-symbol" aria-hidden="true">${source.symbol || source.short || 'NOTE'}</span>`;
-      const kindName = { sample: '梗采样', note: '乐器音符', drum: '鼓点', loop: 'Loop' }[slot.kind];
+      const kindName = { sample: '梗采样', note: '乐器音符', drum: '鼓点' }[slot.kind];
       return `<button class="meme-pad pad-${slot.kind}" type="button" data-pad-index="${index}" style="--pad-color:${source.color};--pad-order:${index}" aria-label="敲击 ${source.title}，${kindName}，快捷键 ${index + 1}">
         <span class="pad-number">${index + 1}</span>
         <span class="pad-kind">${kindName}</span>
@@ -137,6 +138,7 @@
     });
     renderPresets();
     renderSlotPicker();
+    if (window.PadLeds) window.PadLeds.layout();
   }
 
   function renderSlotPicker() {
@@ -184,11 +186,6 @@
         source: item.source,
         midi: previous.midi || SCALE[editingSlot]
       };
-      if (item.kind === 'loop') {
-        preset.backing = item.source.replace('loop:', '');
-        $('#pad-backing-select').value = preset.backing;
-        if (backingOn) options.setBacking(true, preset.backing);
-      }
       saveState(); renderPads(); renderLibrary();
       options.toast(`${item.title} 已装到 ${editingSlot + 1} 号按键`);
     }));
@@ -205,8 +202,7 @@
     openhat: ['嚓——!', 'TSSS!'],
     clap: ['啪!', 'CLAP!'],
     sample: ['哈!', 'WA!', '嘿嘿!', '哇!'],
-    note: ['叮!', 'DING!', '嘀!'],
-    loop: ['嗡!', 'LOOP!']
+    note: ['叮!', 'DING!', '嘀!']
   };
 
   const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -237,42 +233,50 @@
     return resolved;
   }
 
-  function buildLightStrips() {
-    ['#pad-light-strip', '#pad-light-strip-bottom'].forEach((selector) => {
-      $(selector).innerHTML = Array.from({ length: 16 }, (_, index) => `<i data-beat="${index}"></i>`).join('');
-    });
-  }
+  let studioPaused = false;
 
-  function clearBeatLights() {
+  function resetBeatVisuals() {
     const stage = $('#pad-playground');
     stage.classList.remove('beat-kick', 'beat-snare');
-    $$('.pad-light-strip i').forEach((light) => light.classList.remove('current', 'trail'));
+    document.body.classList.remove('fx-kick', 'fx-snare');
+    $('#pad-home')?.classList.remove('fx-kick', 'fx-snare');
+    if (window.PadLeds) window.PadLeds.setActive(false);
+  }
+
+  // 页面背景也跟着底奏呼吸：kick 铺一层暖色光，snare 换一层粉色扫光。
+  function pulsePage(kick, snare) {
+    if (reducedMotion()) return;
+    const body = document.body;
+    const home = $('#pad-home');
+    body.classList.remove('fx-kick', 'fx-snare');
+    home?.classList.remove('fx-kick', 'fx-snare');
+    void body.offsetWidth;
+    if (kick) { body.classList.add('fx-kick'); home?.classList.add('fx-kick'); }
+    if (snare) { body.classList.add('fx-snare'); home?.classList.add('fx-snare'); }
   }
 
   function syncBeatLights(event) {
-    const { position, id, kick, snare } = event.detail;
+    const detail = event.detail;
+    const { id, kick, snare } = detail;
     if (!backingOn || currentPreset().backing !== id) return;
     const stage = $('#pad-playground');
     stage.classList.toggle('beat-kick', kick);
     stage.classList.toggle('beat-snare', snare);
-    $$('.pad-light-strip').forEach((strip) => {
-      [...strip.children].forEach((light, index) => {
-        const distance = (position - index + 16) % 16;
-        light.classList.toggle('current', index === position);
-        light.classList.toggle('trail', distance > 0 && distance < 4);
-      });
-    });
+    if (window.PadLeds) window.PadLeds.beat(detail);
+    pulsePage(kick, snare);
   }
 
   function renderBackingSelect() {
     const preset = currentPreset();
     $('#pad-backing-select').value = preset.backing;
     $('#pad-backing-name').textContent = options.loopName(preset.backing);
+    const active = backingOn && !studioPaused && preset.backing !== 'off';
     const toggle = $('#pad-loop-toggle');
-    toggle.classList.toggle('active', backingOn && preset.backing !== 'off');
-    toggle.setAttribute('aria-pressed', String(backingOn && preset.backing !== 'off'));
-    $('span', toggle).textContent = backingOn && preset.backing !== 'off' ? 'Loop 开' : 'Loop 关';
-    if (!backingOn || preset.backing === 'off') clearBeatLights();
+    toggle.classList.toggle('active', active);
+    toggle.setAttribute('aria-pressed', String(active));
+    $('span', toggle).textContent = active ? '底奏开' : '底奏关';
+    if (window.PadLeds) window.PadLeds.setActive(active);
+    if (!active) resetBeatVisuals();
   }
 
   function hitGeometry(button) {
@@ -354,6 +358,7 @@
     if (window.PadFX) {
       window.PadFX.burst({ x: hit.x, y: hit.y, w: hit.w, h: hit.h, color: resolveColor(source.color), kind: slot.kind, neighbors: neighborPulses(button, hit) });
     }
+    if (window.PadLeds) window.PadLeds.hit(Number(button.dataset.padIndex), resolveColor(source.color));
     spawnWord(button, slot);
     shakeStage(heavy ? 'hard' : 'soft');
   }
@@ -366,16 +371,13 @@
       options.toast('这张卡带还未解锁，请到背包图鉴完成任务');
       return;
     }
-    if (slot.kind === 'loop') {
-      const loopId = slot.source.replace('loop:', '');
-      preset.backing = loopId;
-      backingOn = !(backingOn && options.currentBacking() === loopId);
-      options.setBacking(backingOn, loopId);
-      renderBackingSelect(); saveState();
-    } else {
-      options.hit(slot, index);
-      if (backingOn && preset.backing !== 'off') options.setBacking(true, preset.backing);
+    // 从线谱区回来继续敲：自动把底奏接上（用户手动关掉的情况不会自动开）。
+    if (studioPaused) {
+      studioPaused = false;
+      renderBackingSelect();
     }
+    options.hit(slot, index);
+    if (backingOn && currentPreset().backing !== 'off') options.setBacking(true, currentPreset().backing);
     if (button) burst(button, slot);
     $('#pad-live-status').innerHTML = `<strong>${sourceInfo(slot).title}</strong><span id="pad-backing-name">${options.loopName(preset.backing)}</span>`;
   }
@@ -413,17 +415,36 @@
     }));
     $('#pad-loop-toggle').addEventListener('click', () => {
       if (currentPreset().backing === 'off') currentPreset().backing = 'sunny';
-      backingOn = !backingOn;
+      if (studioPaused) {
+        studioPaused = false;
+        backingOn = true;
+      } else {
+        backingOn = !backingOn;
+      }
       options.setBacking(backingOn, currentPreset().backing);
       renderBackingSelect(); saveState();
     });
     $('#pad-backing-select').addEventListener('change', (event) => {
       currentPreset().backing = event.target.value;
       backingOn = event.target.value !== 'off';
+      studioPaused = false;
       options.setBacking(backingOn, currentPreset().backing);
       renderBackingSelect(); saveState();
-      options.toast(event.target.value === 'off' ? '原创底奏已关闭' : `原创底奏：${options.loopName(event.target.value)}`);
+      options.toast(event.target.value === 'off' ? '底奏已关闭' : `底奏：${options.loopName(event.target.value)}`);
     });
+    // 用户一走到线谱/演奏区，底奏自动让位，避免和正在编辑的东西打架。
+    const studio = $('.studio-layout');
+    if (studio) {
+      ['pointerdown', 'keydown', 'focusin'].forEach((type) => {
+        studio.addEventListener(type, () => {
+          if (studioPaused || !backingOn) return;
+          studioPaused = true;
+          options.setBacking(false, currentPreset().backing);
+          renderBackingSelect();
+          options.toast('底奏已暂停 · 回到打击垫敲一下自动续上');
+        }, true);
+      });
+    }
     $$('#pad-kind-tabs button').forEach((button) => button.addEventListener('click', () => {
       editingKind = button.dataset.kind;
       renderEditingSummary(); renderLibrary();
@@ -476,8 +497,8 @@
   function init(initOptions) {
     options = initOptions;
     loadState();
-    buildLightStrips();
     if (window.PadFX) window.PadFX.init({ canvas: $('#pad-fx'), stage: $('#pad-playground') });
+    if (window.PadLeds) window.PadLeds.init({ canvas: $('#pad-leds'), stage: $('#pad-playground') });
     bindControls();
     window.addEventListener('meme-pad-beat', syncBeatLights);
     renderPads(); renderLibrary(); renderBackingSelect();

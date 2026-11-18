@@ -12,6 +12,7 @@
   <script defer src="./src/music-data.js"></script>
   <script defer src="./src/record-stage.js"></script>
   <script defer src="./src/pad-fx.js"></script>
+  <script defer src="./src/pad-leds.js"></script>
   <script defer src="./src/pad-stage.js"></script>
   <script defer src="./src/main.js"></script>
 </head>
@@ -61,15 +62,14 @@
             <strong id="pad-preset-name">梗图派对</strong>
           </div>
           <div class="pad-toolbar-actions">
-            <button class="pad-chip-button active" id="pad-loop-toggle" type="button" aria-pressed="true" title="原创合成底奏，首次敲击自动开始"><svg><use href="#i-loop"/></svg><span>Loop 开</span></button>
+            <button class="pad-chip-button active" id="pad-loop-toggle" type="button" aria-pressed="true" title="自动底奏：首次敲击自动开始，走到线谱区自动暂停"><svg><use href="#i-loop"/></svg><span>底奏开</span></button>
             <button class="pad-chip-button pad-chip-primary" id="pad-backpack-open" type="button"><svg><use href="#i-spark"/></svg><span>换装</span></button>
             <div class="pad-layout-switch" id="pad-layout" aria-label="打击垫布局"><button type="button" data-layout="4" aria-pressed="false">2 × 2</button><button type="button" data-layout="9" class="active" aria-pressed="true">3 × 3</button></div>
           </div>
         </div>
         <div class="pad-playground" id="pad-playground">
-          <div class="pad-light-strip" id="pad-light-strip" aria-hidden="true"></div>
+          <canvas class="pad-leds" id="pad-leds" aria-hidden="true"></canvas>
           <div class="drum-pad-grid" id="drum-pad-grid" aria-label="梗图音乐打击垫"></div>
-          <div class="pad-light-strip pad-light-strip-bottom" id="pad-light-strip-bottom" aria-hidden="true"></div>
           <canvas class="pad-fx" id="pad-fx" aria-hidden="true"></canvas>
         </div>
         <p class="pad-status" id="pad-live-status" role="status"><strong>随便敲。</strong><span id="pad-backing-name">柑橘跳跳糖</span></p>
@@ -225,7 +225,7 @@
     <div class="pad-backpack-body">
       <div class="pad-preset-manager">
         <label class="pad-field"><span>当前预设</span><select id="pad-preset-select" aria-label="选择打击垫预设"></select></label>
-        <label class="pad-field"><span>原创自动底奏（本地逐音合成）</span><select id="pad-backing-select" aria-label="选择原创自动底奏"><option value="sunny">柑橘跳跳糖 · 摇摆流行</option><option value="bounce">像素弹跳 · 舞曲</option><option value="chill">夜空气泡 · 慢摇</option><option value="off">关闭底奏</option></select></label>
+        <label class="pad-field"><span>底奏（自动伴奏，不属于按键分类）</span><select id="pad-backing-select" aria-label="选择自动底奏"><option value="sunny">柑橘跳跳糖 · 摇摆流行</option><option value="bounce">像素弹跳 · 舞曲</option><option value="chill">夜空气泡 · 慢摇</option><option value="off">关闭底奏</option></select></label>
         <div class="pad-preset-actions"><button class="small-button" id="pad-preset-delete" type="button"><svg><use href="#i-trash"/></svg>删除自定义</button></div>
       </div>
       <div class="pad-custom-save"><label><span>把当前按键布局存成我的预设</span><input id="pad-custom-name" type="text" maxlength="24" placeholder="例如：周末抽象小队" autocomplete="off"></label><button id="pad-preset-save" type="button">保存我的预设</button></div>
@@ -237,7 +237,7 @@
           <p class="pad-preset-tip">4 键布局使用前四颗按键；自定义预设只保存在当前浏览器。</p>
         </section>
         <section class="pad-editor-column" aria-label="声音背包">
-          <div id="pad-kind-tabs" aria-label="声音类型"><button type="button" data-kind="sample" class="active" aria-pressed="true">梗采样</button><button type="button" data-kind="note" aria-pressed="false">乐器音符</button><button type="button" data-kind="drum" aria-pressed="false">鼓点</button><button type="button" data-kind="loop" aria-pressed="false">Loop</button></div>
+          <div id="pad-kind-tabs" aria-label="声音类型"><button type="button" data-kind="sample" class="active" aria-pressed="true">梗采样</button><button type="button" data-kind="note" aria-pressed="false">乐器音符</button><button type="button" data-kind="drum" aria-pressed="false">鼓点</button></div>
           <div id="pad-library" aria-label="可装入按键的声音"></div>
         </section>
       </div>

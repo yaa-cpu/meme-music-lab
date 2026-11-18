@@ -150,6 +150,7 @@
   let reverbGain = null;
   let convolver = null;
   let padMixInput = null;
+  let padBackingInput = null;
   const impulseBuffers = new Map();
   const noteConvolvers = new Map();
   const buffers = {};
@@ -1243,10 +1244,11 @@
     const output = audioCtx.createGain();
     output.gain.value = Number.isFinite(Number(note?.loopVolume)) ? clamp(Number(note.loopVolume), 0, 1) : 1;
     const preset = note?.reverbPreset || null;
-    const destination = note?.padBus && padMixInput ? padMixInput : master;
+    const busInput = note?.backing && padBackingInput ? padBackingInput : note?.padBus && padMixInput ? padMixInput : null;
+    const destination = busInput || master;
     const temporaryNodes = [output];
     if (!preset) {
-      output.connect(note?.padBus ? destination : mixInput);
+      output.connect(busInput || mixInput);
     } else {
       const wet = preset === 'none' ? 0 : clamp(note.reverbWet ?? reverbPresets[preset].wet, 0, .7);
       const dry = audioCtx.createGain();
@@ -1289,15 +1291,18 @@
       convolver = audioCtx.createConvolver();
       reverbGain = audioCtx.createGain();
       padMixInput = audioCtx.createGain();
+      padBackingInput = audioCtx.createGain();
       const padCompressor = audioCtx.createDynamicsCompressor();
       const padOutput = audioCtx.createGain();
-      padCompressor.threshold.value = -18;
-      padCompressor.knee.value = 12;
-      padCompressor.ratio.value = 4;
+      padCompressor.threshold.value = -16;
+      padCompressor.knee.value = 10;
+      padCompressor.ratio.value = 3.5;
       padCompressor.attack.value = .004;
       padCompressor.release.value = .16;
-      padOutput.gain.value = .78;
+      padOutput.gain.value = .82;
+      padBackingInput.gain.value = 1.5;
       padMixInput.connect(padCompressor).connect(padOutput).connect(master);
+      padBackingInput.connect(padCompressor);
       master.gain.value = outputVolume / 100;
       mixInput.connect(dryGain).connect(master);
       mixInput.connect(convolver).connect(reverbGain).connect(master);
@@ -2075,11 +2080,6 @@
     { kind: 'drum', source: 'drum:hat', title: '踩镲', sub: 'HAT · 颗粒', symbol: 'HAT', color: '#d9ef68' },
     { kind: 'drum', source: 'drum:clap', title: '拍手', sub: 'CLAP · 节拍', symbol: 'CLAP', color: '#f2d468' }
   ];
-  const padLoops = [
-    { kind: 'loop', source: 'loop:sunny', title: '柑橘跳跳糖', sub: '摇摆流行', symbol: 'LOOP', color: '#d9ef68' },
-    { kind: 'loop', source: 'loop:bounce', title: '像素弹跳', sub: '舞曲碎拍', symbol: 'LOOP', color: '#efabc2' },
-    { kind: 'loop', source: 'loop:chill', title: '夜空气泡', sub: '慢摇和弦', symbol: 'LOOP', color: '#91cfe8' }
-  ];
   const padLoopNames = { sunny: '柑橘跳跳糖', bounce: '像素弹跳', chill: '夜空气泡', off: '无底奏' };
   let padBackingTimer = null;
   let padBackingId = null;
@@ -2089,13 +2089,12 @@
 
   function padSourceInfo(kind, source) {
     if (kind === 'drum') return padDrums.find((item) => item.source === source) || padDrums[0];
-    if (kind === 'loop') return padLoops.find((item) => item.source === source) || padLoops[0];
     const item = sourceInfo(source);
     return { ...item, kind, source, title: item.title, sub: item.sub, color: item.color || '#d9ef68' };
   }
 
   function padSourceUnlocked(kind, source) {
-    if (kind === 'drum' || kind === 'loop') return true;
+    if (kind === 'drum') return true;
     const index = cartridges.findIndex((cartridge) => cartridge.items.some((item) => item.id === source));
     return index < 0 || isCartridgeUnlocked(index);
   }
@@ -2106,39 +2105,41 @@
 
   function padStepDuration() { return 60 / 116 / 4; }
 
-  function padDrumSound(kind, when, volume = 1) {
+  function padDrumSound(kind, when, volume = 1, backing = false) {
     const type = kind.replace('drum:', '');
-    withSoundBus({ loopVolume: volume, reverbPreset: 'none', padBus: true }, when, .45, () => {
+    withSoundBus({ loopVolume: volume, reverbPreset: 'none', padBus: true, backing }, when, .45, () => {
       if (type === 'kick') {
-        tone('sine', 172, when, .28, .72, 47);
-        tone('triangle', 74, when, .1, .18, 45);
-        noise(when, .025, 3200, .045);
+        tone('sine', 168, when, .34, .95, 42);
+        tone('triangle', 78, when, .16, .3, 44);
+        tone('square', 320, when, .02, .07, 140);
+        noise(when, .03, 3000, .06);
       } else if (type === 'snare') {
-        noise(when, .16, 1950, .32);
-        tone('triangle', 190, when, .1, .16, 112);
+        noise(when, .19, 1900, .5);
+        tone('triangle', 195, when, .12, .24, 108);
+        noise(when + .012, .06, 4200, .12);
       } else if (type === 'hat' || type === 'openhat') {
-        noise(when, type === 'openhat' ? .18 : .055, 7900, .14);
-        noise(when, type === 'openhat' ? .12 : .028, 10800, .06);
+        noise(when, type === 'openhat' ? .2 : .07, 7900, .22);
+        noise(when, type === 'openhat' ? .14 : .03, 10800, .1);
       } else {
-        [0, .018, .038].forEach((offset, index) => noise(when + offset, .1 - index * .014, 1450 + index * 420, .16));
+        [0, .018, .038].forEach((offset, index) => noise(when + offset, .11 - index * .014, 1450 + index * 420, .24));
       }
     });
   }
 
-  function padInstrumentTone(instrument, midi, when, length, volume) {
+  function padInstrumentTone(instrument, midi, when, length, volume, backing = false) {
     const row = nearestPitchRow(midi);
     const stepLength = padStepDuration();
-    withSoundBus({ loopVolume: volume, reverbPreset: 'none', padBus: true }, when, length * stepLength, () => {
+    withSoundBus({ loopVolume: volume, reverbPreset: 'none', padBus: true, backing }, when, length * stepLength, () => {
       instrumentSound(`instrument:${instrument}`, row, when, false, { midi, length, stepLength });
     });
   }
 
-  function emitPadBeat(step, when, id, kick, snare) {
+  function emitPadBeat(step, when, id, flags) {
     const delay = Math.max(0, (when - audioCtx.currentTime) * 1000);
     setTimeout(() => {
       if (padBackingId !== id) return;
       window.dispatchEvent(new CustomEvent('meme-pad-beat', {
-        detail: { step, position: step % 16, id, kick, snare, duration: padStepDuration() }
+        detail: { step, position: step % 16, id, duration: padStepDuration(), ...flags }
       }));
     }, delay);
   }
@@ -2148,38 +2149,44 @@
     const bar = Math.floor(step / 16) % 4;
     const chords = [[60, 64, 67], [57, 60, 64], [57, 60, 65], [59, 62, 67]];
     const roots = [36, 33, 29, 31];
-    // Original four-bar, 116 BPM grooves on a true sixteenth-note grid.
-    const kickPositions = id === 'chill' ? [0, 8, 11] : [0, 4, 8, 12];
-    const snarePositions = id === 'chill' ? [8] : [4, 12];
+    // 116 BPM 十六分网格：四踩底鼓 + 反拍军鼓 + 切分贝斯，四小节一循环，第 4 小节带过门。
+    const fill = bar === 3 && position >= 13;
+    const kickPositions = id === 'chill' ? [0, 8, 11] : id === 'bounce' ? [0, 4, 6, 8, 12, 14] : [0, 4, 8, 10, 12];
+    const snarePositions = id === 'chill' ? [8, 15] : [4, 12];
     const bassPositions = id === 'sunny' ? [0, 3, 6, 8, 10, 14] : id === 'bounce' ? [0, 3, 6, 8, 11, 14] : [0, 8, 14];
     const chordPositions = id === 'sunny' ? [2, 7, 10, 15] : id === 'bounce' ? [2, 6, 10, 14] : [0];
+    const hatEvery = id === 'chill' ? 4 : 2;
     const kick = kickPositions.includes(position);
-    const snare = snarePositions.includes(position);
-    emitPadBeat(step, when, id, kick, snare);
-    if (kick) padDrumSound('drum:kick', when, id === 'chill' ? .5 : .62);
-    if (snare) {
-      padDrumSound('drum:snare', when, id === 'chill' ? .4 : .55);
-      if (id === 'bounce') padDrumSound('drum:clap', when, .34);
+    const snare = snarePositions.includes(position) || fill;
+    const hat = position % hatEvery === 0;
+    const bass = bassPositions.includes(position);
+    const chord = chordPositions.includes(position);
+    emitPadBeat(step, when, id, { kick, snare, hat, bass, chord, bar });
+
+    const vel = id === 'chill' ? .72 : 1;
+    if (kick) {
+      padDrumSound('drum:kick', when, (position === 0 ? .95 : .85) * vel, true);
+      if (id === 'bounce' && position % 8 === 6) padDrumSound('drum:kick', when + .012, .5, true);
     }
-    const hat = id === 'bounce' || position % 2 === 0;
+    if (snare) padDrumSound('drum:snare', when, (fill ? .6 : .82) * vel, true);
+    if (position % 4 === 0 && id !== 'chill') padDrumSound('drum:clap', when + .006, .5 * vel, true);
     if (hat) {
       const open = position === 14 && id !== 'chill';
-      const hatVolume = id === 'bounce' ? (position % 2 ? .12 : .24) : position % 4 === 2 ? .3 : .2;
-      padDrumSound(open ? 'drum:openhat' : 'drum:hat', when, id === 'chill' ? .12 : hatVolume);
+      const hatVolume = (position % 4 === 2 ? .42 : .3) * (id === 'chill' ? .72 : 1);
+      padDrumSound(open ? 'drum:openhat' : 'drum:hat', when, hatVolume, true);
     }
-    if (bassPositions.includes(position)) {
+    if (bass) {
       const octave = [6, 14].includes(position) && id !== 'chill' ? 12 : 0;
-      padInstrumentTone('bass', roots[bar] + octave, when, position === 0 ? 2.2 : 1.15, .34);
+      padInstrumentTone('bass', roots[bar] + octave, when, position === 0 ? 2.4 : 1.2, .55 * vel, true);
     }
-    if (chordPositions.includes(position)) {
+    if (chord) {
       const instrument = id === 'chill' ? 'pad' : id === 'bounce' ? 'synth' : 'piano';
-      const length = id === 'chill' ? 13.5 : position === 7 ? 1.5 : .85;
-      chords[bar].forEach((midi) => padInstrumentTone(instrument, midi, when, length, id === 'chill' ? .09 : .13));
+      const length = id === 'chill' ? 13.5 : position === 7 ? 1.5 : .9;
+      chords[bar].forEach((midi) => padInstrumentTone(instrument, midi, when, length, (id === 'chill' ? .2 : .3) * vel, true));
     }
-    if (id === 'sunny' && bar % 2 === 1 && [6, 14].includes(position)) {
-      padInstrumentTone('marimba', chords[bar][2] + 12, when, 1.4, .07);
-    }
-    if (id === 'chill' && position === 10) padInstrumentTone('harp', chords[bar][1] + 12, when, 2.2, .045);
+    if (id === 'sunny' && bar % 2 === 1 && [6, 14].includes(position)) padInstrumentTone('marimba', chords[bar][2] + 12, when, 1.4, .16, true);
+    if (id === 'chill' && position === 10) padInstrumentTone('harp', chords[bar][1] + 12, when, 2.2, .12, true);
+    if (fill) padDrumSound('drum:hat', when + .03, .3, true);
   }
 
   function runPadBackingScheduler() {
@@ -2240,7 +2247,7 @@
     const samples = memes.map((meme) => ({ kind: 'sample', source: meme.id, title: meme.title, sub: meme.sub, image: meme.image, color: meme.color }));
     const instrumentNotes = musicData.instruments.map((instrument) => ({ kind: 'note', source: `instrument:${instrument.id}`, title: instrument.title, sub: instrument.description, symbol: instrument.symbol, color: instrument.color }));
     window.MemePadStage.init({
-      library: { sample: samples, note: instrumentNotes, drum: padDrums, loop: padLoops },
+      library: { sample: samples, note: instrumentNotes, drum: padDrums },
       sourceInfo: padSourceInfo,
       isUnlocked: padSourceUnlocked,
       hit: hitPadSource,
