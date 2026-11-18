@@ -145,6 +145,7 @@
   let notes = [];
   let selectedId = 'doro';
   let selectedNoteId = null;
+  let projectMixer = null;
   let bpm = 112;
   let outputVolume = 70;
   let loop = true;
@@ -686,6 +687,46 @@
     旋律: 'synthLead', lead: 'synthLead', vocal: 'synthLead'
   };
 
+  // ACE 工程分轨混音：每轨一个音量滑块 + 静音，直接改音符的总线音量。
+  function applyProjectMix() {
+    if (!projectMixer) return;
+    projectMixer.forEach((track) => {
+      const meme = `instrument:${track.preset}`;
+      notes.forEach((note) => {
+        if (note.meme !== meme) return;
+        note.loopVolume = track.mute ? 0 : Math.min(1.4, track.gain);
+      });
+    });
+    saveState();
+  }
+
+  function renderProjectMixer() {
+    const host = $('#project-mixer');
+    if (!host) return;
+    if (!projectMixer || !projectMixer.length) { host.hidden = true; host.innerHTML = ''; return; }
+    host.hidden = false;
+    host.innerHTML = `<div class="mixer-title"><span>工程分轨混音 · 低音轻就拉高贝斯，觉得哪轨怪就静音</span><small>${projectMixer.length} 轨</small></div>` + projectMixer.map((track, index) => `
+      <div class="mixer-row${track.mute ? ' muted' : ''}" data-mix-index="${index}">
+        <strong>${track.label}</strong>
+        <input type="range" min="0" max="150" step="1" value="${Math.round(track.gain / track.base * 100)}" aria-label="${track.label} 音量">
+        <button class="mixer-mute" type="button" aria-pressed="${track.mute}" data-mix-mute="${index}">${track.mute ? '已静音' : '静音'}</button>
+      </div>`).join('');
+    $$('[data-mix-index] input', host).forEach((input) => input.addEventListener('input', (event) => {
+      const index = Number(event.target.closest('[data-mix-index]').dataset.mixIndex);
+      const percent = Number(event.target.value);
+      projectMixer[index].gain = Math.min(1.4, projectMixer[index].base * percent / 100);
+      applyProjectMix();
+      $('#play-status').textContent = `${projectMixer[index].label} 音量 ${percent}%`;
+    }));
+    $$('[data-mix-mute]', host).forEach((button) => button.addEventListener('click', () => {
+      const index = Number(button.dataset.mixMute);
+      projectMixer[index].mute = !projectMixer[index].mute;
+      applyProjectMix();
+      renderProjectMixer();
+      showToast(`${projectMixer[index].label} ${projectMixer[index].mute ? '已静音' : '已恢复'}`);
+    }));
+  }
+
   async function loadSynthProject(source) {
     try {
       const project = typeof source === 'string' ? await (await fetch(source)).json() : source;
@@ -704,7 +745,7 @@
           : (ACE_KIND_PRESET[track.aceKind] || 'piano');
         mapped.push(`${track.label || track.aceKind || preset}→${preset}`);
         const fx = track.fx || null;
-        const gain = Number.isFinite(Number(track.gain)) ? Math.max(0, Math.min(1, Number(track.gain))) : 1;
+        const gain = Number.isFinite(Number(track.gain)) ? Math.max(0, Math.min(1.4, Number(track.gain))) : 1;
         (track.notes || []).forEach(([midiValue, col, length, velocity]) => {
           const midi = Number(midiValue);
           const row = pitches.reduce((best, pitch, index) => Math.abs(pitch.midi - midi) < Math.abs(pitches[best].midi - midi) ? index : best, 0);
@@ -719,6 +760,14 @@
       renderRuler();
       renderStaff();
       saveState();
+      projectMixer = project.tracks.map((track) => ({
+        label: track.label || track.aceKind || track.preset,
+        preset: window.MemeSynth && window.MemeSynth.has(track.preset) ? track.preset : (ACE_KIND_PRESET[track.aceKind] || 'piano'),
+        base: Number.isFinite(Number(track.gain)) ? Math.max(.2, Math.min(1.4, Number(track.gain))) : 1,
+        gain: Number.isFinite(Number(track.gain)) ? Math.max(.2, Math.min(1.4, Number(track.gain))) : 1,
+        mute: false
+      }));
+      renderProjectMixer();
       $('#play-status').textContent = `《${project.name || '合成器工程'}》已载入 · ${project.tracks.length} 轨 / ${notes.length} 个音符`;
       showToast(`ACE 分轨已映射：${mapped.join('，')}`);
       startPlayback();
@@ -2285,6 +2334,8 @@
       return { id: uid(), meme: song.instrument, row: 7 - degree, col, length, midi };
     });
     selectMeme(song.instrument);
+    projectMixer = null;
+    renderProjectMixer();
     renderRuler(); renderStaff(); saveState();
     $('#play-status').textContent = `正在播放《${song.title}》· ${notes.length} 个多轨合成音符`;
     showToast(`《${song.title}》已载入旋律与伴奏，停止后仍可自由编辑`);

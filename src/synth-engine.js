@@ -355,14 +355,14 @@
 
   // 每个乐器族的默认效果器（reverb 走总线、delaySend 走附点延迟），解决"听起来干巴"。
   const FAMILY_FX = {
-    keys: { reverb: 'plate', wet: .14 },
-    strings: { reverb: 'hall', wet: .22 },
-    brass: { reverb: 'hall', wet: .18 },
-    woodwind: { reverb: 'room', wet: .16 },
-    pluck: { reverb: 'room', wet: .12 },
+    keys: { reverb: 'plate', wet: .12 },
+    strings: { reverb: 'hall', wet: .16 },
+    brass: { reverb: 'hall', wet: .15 },
+    woodwind: { reverb: 'room', wet: .14 },
+    pluck: { reverb: 'plate', wet: .11 },
     bass: { reverb: 'none', wet: 0 },
-    synth: { reverb: 'plate', wet: .18, delay: .18 },
-    drums: { reverb: 'room', wet: .1 }
+    synth: { reverb: 'plate', wet: .15, delay: .14 },
+    drums: { reverb: 'room', wet: .08 }
   };
   const families = {
     keys: ['piano', 'grandPiano', 'uprightPiano', 'electricPiano', 'clavinet', 'organ', 'pad'],
@@ -424,8 +424,8 @@
       s.start(when); s.stop(when + dur + .02);
     };
     if (kind === 'kick') {
-      osc('sine', 165, .3, .95, 48);
-      osc('triangle', 90, .1, .2, 44);
+      osc('sine', 160, .34, 1.0, 42);
+      osc('triangle', 85, .12, .22, 40);
       noise(.008, 3600, .12);
     } else if (kind === 'snare') {
       noise(.2, 1900, .5);
