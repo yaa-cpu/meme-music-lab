@@ -1633,8 +1633,10 @@
       const startOffset = Math.min(sampleOffset + lead, Math.max(0, buffer.duration - .02));
       const sampleDuration = buffer.duration / playbackRate;
       const availableDuration = Math.max(.01, sampleDuration - startOffset / playbackRate);
+      // 打击垫只给约 0.1s 的“记忆采样”反馈：快速连击时每一击都干净利落，
+      // 不会因为上一声拖长而糊成一片、丢掉节奏感。区间仍固定从裁剪起点开始。
       const duration = padHit
-        ? availableDuration
+        ? Math.min(.11, availableDuration)
         : preview
           ? Math.min(2.7, availableDuration)
           : (note?.length || 1) * stepDuration() * (hasAdjacentNext ? 1 : 1.6);
