@@ -18,7 +18,7 @@ Web Audio 合成仿音为本地代码生成，只在原声加载失败时作为�
 
 十二张逐音卡共用本地原创猫咪音符插图（`assets/hachimi.svg`），不含真人图片。当前使用用户在“采样音频／已裁剪好”中提供的“哈基米南北绿豆1–12.mp3”，原始素材来自 [B站《哈基米之歌》BV1WfFJzyEjv](https://www.bilibili.com/video/BV1WfFJzyEjv/?t=3)。切分点与首尾处理以用户文件为准。
 
-《朋友的酒 DJ》当前播放用户提供的“朋友的酒.mp3”裁剪版（`assets/friend-wine-dj.mp3`，SHA-256 与源文件一致），原始素材来自 [B站 BV1kFar6KE4t](https://www.bilibili.com/video/BV1kFar6KE4t/)。打击垫的「朋友的酒 · DJ 演示」预设底奏用 Web Audio 解码后循环播放第 85.32s 起、16 小节（约 29.56s）的 drop 段（129.89 BPM，接缝经过零交叉与电平校验）；逐音合成谱面仍按原样独立存在。完整未截切音轨另存于“采样音频／源文件”。
+《朋友的酒 DJ》当前播放用户提供的“朋友的酒.mp3”裁剪版（`assets/friend-wine-dj.mp3`，SHA-256 与源文件一致），原始素材来自 [B站 BV1kFar6KE4t](https://www.bilibili.com/video/BV1kFar6KE4t/)。它在歌单「先来一首熟悉的」中作为原声演示卡出现，通过 HTMLAudioElement 流式播放整段音频（支持 HTTP Range 与拖动进度）；逐音合成谱面不再包含该曲。完整未截切音轨另存于“采样音频／源文件”。
 
 ## 乐器、混响与演示谱面
 

@@ -656,7 +656,7 @@
 
   function renderSongs() {
     const demos = musicData.songs.map((song, index) => `<div class="library-song-wrap"><button class="song-card" type="button" data-song="${song.id}"><span class="song-number">0${index + 1}</span><span><strong>${song.title}</strong><small>${song.subtitle}</small></span><span class="song-play">${icon('play')} 播放演示</span></button>${song.source ? `<a class="track-source" href="${song.source}" target="_blank" rel="noopener noreferrer">参考视频 ${icon('arrow')}</a>` : ''}</div>`).join('');
-    const tracks = musicData.libraryTracks.map((track, index) => `<div class="library-song-wrap"><button class="song-card library-track-card" type="button" data-track="${track.id}" aria-pressed="false"><span class="song-number">0${musicData.songs.length + index + 1}</span><span><strong>${track.title}</strong><small>${track.subtitle}</small></span><span class="song-play">${icon('play')} 播放整曲</span></button><a class="track-source" href="${track.source}" target="_blank" rel="noopener noreferrer">视频来源 ${icon('arrow')}</a></div>`).join('');
+    const tracks = musicData.libraryTracks.map((track, index) => `<div class="library-song-wrap"><button class="song-card library-track-card" type="button" data-track="${track.id}" aria-pressed="false"><span class="song-number">0${musicData.songs.length + index + 1}</span><span><strong>${track.title}</strong><small>${track.subtitle}</small></span><span class="song-play">${icon('play')} ${track.action || '播放整曲'}</span></button><a class="track-source" href="${track.source}" target="_blank" rel="noopener noreferrer">视频来源 ${icon('arrow')}</a></div>`).join('');
     $('#song-grid').innerHTML = demos + tracks;
     $$('[data-song]').forEach((button) => button.addEventListener('click', () => loadSong(button.dataset.song)));
     $$('[data-track]').forEach((button) => button.addEventListener('click', () => toggleLibraryTrack(button.dataset.track)));
@@ -675,7 +675,7 @@
       const track = musicData.libraryTracks.find((item) => item.id === button.dataset.track);
       $('.song-play', button).innerHTML = libraryLoading && button.dataset.track === libraryTrackId
         ? `${icon('loop')} 载入中`
-        : active ? `${icon('stop')} ${formatTrackTime(libraryAudio.currentTime)} / ${formatTrackTime(libraryAudio.duration)}` : `${icon('play')} 播放整曲`;
+        : active ? `${icon('stop')} ${formatTrackTime(libraryAudio.currentTime)} / ${formatTrackTime(libraryAudio.duration)}` : `${icon('play')} ${track.action || '播放整曲'}`;
       $('small', button).textContent = track.subtitle;
     });
   }
@@ -2238,142 +2238,12 @@
     { kind: 'drum', source: 'drum:hat', title: '踩镲', sub: 'HAT · 颗粒', symbol: 'HAT', color: '#d9ef68' },
     { kind: 'drum', source: 'drum:clap', title: '拍手', sub: 'CLAP · 节拍', symbol: 'CLAP', color: '#f2d468' }
   ];
-  const padLoopNames = { friendwine: '朋友的酒 · DJ 演示', sunny: '柑橘跳跳糖', bounce: '像素弹跳', chill: '夜空气泡', off: '无底奏' };
+  const padLoopNames = { sunny: '柑橘跳跳糖', bounce: '像素弹跳', chill: '夜空气泡', off: '无底奏' };
   let padBackingTimer = null;
   let padBackingId = null;
   let padBackingStep = 0;
   let padBackingNextTime = 0;
   let padBackingGeneration = 0;
-
-  // ---- 「朋友的酒 DJ」真实音频底奏（预设演示）----
-  // 与 assets/friend-wine-dj.mp3 完全同源（SHA-256 一致），直接播放原音频，相似度 100%。
-  // 实测 129.91 BPM、4-on-floor；截取第 85.3233s 起、16 小节（64 拍 / 29.564s）的 drop 段做无缝循环：
-  //   loop 点都落在零交叉上、段内无静音断口（实测接缝跳变 ~0.01，约 -40dBFS，听不出接缝），
-  //   且 16 小节与三套合成底奏的循环长度一致，切换时不会错拍。
-  //   stepDur 由 loop 长度 / 256 反推（≈129.89 BPM），音频循环与灯带 16 分网格严格同长、长时间不漂移。
-  // 灯带/背景不再依赖合成器，而是按同一网格发 meme-pad-beat，所以视觉与音频同步。
-  const PAD_DJ_DEMO = {
-    id: 'friendwine',
-    src: './assets/friend-wine-dj.mp3',
-    bpm: 129.89,
-    loopStart: 85.3233,
-    loopEnd: 114.8871,
-    loopSteps: 256,        // 16 小节 × 16 步
-    volume: 0.88
-  };
-  let padDjBuffer = null;
-  let padDjLoading = null;
-  let padDjSource = null;
-  let padDjGain = null;
-  let padDjTimer = null;
-  let padDjStepDur = 60 / 129.89 / 4;  // 由 loop 长度反推，startPadDjBacking 里按实际 loop 覆盖
-  let padDjOrigin = 0;      // 第 0 步在 audioCtx 里的绝对时间（= source.start 的时刻）
-  let padDjScheduled = 0;   // 已经排到第几步（绝对步号，跨循环累加）
-  let padDjStartToken = 0;  // 快速连点/切换时判断「这次启动是否已被更新的一次覆盖」
-
-  async function loadPadDjBuffer() {
-    if (padDjBuffer) return padDjBuffer;
-    if (!padDjLoading) {
-      padDjLoading = (async () => {
-        const response = await fetch(PAD_DJ_DEMO.src);
-        if (!response.ok) throw new Error(`DJ audio ${response.status}`);
-        const decoded = await audioCtx.decodeAudioData(await response.arrayBuffer());
-        // 只保留循环段：整首解码约 70MB（183.8s / 48k / stereo / float32），切片后约 11MB。
-        const rate = decoded.sampleRate;
-        const from = Math.max(0, Math.floor(PAD_DJ_DEMO.loopStart * rate));
-        const to = Math.min(decoded.length, Math.floor(PAD_DJ_DEMO.loopEnd * rate));
-        const loopBuffer = audioCtx.createBuffer(decoded.numberOfChannels, Math.max(1, to - from), rate);
-        for (let channel = 0; channel < decoded.numberOfChannels; channel++) {
-          loopBuffer.copyToChannel(decoded.getChannelData(channel).subarray(from, to), channel);
-        }
-        padDjBuffer = loopBuffer;
-        return padDjBuffer;
-      })().catch((error) => { padDjLoading = null; throw error; });
-    }
-    return padDjLoading;
-  }
-
-  function preloadPadDjDemo() {
-    ensureAudio()
-      .then(() => loadPadDjBuffer())
-      .catch(() => { /* 离线时静默失败，切到别的底奏即可 */ });
-  }
-
-  // 灯带/背景完全从音频时钟推导：step = floor((now - origin) / stepDur)，
-  // 所以浏览器后台节流、暂停恢复后都不会与音频错位；循环长度 = 256 步，和 buffer 循环严格同长。
-  function runPadDjBeatScheduler() {
-    if (!audioCtx || !padDjSource) return;
-    const stepDur = padDjStepDur;
-    const currentIndex = Math.floor((audioCtx.currentTime - padDjOrigin) / stepDur);
-    if (currentIndex - padDjScheduled > 8) padDjScheduled = currentIndex - 2;  // 后台恢复：跳过积压，不刷屏
-    while (padDjScheduled <= currentIndex + 2) {
-      const stepInLoop = padDjScheduled % PAD_DJ_DEMO.loopSteps;
-      const when = padDjOrigin + padDjScheduled * stepDur;
-      const position = stepInLoop % 16;
-      const barOfLoop = Math.floor(stepInLoop / 16) % 16;
-      emitPadBeat(stepInLoop, when, PAD_DJ_DEMO.id, {
-        kick: position % 4 === 0,
-        snare: position === 4 || position === 12,
-        hat: true,
-        bass: position === 2 || position === 6 || position === 10 || position === 14,
-        chord: position === 2 || position === 6 || position === 10 || position === 14,
-        bar: barOfLoop % 4,
-        barOfLoop,
-        swingMs: 0,
-        gain: PAD_DJ_DEMO.volume
-      });
-      padDjScheduled++;
-    }
-  }
-
-  async function startPadDjBacking(generation) {
-    const buffer = await loadPadDjBuffer();
-    if (generation !== padBackingGeneration || padBackingId !== PAD_DJ_DEMO.id) return false;
-    if (!audioCtx || !buffer || buffer.duration < 1) throw new Error('DJ buffer invalid');
-    // buffer 已经切片成 16 小节；用它的长度反推 stepDur，音频循环与灯带网格严格同长。
-    padDjStepDur = buffer.duration / PAD_DJ_DEMO.loopSteps;
-    const startAt = audioCtx.currentTime + .06;
-    const source = audioCtx.createBufferSource();
-    source.buffer = buffer;
-    source.loop = true;
-    source.loopStart = 0;
-    source.loopEnd = buffer.duration;
-    const gain = audioCtx.createGain();
-    gain.gain.setValueAtTime(.0001, startAt);
-    gain.gain.exponentialRampToValueAtTime(PAD_DJ_DEMO.volume, startAt + .05);
-    source.connect(gain);
-    // 与合成底奏共用「用户敲击时让位」节点；没有就退回 master。
-    gain.connect(padDuckUser || master);
-    source.start(startAt, 0);
-    padDjSource = source;
-    padDjGain = gain;
-    padDjOrigin = startAt;
-    padDjScheduled = 0;
-    runPadDjBeatScheduler();
-    clearInterval(padDjTimer);
-    padDjTimer = setInterval(runPadDjBeatScheduler, 25);
-    return true;
-  }
-
-  function stopPadDjBacking() {
-    clearInterval(padDjTimer);
-    padDjTimer = null;
-    const source = padDjSource;
-    const gain = padDjGain;
-    padDjSource = null;
-    padDjGain = null;
-    if (!source) return;
-    const now = audioCtx ? audioCtx.currentTime : 0;
-    try {
-      if (gain) {
-        gain.gain.cancelScheduledValues(now);
-        gain.gain.setValueAtTime(Math.max(.0001, gain.gain.value), now);
-        gain.gain.exponentialRampToValueAtTime(.0001, now + .06);
-      }
-      source.stop(now + .08);
-    } catch (_) { /* 已经停止 */ }
-    setTimeout(() => { try { if (gain) gain.disconnect(); } catch (_) { /* 已断开 */ } }, 400);
-  }
 
   function padSourceInfo(kind, source) {
     if (kind === 'drum') return padDrums.find((item) => item.source === source) || padDrums[0];
@@ -2391,7 +2261,7 @@
     return pitches.reduce((best, pitch, index) => Math.abs(pitch.midi - midi) < Math.abs(pitches[best].midi - midi) ? index : best, 0);
   }
 
-  const PAD_GROOVE_BPM = { friendwine: 129.89, sunny: 124, bounce: 134, chill: 86 };
+  const PAD_GROOVE_BPM = { sunny: 124, bounce: 134, chill: 86 };
   const PAD_LOOP_STEPS = 256; // 16 小节编排
   function padGrooveBpm(id) {
     if (window.PadGrooves && typeof window.PadGrooves.padGrooveBpm === 'function') return window.PadGrooves.padGrooveBpm(id);
@@ -2786,7 +2656,6 @@
   function clearPadBacking() {
     clearInterval(padBackingTimer);
     padBackingTimer = null;
-    stopPadDjBacking();
     padBackingId = null;
     padBeatTiming = null;
     padCombo = 0;
@@ -2798,32 +2667,8 @@
     try {
       await ensureAudio();
       if (generation !== padBackingGeneration) return;
-      if (padBackingId === id && (padBackingTimer || padDjTimer)) return;
+      if (padBackingId === id && padBackingTimer) return;
       clearPadBacking();
-      if (id === PAD_DJ_DEMO.id) {
-        padBackingId = id;
-        const token = ++padDjStartToken;
-        try {
-          const started = await startPadDjBacking(generation);
-          if (generation !== padBackingGeneration || !started) {
-            // 已被更新的一次切换覆盖：只收掉自己这次启动的东西，不要碰新状态。
-            if (padDjStartToken === token) {
-              stopPadDjBacking();
-              if (padBackingId === PAD_DJ_DEMO.id) padBackingId = null;
-            }
-            return;
-          }
-        } catch (_) {
-          if (generation !== padBackingGeneration) return;
-          if (padDjStartToken === token) {
-            stopPadDjBacking();
-            if (padBackingId === PAD_DJ_DEMO.id) padBackingId = null;
-          }
-          showToast('DJ 演示音频没加载成功，先切回合成底奏');
-          setPadBacking(true, 'sunny').catch(() => { /* 兜底再失败就静音 */ });
-        }
-        return;
-      }
       padBackingId = id;
       padBackingStep = 0;
       padBackingNextTime = audioCtx.currentTime + .06;
@@ -3018,7 +2863,6 @@
   bindDialogs();
   initPadStage();
   preloadPadSamples();
-  preloadPadDjDemo();
   updateTransport();
   restoreVocalTake();
 })();

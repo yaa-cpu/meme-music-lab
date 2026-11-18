@@ -5,7 +5,7 @@
   const SCALE = [60, 62, 64, 67, 69, 72, 74, 76, 79];
   const BUILT_INS = [
     {
-      id: 'meme-party', name: '梗图派对', builtIn: true, layout: 9, backing: 'friendwine',
+      id: 'meme-party', name: '梗图派对', builtIn: true, layout: 9, backing: 'sunny',
       slots: ['doro', 'maodie', 'chicken', 'oiia', 'dog', 'nailong', 'dog-1', 'dog-2', 'bingbingbing']
         .map((source, index) => ({ kind: 'sample', source, midi: SCALE[index] }))
     },
@@ -54,7 +54,7 @@
       name: String(preset.name || '我的打击垫').slice(0, 24),
       builtIn: Boolean(preset.builtIn),
       layout: Number(preset.layout) === 4 ? 4 : 9,
-      backing: ['friendwine', 'sunny', 'bounce', 'chill', 'off'].includes(preset.backing) ? preset.backing : 'friendwine',
+      backing: ['sunny', 'bounce', 'chill', 'off'].includes(preset.backing) ? preset.backing : 'sunny',
       slots: slots.map((slot, index) => ({
         kind: ['sample', 'note', 'drum'].includes(slot.kind) ? slot.kind : 'sample',
         source: String(slot.source || fallback.slots[index].source),
@@ -280,7 +280,7 @@
     // 图案的律动周期 = 两拍，跟着当前底奏的速度走（BPM 由 pad-grooves 引擎提供）。
     const grooveBpm = (window.PadGrooves && window.PadGrooves.padGrooveBpm)
       ? window.PadGrooves.padGrooveBpm(preset.backing)
-      : ({ friendwine: 129.89, sunny: 124, bounce: 134, chill: 86 }[preset.backing] || 124);
+      : ({ sunny: 124, bounce: 134, chill: 86 }[preset.backing] || 124);
     $('#pad-playground').style.setProperty('--dance-dur', `${((60 / grooveBpm) * 2).toFixed(3)}s`);
     const toggle = $('#pad-loop-toggle');
     toggle.classList.toggle('active', active);
@@ -611,7 +611,7 @@
       saveState(); renderPads(); renderLibrary();
     }));
     $('#pad-loop-toggle').addEventListener('click', () => {
-      if (currentPreset().backing === 'off') currentPreset().backing = 'friendwine';
+      if (currentPreset().backing === 'off') currentPreset().backing = 'sunny';
       if (studioPaused) {
         studioPaused = false;
         backingOn = true;
