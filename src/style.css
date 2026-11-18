@@ -94,12 +94,10 @@ h2{font-size:20px;line-height:1.25;font-weight:900;letter-spacing:-.02em}
 .legend-dot.original{background:var(--acid)}.legend-dot.synth{background:var(--p-pink)}
 .workbench{min-width:0}
 .sequencer-heading{margin-bottom:18px}
-.transport{display:flex;flex-direction:column;gap:8px;padding:10px;background:var(--ink);color:var(--surface);border-radius:12px 12px 0 0}
-.transport-row{display:flex;align-items:flex-end;gap:8px;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
+.transport{display:flex;padding:10px;background:var(--ink);color:var(--surface);border-radius:12px 12px 0 0;overflow:hidden}
+.transport-row{display:flex;align-items:flex-end;gap:10px;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;width:100%}
 .transport-row::-webkit-scrollbar{display:none}
-.transport-main{justify-content:space-between}
-.transport-reverb-row .transport-group{flex:1;justify-content:space-between}
-.transport-group{display:flex;align-items:flex-end;gap:9px;padding:6px 9px;border-radius:10px;background:oklch(1 0 0 / .045);border:1px solid oklch(1 0 0 / .08)}
+.transport-group{display:flex;align-items:flex-end;gap:9px;padding:6px 9px;border-radius:10px;background:oklch(1 0 0 / .045);border:1px solid oklch(1 0 0 / .08);flex:0 0 auto}
 .transport-group+.transport-group{margin-left:2px}
 .transport .mini-wheel-control{display:flex;flex-direction:column;align-items:flex-start;gap:3px;height:auto;min-width:0}
 .transport .mini-wheel-control>span{min-width:0;text-align:left;font-size:9px;letter-spacing:.05em;color:oklch(0.78 0.02 115)}
@@ -789,3 +787,9 @@ dialog[open]{animation:dialog-in .18s ease-out}
 .project-mixer .mixer-mute{grid-column:2/3;grid-row:1/4;align-self:center;border:1.5px solid var(--ink);border-radius:8px;background:var(--surface);font:900 10px/1 Arial,sans-serif;padding:5px 7px;cursor:pointer}
 .project-mixer .mixer-mute[aria-pressed="true"]{background:var(--danger);color:var(--paper)}
 
+
+
+/* 运输栏永久单排：覆盖旧响应式规则 */
+.transport{display:flex!important;flex-direction:row!important;align-items:stretch!important;padding:10px!important}
+.transport>.transport-row{display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;width:100%!important;gap:10px!important;align-items:flex-end!important;overflow-x:auto!important;overflow-y:hidden!important}
+.transport .transport-group{flex:0 0 auto!important;width:auto!important}

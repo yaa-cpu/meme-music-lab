@@ -3161,6 +3161,16 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
   bindStaff();
   bindControls();
   bindStaffGestures();
+  // 运输栏单排：鼠标滚轮在空白处可横向滚动
+  const transportRow = $('.transport-row');
+  if (transportRow) {
+    transportRow.addEventListener('wheel', (event) => {
+      if (event.target.closest('.mini-wheel')) return;
+      if (transportRow.scrollWidth <= transportRow.clientWidth) return;
+      event.preventDefault();
+      transportRow.scrollLeft += event.deltaY + event.deltaX;
+    }, { passive: false });
+  }
   bindDialogs();
   initPadStage();
   preloadPadSamples();
