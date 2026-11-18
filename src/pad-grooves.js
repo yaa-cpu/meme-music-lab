@@ -38,7 +38,8 @@
   //   sunny 124（disco/funk house 的黄金区，比参考曲慢一档，方便接 130 的曲子）
   //   bounce 134（2-step / speed garage 的常用区）
   //   chill 86（lo-fi half-time，听感约为 172 BPM 的半速）
-  var BPM = { sunny: 124, bounce: 134, chill: 86 };
+  // friendwine 是「真实音频底奏」（main.js 直接播放），这里只提供 BPM 给步长/舞蹈周期/灯带用。
+  var BPM = { friendwine: 129.89, sunny: 124, bounce: 134, chill: 86 };
 
   // ---- 每层建议音量（会被 section 的层级系数与 gain 再乘一次）----
   var VOL = {
