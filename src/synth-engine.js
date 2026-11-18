@@ -353,6 +353,37 @@
   const drumKinds = ['kick', 'snare', 'hat', 'clap', 'openhat', 'rim'];
   const DRUM_MAP = ['kick', 'kick', 'snare', 'snare', 'hat', 'hat', 'clap', 'clap', 'openhat', 'rim', 'kick', 'snare'];
 
+  // 每个乐器族的默认效果器（reverb 走总线、delaySend 走附点延迟），解决"听起来干巴"。
+  const FAMILY_FX = {
+    keys: { reverb: 'plate', wet: .14 },
+    strings: { reverb: 'hall', wet: .22 },
+    brass: { reverb: 'hall', wet: .18 },
+    woodwind: { reverb: 'room', wet: .16 },
+    pluck: { reverb: 'room', wet: .12 },
+    bass: { reverb: 'none', wet: 0 },
+    synth: { reverb: 'plate', wet: .18, delay: .18 },
+    drums: { reverb: 'room', wet: .1 }
+  };
+  const families = {
+    keys: ['piano', 'grandPiano', 'uprightPiano', 'electricPiano', 'clavinet', 'organ', 'pad'],
+    strings: ['violin', 'cello', 'contrabass', 'stringsHigh', 'stringsMid', 'stringsLow', 'stringsPizz'],
+    brass: ['trumpet', 'trombone', 'horn', 'brassSection'],
+    woodwind: ['flute', 'clarinet', 'sax', 'saxTenor', 'dizi'],
+    pluck: ['guitar', 'guitarElectric', 'ukulele', 'harp', 'marimba'],
+    bass: ['bass', 'subBass'],
+    synth: ['synth', 'synthLead', 'synthPluck', 'synthBell', '8bit'],
+    drums: ['drumkit']
+  };
+  function familyOf(id) {
+    for (const key of Object.keys(families)) if (families[key].includes(id)) return key;
+    return 'keys';
+  }
+  function fxFor(id) {
+    const preset = presets[String(id)];
+    if (!preset) return null;
+    return preset.fx || FAMILY_FX[familyOf(String(id))] || null;
+  }
+
   function ensureNoise(ctx, provided) {
     if (provided && provided.length) return provided;
     const buffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 1.5), ctx.sampleRate);
@@ -520,15 +551,9 @@
     drumKinds,
     has: (id) => Boolean(presets[String(id)]),
     play,
-    families: {
-      keys: ['piano', 'grandPiano', 'uprightPiano', 'electricPiano', 'clavinet', 'organ', 'pad'],
-      strings: ['violin', 'cello', 'contrabass', 'stringsHigh', 'stringsMid', 'stringsLow', 'stringsPizz'],
-      brass: ['trumpet', 'trombone', 'horn', 'brassSection'],
-      woodwind: ['flute', 'clarinet', 'sax', 'saxTenor', 'dizi'],
-      pluck: ['guitar', 'guitarElectric', 'ukulele', 'harp', 'marimba'],
-      bass: ['bass', 'subBass'],
-      synth: ['synth', 'synthLead', 'synthPluck', 'synthBell', '8bit'],
-      drums: ['drumkit']
-    }
+    fxFor,
+    FAMILY_FX,
+    familyOf,
+    families
   };
 })(typeof window !== 'undefined' ? window : globalThis);

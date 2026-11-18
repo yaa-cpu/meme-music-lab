@@ -703,10 +703,16 @@
           ? track.preset
           : (ACE_KIND_PRESET[track.aceKind] || 'piano');
         mapped.push(`${track.label || track.aceKind || preset}→${preset}`);
+        const fx = track.fx || null;
+        const gain = Number.isFinite(Number(track.gain)) ? Math.max(0, Math.min(1, Number(track.gain))) : 1;
         (track.notes || []).forEach(([midiValue, col, length]) => {
           const midi = Number(midiValue);
           const row = pitches.reduce((best, pitch, index) => Math.abs(pitch.midi - midi) < Math.abs(pitches[best].midi - midi) ? index : best, 0);
-          notes.push({ id: uid(), meme: `instrument:${preset}`, row, col: Number(col), length: Number(length), midi });
+          notes.push({
+            id: uid(), meme: `instrument:${preset}`, row, col: Number(col), length: Number(length), midi,
+            loopVolume: gain,
+            ...(fx ? { reverbPreset: fx.reverb, reverbWet: fx.wet, delaySend: fx.delay } : {})
+          });
         });
       });
       renderRuler();
@@ -1637,7 +1643,15 @@
   function triggerSound(id, row, when, preview = false, note = null, hasAdjacentNext = false) {
     if (id.startsWith('instrument:')) {
       const duration = preview ? 1.2 : Math.max(.12, (note?.length || 1) * stepDuration());
-      withSoundBus(note, when, duration, () => instrumentSound(id, row, when, preview, note));
+      // 给每个乐器叠加它所属族的默认效果器（总线混响 + 附点延迟），避免干巴。
+      const fx = window.MemeSynth?.fxFor ? window.MemeSynth.fxFor(id.replace('instrument:', '')) : null;
+      const busNote = note ? { ...note } : {};
+      if (fx) {
+        if (!busNote.reverbPreset) busNote.reverbPreset = fx.reverb;
+        if (busNote.reverbWet == null) busNote.reverbWet = fx.wet;
+        if (busNote.delaySend == null && fx.delay) busNote.delaySend = fx.delay;
+      }
+      withSoundBus(busNote, when, duration, () => instrumentSound(id, row, when, preview, note));
       return;
     }
     const meme = memeById(id);

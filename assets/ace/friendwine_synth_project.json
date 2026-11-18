@@ -9,6 +9,11 @@
    "label": "01 鼓组",
    "aceKind": "鼓组",
    "preset": "drumkit",
+   "gain": 1,
+   "fx": {
+    "reverb": "room",
+    "wet": 0.1
+   },
    "notes": [
     [
      60,
@@ -1316,6 +1321,11 @@
    "label": "02 贝斯",
    "aceKind": "贝斯",
    "preset": "subBass",
+   "gain": 0.95,
+   "fx": {
+    "reverb": "none",
+    "wet": 0
+   },
    "notes": [
     [
      38,
@@ -1483,6 +1493,11 @@
    "label": "03 钢琴",
    "aceKind": "钢琴",
    "preset": "grandPiano",
+   "gain": 0.9,
+   "fx": {
+    "reverb": "hall",
+    "wet": 0.18
+   },
    "notes": [
     [
      54,
@@ -1730,6 +1745,12 @@
    "label": "04 吉他",
    "aceKind": "吉他",
    "preset": "guitarElectric",
+   "gain": 0.85,
+   "fx": {
+    "reverb": "plate",
+    "wet": 0.12,
+    "delay": 0.12
+   },
    "notes": [
     [
      54,
@@ -2377,6 +2398,11 @@
    "label": "05 其他乐器",
    "aceKind": "其他",
    "preset": "pad",
+   "gain": 0.8,
+   "fx": {
+    "reverb": "hall",
+    "wet": 0.28
+   },
    "notes": [
     [
      66,
@@ -2624,6 +2650,12 @@
    "label": "06 主旋律（合成 Lead）",
    "aceKind": "旋律",
    "preset": "synthLead",
+   "gain": 0.9,
+   "fx": {
+    "reverb": "plate",
+    "wet": 0.18,
+    "delay": 0.2
+   },
    "notes": [
     [
      66,
