@@ -656,7 +656,7 @@
 
   function renderSongs() {
     const demos = musicData.songs.map((song, index) => `<div class="library-song-wrap"><button class="song-card" type="button" data-song="${song.id}"><span class="song-number">0${index + 1}</span><span><strong>${song.title}</strong><small>${song.subtitle}</small></span><span class="song-play">${icon('play')} 播放演示</span></button>${song.source ? `<a class="track-source" href="${song.source}" target="_blank" rel="noopener noreferrer">参考视频 ${icon('arrow')}</a>` : ''}</div>`).join('');
-    const tracks = musicData.libraryTracks.map((track, index) => `<div class="library-song-wrap"><button class="song-card library-track-card" type="button" data-track="${track.id}" aria-pressed="false"><span class="song-number">0${musicData.songs.length + index + 1}</span><span><strong>${track.title}</strong><small>${track.subtitle}</small></span><span class="song-play">${icon('play')} ${track.action || '播放整曲'}</span></button><a class="track-source" href="${track.source}" target="_blank" rel="noopener noreferrer">视频来源 ${icon('arrow')}</a></div>`).join('');
+    const tracks = musicData.libraryTracks.map((track, index) => `<div class="library-song-wrap"><button class="song-card library-track-card" type="button" data-track="${track.id}" aria-pressed="false"><span class="song-number">0${musicData.songs.length + index + 1}</span><span><strong>${track.title}</strong><small>${track.subtitle}</small></span><span class="song-play">${icon('play')} 播放整曲</span></button><a class="track-source" href="${track.source}" target="_blank" rel="noopener noreferrer">视频来源 ${icon('arrow')}</a></div>`).join('');
     $('#song-grid').innerHTML = demos + tracks;
     $$('[data-song]').forEach((button) => button.addEventListener('click', () => loadSong(button.dataset.song)));
     $$('[data-track]').forEach((button) => button.addEventListener('click', () => toggleLibraryTrack(button.dataset.track)));
@@ -675,7 +675,7 @@
       const track = musicData.libraryTracks.find((item) => item.id === button.dataset.track);
       $('.song-play', button).innerHTML = libraryLoading && button.dataset.track === libraryTrackId
         ? `${icon('loop')} 载入中`
-        : active ? `${icon('stop')} ${formatTrackTime(libraryAudio.currentTime)} / ${formatTrackTime(libraryAudio.duration)}` : `${icon('play')} ${track.action || '播放整曲'}`;
+        : active ? `${icon('stop')} ${formatTrackTime(libraryAudio.currentTime)} / ${formatTrackTime(libraryAudio.duration)}` : `${icon('play')} 播放整曲`;
       $('small', button).textContent = track.subtitle;
     });
   }

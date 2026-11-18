@@ -199,20 +199,14 @@
       id: 'firefly', title: '虫儿飞', subtitle: 'F 调主歌与副歌 · 长笛／竖琴／低音', instrument: 'instrument:flute', bpm: 104, pitchCount: 49,
       source: 'https://www.bilibili.com/video/BV1L8411v7v5/',
       events: [...makeTrack('flute', `${fireflyVerse} ${fireflyChorus}`), ...makeArpeggio('harp', fireflyBars), ...makeBass('bass', fireflyBars)]
+    },
+    {
+      id: 'friend-wine', title: '朋友的酒 DJ', subtitle: '主歌与副歌 · A 调逐音合成', instrument: 'instrument:trumpet', bpm: 125, backing: 'dance',
+      events: makeEvents('66:2 66:2 73:2 66:2 71:2 66:2 69:8 66:2 69:2 73:2 66:2 71:2 66:2 69:8 66:2 69:2 73:2 76:2 73:2 71:2 66:2 69:8 66:2 69:2 73:2 76:2 73:2 71:2 69:2 66:8 73:2 76:2 76:2 78:2 81:2 83:2 81:2 85:4 81:2 81:2 81:2 76:2 81:2 83:4 83:2 83:2 83:2 81:2 83:2 73:6 83:2 83:2 83:2 81:2 83:2 85:4 78:2 78:2 78:2 76:2 78:8 81:2 81:2 81:2 76:2 81:2 83:4 83:2 83:2 83:2 81:2 83:2 85:4 78:2 78:2 78:2 76:2 78:2 85:2 81:2 85:2 78:6 83:2 81:2 78:2 76:2 78:8 73:2 85:2 78:2 78:2 81:2 78:2 76:4 81:2 85:2 81:2 83:2 81:2 83:2 85:4 85:2 85:2 85:2 83:2 85:2 81:4 83:2 83:2 81:2 81:4')
     }
   ];
 
-  // 原声演示：直接流式播放用户提供的音频（HTMLAudioElement + Range），不进线谱、不参与合成。
-  const libraryTracks = [
-    {
-      id: 'friend-wine-dj',
-      title: '朋友的酒 DJ',
-      subtitle: '原声演示 · 用户提供的 DJ 裁剪版，整段播放',
-      action: '播放演示',
-      audio: './assets/friend-wine-dj.mp3',
-      source: 'https://www.bilibili.com/video/BV1kFar6KE4t/'
-    }
-  ];
+  const libraryTracks = [];
 
   const loopPresets = [
     { id: 'four', name: '四拍律动', steps: ['1000100010001000', '0000100000001000', '1010101010101010', '0000000000000000'].map((row) => [...row].map(Number)) },
