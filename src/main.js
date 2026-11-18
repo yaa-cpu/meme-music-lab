@@ -666,9 +666,58 @@
   function renderSongs() {
     const demos = musicData.songs.map((song, index) => `<div class="library-song-wrap"><button class="song-card" type="button" data-song="${song.id}"><span class="song-number">0${index + 1}</span><span><strong>${song.title}</strong><small>${song.subtitle}</small></span><span class="song-play">${icon('play')} 播放演示</span></button>${song.source ? `<a class="track-source" href="${song.source}" target="_blank" rel="noopener noreferrer">参考视频 ${icon('arrow')}</a>` : ''}</div>`).join('');
     const tracks = musicData.libraryTracks.map((track, index) => `<div class="library-song-wrap"><button class="song-card library-track-card" type="button" data-track="${track.id}" aria-pressed="false"><span class="song-number">0${musicData.songs.length + index + 1}</span><span><strong>${track.title}</strong><small>${track.subtitle}</small></span><span class="song-play">${icon('play')} 播放整曲</span></button><a class="track-source" href="${track.source}" target="_blank" rel="noopener noreferrer">视频来源 ${icon('arrow')}</a></div>`).join('');
-    $('#song-grid').innerHTML = demos + tracks;
+    const projects = (musicData.synthProjects || []).map((project, index) => `<div class="library-song-wrap"><button class="song-card" type="button" data-project="${project.id}"><span class="song-number">0${musicData.songs.length + musicData.libraryTracks.length + index + 1}</span><span><strong>${project.title}</strong><small>${project.subtitle}</small></span><span class="song-play">${icon('play')} 载入工程</span></button></div>`).join('');
+    $('#song-grid').innerHTML = demos + tracks + projects;
     $$('[data-song]').forEach((button) => button.addEventListener('click', () => loadSong(button.dataset.song)));
     $$('[data-track]').forEach((button) => button.addEventListener('click', () => toggleLibraryTrack(button.dataset.track)));
+    $$('[data-project]').forEach((button) => button.addEventListener('click', () => {
+      const project = (musicData.synthProjects || []).find((item) => item.id === button.dataset.project);
+      if (project) loadSynthProject(project.url);
+    }));
+  }
+
+  // ACE 分轨工程包 → 网页多轨合成器工程：每条轨的 aceKind 映射到预设，音符平铺进线谱。
+  const ACE_KIND_PRESET = {
+    鼓组: 'drumkit', drums: 'drumkit',
+    贝斯: 'subBass', bass: 'subBass',
+    钢琴: 'grandPiano', piano: 'grandPiano',
+    吉他: 'guitarElectric', guitar: 'guitarElectric',
+    其他: 'pad', others: 'pad',
+    旋律: 'synthLead', lead: 'synthLead', vocal: 'synthLead'
+  };
+
+  async function loadSynthProject(source) {
+    try {
+      const project = typeof source === 'string' ? await (await fetch(source)).json() : source;
+      if (!project || !Array.isArray(project.tracks)) throw new Error('工程格式不对');
+      stopPlayback();
+      clearVocalTake();
+      const rows = [49, 61, 88].includes(Number(project.rows)) ? Number(project.rows) : 61;
+      refreshScale(rows, false);
+      bpm = Number(project.bpm) || bpm;
+      syncChoiceWheel('#bpm-wheel', bpm);
+      const mapped = [];
+      notes = [];
+      project.tracks.forEach((track) => {
+        const preset = window.MemeSynth && window.MemeSynth.has(track.preset)
+          ? track.preset
+          : (ACE_KIND_PRESET[track.aceKind] || 'piano');
+        mapped.push(`${track.label || track.aceKind || preset}→${preset}`);
+        (track.notes || []).forEach(([midiValue, col, length]) => {
+          const midi = Number(midiValue);
+          const row = pitches.reduce((best, pitch, index) => Math.abs(pitch.midi - midi) < Math.abs(pitches[best].midi - midi) ? index : best, 0);
+          notes.push({ id: uid(), meme: `instrument:${preset}`, row, col: Number(col), length: Number(length), midi });
+        });
+      });
+      renderRuler();
+      renderStaff();
+      saveState();
+      $('#play-status').textContent = `《${project.name || '合成器工程'}》已载入 · ${project.tracks.length} 轨 / ${notes.length} 个音符`;
+      showToast(`ACE 分轨已映射：${mapped.join('，')}`);
+      startPlayback();
+    } catch (error) {
+      showToast(`工程导入失败：${error?.message || '请检查 JSON 格式'}`);
+    }
   }
 
   function formatTrackTime(seconds) {
@@ -2801,6 +2850,18 @@
       showToast('已清空线谱与人声');
     });
     $('#demo-button').addEventListener('click', loadDemo);
+    $('#import-project').addEventListener('click', () => $('#project-file').click());
+    $('#project-file').addEventListener('change', async (event) => {
+      const file = event.target.files && event.target.files[0];
+      event.target.value = '';
+      if (!file) return;
+      try {
+        const project = JSON.parse(await file.text());
+        loadSynthProject(project);
+      } catch (_) {
+        showToast('读取失败：请选择 ACE 工程包 JSON');
+      }
+    });
     $('#make-tape').addEventListener('click', makeTape);
     $('#staff-scroll').addEventListener('scroll', syncTapeScroll, { passive: true });
     window.addEventListener('resize', syncTapeScroll, { passive: true });

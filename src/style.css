@@ -751,3 +751,8 @@ dialog[open]{animation:dialog-in .18s ease-out}
   .cartridge-console .cartridge-wheel{height:62px;inset:5px 4px}
   .cartridge-console .cartridge-changer{padding-right:6px}
 }
+
+/* 歌单标题区的「导入 ACE 工程」按钮 */
+.songbook-actions{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+.songbook-actions>p{margin:0;color:var(--muted);font-size:12px}
+.songbook-actions .small-button{flex:0 0 auto;white-space:nowrap}

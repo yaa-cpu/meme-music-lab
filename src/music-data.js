@@ -407,6 +407,16 @@
 
   const libraryTracks = [];
 
+  // ACE 分轨工程 → 网页合成器工程包（JSON 由 _shots/gen_synth_project.py 生成）
+  const synthProjects = [
+    {
+      id: 'friendwine-synth',
+      title: '朋友的酒 DJ · 全合成器版',
+      subtitle: 'ACE 分轨（鼓组/贝斯/钢琴/吉他/其他）→ 网页合成器 6 轨',
+      url: './assets/ace/friendwine_synth_project.json'
+    }
+  ];
+
   const loopPresets = [
     { id: 'four', name: '四拍律动', steps: ['1000100010001000', '0000100000001000', '1010101010101010', '0000000000000000'].map((row) => [...row].map(Number)) },
     { id: 'disco', name: '复古迪斯科', steps: ['1000100010001000', '0000100000001000', '0010101000101010', '0000100000001000'].map((row) => [...row].map(Number)) },
@@ -433,6 +443,7 @@
     instruments,
     songs,
     libraryTracks,
+    synthProjects,
     loopPresets,
     getPitches,
     getPianoLayout,

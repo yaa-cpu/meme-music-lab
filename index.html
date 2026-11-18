@@ -197,7 +197,11 @@
     <section class="songbook" aria-labelledby="songbook-title">
       <div class="performance-heading">
         <div><span class="section-index">05</span><h2 id="songbook-title">先来一首熟悉的</h2></div>
-        <p>逐音合成完整旋律并自动播放 · 不播放原曲 · 之后仍可自由编辑</p>
+        <div class="songbook-actions">
+          <p>逐音合成完整旋律并自动播放 · 不播放原曲 · 之后仍可自由编辑</p>
+          <button class="small-button" id="import-project" type="button"><svg><use href="#i-spark"/></svg>导入 ACE 工程</button>
+          <input id="project-file" type="file" accept="application/json,.json" hidden>
+        </div>
       </div>
       <div class="song-grid" id="song-grid"></div>
     </section>
