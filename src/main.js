@@ -1634,17 +1634,17 @@
       const startOffset = Math.min(sampleOffset + lead, Math.max(0, buffer.duration - .02));
       const sampleDuration = buffer.duration / playbackRate;
       const availableDuration = Math.max(.01, sampleDuration - startOffset / playbackRate);
-      // 打击垫只给约 0.1s 的“记忆采样”反馈：快速连击时每一击都干净利落，
-      // 不会因为上一声拖长而糊成一片、丢掉节奏感。区间仍固定从裁剪起点开始。
+      // 对照 Dagou-Tap：采样本身放完整段，不靠“截短”来收干净；
+      // 快速连击时靠“重触发立刻掐掉上一声”保证节奏反馈，见下面的 choke。
       const duration = padHit
-        ? Math.min(.11, availableDuration)
+        ? availableDuration
         : preview
           ? Math.min(2.7, availableDuration)
           : (note?.length || 1) * stepDuration() * (hasAdjacentNext ? 1 : 1.6);
       const stopAt = when + duration;
-      const attack = padHit ? Math.min(.006, duration * .12) : Math.min(.025, duration * .08);
+      const attack = padHit ? .004 : Math.min(.025, duration * .08);
       const fade = padHit
-        ? Math.min(.07, duration * .4)
+        ? Math.min(.05, duration * .25)
         : Math.min(hasAdjacentNext ? .42 : .11, duration * (hasAdjacentNext ? .72 : .32));
       const fadeStart = Math.max(when + attack, stopAt - fade);
       const fadeCurve = new Float32Array(97);
@@ -1662,17 +1662,18 @@
       source.connect(gain).connect(createSoundBus(note, when, duration));
       source.start(when, startOffset);
       source.stop(stopAt + .08);
-      // 打击垫连击：普通敲击把上一声快速收掉；卡准拍子时保留上一声，让采样能顺着往下弹。
+      // 打击垫重触发：同一个采样再次被敲时，直接掐掉上一声（6ms 消咔哒）再从起点重新发声，
+      // 这样连击的节奏反馈靠“重新触发”而不是靠把采样截短。
       if (padHit) {
-        if (!note?.skipChoke) {
-          const previous = padSampleVoices.get(id);
-          if (previous) {
-            try {
-              previous.gain.gain.cancelScheduledValues(when);
-              previous.gain.gain.setTargetAtTime(0, when, .004);
-              previous.source.stop(when + .045);
-            } catch (_) { /* 上一声已结束 */ }
-          }
+        const previous = padSampleVoices.get(id);
+        if (previous) {
+          try {
+            const previousGain = previous.gain.gain;
+            previousGain.cancelScheduledValues(when);
+            previousGain.setValueAtTime(previousGain.value, when);
+            previousGain.linearRampToValueAtTime(0, when + .006);
+            previous.source.stop(when + .008);
+          } catch (_) { /* 上一声已结束 */ }
         }
         padSampleVoices.set(id, { source, gain });
         source.addEventListener('ended', () => {
@@ -2702,8 +2703,6 @@
           detail: { rating, combo: padCombo, errorMs: Math.round(errorMs), source: slot.source }
         }));
       }
-      const onBeat = rating === 'perfect' || rating === 'good';
-
       if (slot.kind === 'drum') {
         const volumes = { 'drum:kick': .62, 'drum:snare': .55, 'drum:hat': .3, 'drum:clap': .45 };
         padDrumSound(slot.source, now + .005, volumes[slot.source] || .45);
@@ -2717,7 +2716,7 @@
       }
       // 采样区间固定不随机：同一个按键永远从裁剪好的起点播到采样结尾。
       // 不同按键靠各自的音符（pad 槽位里的 midi）改变 pitch，从而听出不同的“位置/音色”。
-      const note = { midi: slot.midi, length: 2, reverbPreset: 'none', padBus: true, padHit: true, skipChoke: onBeat };
+      const note = { midi: slot.midi, length: 2, reverbPreset: 'none', padBus: true, padHit: true };
       triggerSound(slot.source, nearestPitchRow(slot.midi), now + .005, false, note);
       flashMeme(slot.source, nearestPitchRow(slot.midi));
     } catch (_) {
