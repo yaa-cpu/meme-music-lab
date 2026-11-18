@@ -94,8 +94,10 @@ h2{font-size:20px;line-height:1.25;font-weight:900;letter-spacing:-.02em}
 .legend-dot.original{background:var(--acid)}.legend-dot.synth{background:var(--p-pink)}
 .workbench{min-width:0}
 .sequencer-heading{margin-bottom:18px}
-.transport{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px;background:var(--ink);color:var(--surface);border-radius:12px 12px 0 0}
-.transport-main,.transport-options{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.transport{display:flex;flex-direction:column;align-items:stretch;gap:8px;padding:10px 12px;background:var(--ink);color:var(--surface);border-radius:12px 12px 0 0}
+.transport-row{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;min-height:48px}
+.transport-row::-webkit-scrollbar{display:none}
+.transport-main,.transport-options{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden}
 .play-button,.control-button{height:44px;min-height:44px;border:1px solid oklch(0.43 0.02 115);background:oklch(0.27 0.018 115);color:var(--surface);border-radius:7px;padding:0 11px;display:flex;align-items:center;justify-content:center;gap:7px;font-size:13px;font-weight:750;box-shadow:inset 0 1px 0 oklch(0.8 0.02 115 / .12),0 2px 0 oklch(0.12 0.015 115)}
 .transport .play-button,.transport .record-button,.transport #loop-button{width:104px;flex:0 0 104px}
 .play-button{background:var(--accent);border-color:oklch(0.84 0.16 75);color:var(--ink)}
