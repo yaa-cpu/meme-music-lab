@@ -96,6 +96,23 @@
       soundSource: source, imageSource: image, originSource: source
     }))
   ];
+  // 打击垫上用的透明抠图（原始素材保留给线谱/图鉴等需要完整画面的地方）。
+  const padCutouts = {
+    doro: './assets/cut/doro.png',
+    maodie: './assets/cut/maodie.png',
+    chicken: './assets/cut/chicken.svg',
+    oiia: './assets/cut/oiia.png',
+    dog: './assets/cut/dog.png',
+    nailong: './assets/nailong.gif'
+  };
+  memes.forEach((meme) => {
+    meme.padImage = padCutouts[meme.id]
+      || (meme.id.startsWith('hachimi-') ? './assets/cut/hachimi.svg'
+        : meme.id.startsWith('dog') ? './assets/cut/dog.png'
+          : meme.id.startsWith('maodie') ? './assets/cut/maodie.png'
+            : meme.id.startsWith('chicken') ? './assets/cut/chicken.svg'
+              : meme.image);
+  });
   const instrumentItems = (ids) => ids.map((id) => ({
     ...musicData.getInstrument(id), id: `instrument:${id}`, sub: '合成乐器', type: 'instrument'
   }));
@@ -2153,7 +2170,9 @@
     return pitches.reduce((best, pitch, index) => Math.abs(pitch.midi - midi) < Math.abs(pitches[best].midi - midi) ? index : best, 0);
   }
 
-  function padStepDuration() { return 60 / 116 / 4; }
+  const PAD_GROOVE_BPM = { sunny: 116, bounce: 138, chill: 84 };
+  function padGrooveBpm(id) { return PAD_GROOVE_BPM[id] || 116; }
+  function padStepDuration() { return 60 / padGrooveBpm(padBackingId) / 4; }
 
   function padDrumSound(kind, when, volume = 1, backing = false) {
     const type = kind.replace('drum:', '');
@@ -2194,49 +2213,82 @@
     }, delay);
   }
 
+  // 三套底奏各有自己的速度和性格：迪斯科放克 / 碎拍舞曲 / 半速 lo-fi。
+  const PAD_GROOVES = {
+    sunny: {
+      kick: [0, 4, 8, 12], ghostKick: [7, 15], snare: [4, 12], clap: [4, 12],
+      hat: 2, hatAccent: [2, 6, 10, 14], openHat: [14],
+      bass: [0, 3, 6, 8, 10, 14], bassOctave: [6, 14],
+      stab: [2, 7, 10, 15], stabInst: 'piano',
+      chords: [[60, 64, 67], [57, 60, 64], [57, 60, 65], [59, 62, 67]], roots: [36, 33, 29, 31],
+      lead: { inst: 'marimba', positions: [6, 14] }, swing: 0, level: 1
+    },
+    bounce: {
+      kick: [0, 3, 6, 10, 12], ghostKick: [], snare: [4, 12], clap: [4, 12],
+      hat: 1, hatAccent: [2, 6, 10, 14], openHat: [14],
+      bass: [0, 2, 5, 8, 10, 13], bassOctave: [5, 13],
+      stab: [2, 6, 10, 14], stabInst: 'synth',
+      chords: [[57, 60, 64], [53, 57, 60], [55, 59, 62], [52, 55, 59]], roots: [33, 29, 31, 28],
+      lead: { inst: '8bit', positions: [3, 11] }, swing: 0, level: 1
+    },
+    chill: {
+      kick: [0, 10], ghostKick: [], snare: [8], clap: [15],
+      hat: 2, hatAccent: [2, 6, 10, 14], openHat: [],
+      bass: [0, 8], bassOctave: [8],
+      stab: [], stabInst: 'pad',
+      chords: [[50, 53, 57, 60], [55, 58, 62, 65], [48, 52, 55, 59], [45, 48, 52, 55]], roots: [38, 43, 36, 33],
+      lead: { inst: 'harp', positions: [4, 6, 12] }, swing: .2, level: .74
+    }
+  };
+
   function schedulePadBackingStep(step, when, id) {
+    const groove = PAD_GROOVES[id] || PAD_GROOVES.sunny;
     const position = step % 16;
     const bar = Math.floor(step / 16) % 4;
-    const chords = [[60, 64, 67], [57, 60, 64], [57, 60, 65], [59, 62, 67]];
-    const roots = [36, 33, 29, 31];
-    // 116 BPM 十六分网格：四踩底鼓 + 反拍军鼓 + 切分贝斯，四小节一循环，第 4 小节带过门。
+    const stepDur = padStepDuration();
+    const swing = id === 'chill' && position % 2 === 1 ? stepDur * groove.swing : 0;
+    const t = when + swing;
+    const human = () => (Math.random() - .5) * .006;
+    const vary = (value) => value * (.92 + Math.random() * .16);
+    const level = groove.level;
     const fill = bar === 3 && position >= 13;
-    const kickPositions = id === 'chill' ? [0, 8, 11] : id === 'bounce' ? [0, 4, 6, 8, 12, 14] : [0, 4, 8, 10, 12];
-    const snarePositions = id === 'chill' ? [8, 15] : [4, 12];
-    const bassPositions = id === 'sunny' ? [0, 3, 6, 8, 10, 14] : id === 'bounce' ? [0, 3, 6, 8, 11, 14] : [0, 8, 14];
-    const chordPositions = id === 'sunny' ? [2, 7, 10, 15] : id === 'bounce' ? [2, 6, 10, 14] : [0];
-    const hatEvery = id === 'chill' ? 4 : 2;
-    const kick = kickPositions.includes(position);
-    const snare = snarePositions.includes(position) || fill;
-    const hat = position % hatEvery === 0;
-    const bass = bassPositions.includes(position);
-    const chord = chordPositions.includes(position);
+
+    const kick = groove.kick.includes(position) || groove.ghostKick.includes(position);
+    const snare = groove.snare.includes(position) || fill;
+    const hat = position % groove.hat === 0;
+    const bass = groove.bass.includes(position);
+    const chord = groove.stab.includes(position) || (id === 'chill' && position % 8 === 0);
     emitPadBeat(step, when, id, { kick, snare, hat, bass, chord, bar });
 
-    const vel = id === 'chill' ? .72 : 1;
     if (kick) {
-      padDrumSound('drum:kick', when, (position === 0 ? .95 : .85) * vel, true);
-      if (id === 'bounce' && position % 8 === 6) padDrumSound('drum:kick', when + .012, .5, true);
+      const ghost = groove.ghostKick.includes(position) && !groove.kick.includes(position);
+      padDrumSound('drum:kick', t + human(), vary((ghost ? .42 : position === 0 ? .98 : .86) * level), true);
     }
-    if (snare) padDrumSound('drum:snare', when, (fill ? .6 : .82) * vel, true);
-    if (position % 4 === 0 && id !== 'chill') padDrumSound('drum:clap', when + .006, .5 * vel, true);
+    if (snare) padDrumSound('drum:snare', t + human(), vary((fill ? .58 : .84) * level), true);
+    if (groove.clap.includes(position) && id !== 'chill') padDrumSound('drum:clap', t + .006, vary(.5 * level), true);
+    if (id === 'chill' && position === 15) padDrumSound('drum:clap', t, .3, true);
     if (hat) {
-      const open = position === 14 && id !== 'chill';
-      const hatVolume = (position % 4 === 2 ? .42 : .3) * (id === 'chill' ? .72 : 1);
-      padDrumSound(open ? 'drum:openhat' : 'drum:hat', when, hatVolume, true);
+      const open = groove.openHat.includes(position);
+      const accent = groove.hatAccent.includes(position);
+      padDrumSound(open ? 'drum:openhat' : 'drum:hat', t + human(), vary((accent ? .44 : .28) * level), true);
     }
     if (bass) {
-      const octave = [6, 14].includes(position) && id !== 'chill' ? 12 : 0;
-      padInstrumentTone('bass', roots[bar] + octave, when, position === 0 ? 2.4 : 1.2, .55 * vel, true);
+      const octave = groove.bassOctave.includes(position) ? 12 : 0;
+      const long = id === 'chill' ? (position === 0 ? 3.6 : 2.2) : position === 0 ? 2.4 : 1.2;
+      padInstrumentTone('bass', groove.roots[bar] + octave, t + human(), long, vary(.58 * level), true);
     }
-    if (chord) {
-      const instrument = id === 'chill' ? 'pad' : id === 'bounce' ? 'synth' : 'piano';
+    if (groove.stab.includes(position)) {
       const length = id === 'chill' ? 13.5 : position === 7 ? 1.5 : .9;
-      chords[bar].forEach((midi) => padInstrumentTone(instrument, midi, when, length, (id === 'chill' ? .2 : .3) * vel, true));
+      groove.chords[bar].forEach((midi) => padInstrumentTone(groove.stabInst, midi, t + human(), length, vary(.3 * level), true));
     }
-    if (id === 'sunny' && bar % 2 === 1 && [6, 14].includes(position)) padInstrumentTone('marimba', chords[bar][2] + 12, when, 1.4, .16, true);
-    if (id === 'chill' && position === 10) padInstrumentTone('harp', chords[bar][1] + 12, when, 2.2, .12, true);
-    if (fill) padDrumSound('drum:hat', when + .03, .3, true);
+    if (id === 'chill' && position % 8 === 0) {
+      groove.chords[bar].forEach((midi) => padInstrumentTone('pad', midi, t, position === 0 ? 7.5 : 7.2, .22 * level, true));
+    }
+    if (groove.lead && groove.lead.positions.includes(position)) {
+      const midi = groove.chords[bar][1] + 12 + (position % 4 === 0 ? 12 : 0);
+      padInstrumentTone(groove.lead.inst, midi, t + human(), id === 'chill' ? 2.4 : 1.2, vary(.16 * level), true);
+    }
+    if (fill) padDrumSound('drum:hat', t + .03, .3, true);
   }
 
   function runPadBackingScheduler() {
@@ -2297,7 +2349,7 @@
 
   function initPadStage() {
     if (!window.MemePadStage) return;
-    const samples = memes.map((meme) => ({ kind: 'sample', source: meme.id, title: meme.title, sub: meme.sub, image: meme.image, color: meme.color }));
+    const samples = memes.map((meme) => ({ kind: 'sample', source: meme.id, title: meme.title, sub: meme.sub, image: meme.image, padImage: meme.padImage, color: meme.color }));
     const instrumentNotes = musicData.instruments.map((instrument) => ({ kind: 'note', source: `instrument:${instrument.id}`, title: instrument.title, sub: instrument.description, symbol: instrument.symbol, color: instrument.color }));
     window.MemePadStage.init({
       library: { sample: samples, note: instrumentNotes, drum: padDrums },

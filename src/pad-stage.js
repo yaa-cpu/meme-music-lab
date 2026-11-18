@@ -110,11 +110,12 @@
     grid.classList.toggle('four-pads', preset.layout === 4);
     grid.innerHTML = visibleSlots().map((slot, index) => {
       const source = sourceInfo(slot);
-      const visual = source.image
-        ? `<img src="${source.image}" alt="" draggable="false">`
+      const padImage = source.padImage || source.image;
+      const visual = padImage
+        ? `<img src="${padImage}" alt="" draggable="false">`
         : `<span class="pad-source-symbol" aria-hidden="true">${source.symbol || source.short || 'NOTE'}</span>`;
       const kindName = { sample: '梗采样', note: '乐器音符', drum: '鼓点' }[slot.kind];
-      return `<button class="meme-pad pad-${slot.kind}" type="button" data-pad-index="${index}" style="--pad-color:${source.color};--pad-order:${index}" aria-label="敲击 ${source.title}，${kindName}，快捷键 ${index + 1}">
+      return `<button class="meme-pad pad-${slot.kind}" type="button" data-pad-index="${index}" data-source="${escapeHTML(slot.source)}" style="--pad-color:${source.color};--pad-order:${index};--dance-tilt:${index % 2 ? '-2.5deg' : '2.5deg'}" aria-label="敲击 ${source.title}，${kindName}，快捷键 ${index + 1}">
         <span class="pad-number">${index + 1}</span>
         <span class="pad-kind">${kindName}</span>
         <span class="pad-image">${visual}</span>
@@ -263,6 +264,7 @@
     stage.classList.toggle('beat-kick', kick);
     stage.classList.toggle('beat-snare', snare);
     if (window.PadLeds) window.PadLeds.beat(detail);
+    if (window.PadBG) window.PadBG.beat(detail);
     pulsePage(kick, snare);
   }
 
@@ -271,11 +273,15 @@
     $('#pad-backing-select').value = preset.backing;
     $('#pad-backing-name').textContent = options.loopName(preset.backing);
     const active = backingOn && !studioPaused && preset.backing !== 'off';
+    // 图案的律动周期 = 两拍，跟着当前底奏的速度走。
+    const grooveBpm = { sunny: 116, bounce: 138, chill: 84 }[preset.backing] || 116;
+    $('#pad-playground').style.setProperty('--dance-dur', `${((60 / grooveBpm) * 2).toFixed(3)}s`);
     const toggle = $('#pad-loop-toggle');
     toggle.classList.toggle('active', active);
     toggle.setAttribute('aria-pressed', String(active));
     $('span', toggle).textContent = active ? '底奏开' : '底奏关';
     if (window.PadLeds) window.PadLeds.setActive(active);
+    if (window.PadBG) window.PadBG.setActive(active);
     if (!active) resetBeatVisuals();
   }
 
@@ -359,6 +365,7 @@
       window.PadFX.burst({ x: hit.x, y: hit.y, w: hit.w, h: hit.h, color: resolveColor(source.color), kind: slot.kind, neighbors: neighborPulses(button, hit) });
     }
     if (window.PadLeds) window.PadLeds.hit(Number(button.dataset.padIndex), resolveColor(source.color));
+    if (window.PadBG) window.PadBG.hit(resolveColor(source.color));
     spawnWord(button, slot);
     shakeStage(heavy ? 'hard' : 'soft');
   }
@@ -499,6 +506,7 @@
     loadState();
     if (window.PadFX) window.PadFX.init({ canvas: $('#pad-fx'), stage: $('#pad-playground') });
     if (window.PadLeds) window.PadLeds.init({ canvas: $('#pad-leds'), stage: $('#pad-playground') });
+    if (window.PadBG) window.PadBG.init({ canvas: $('#pad-bg'), stage: $('#pad-home') });
     bindControls();
     window.addEventListener('meme-pad-beat', syncBeatLights);
     renderPads(); renderLibrary(); renderBackingSelect();

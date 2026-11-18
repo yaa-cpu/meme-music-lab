@@ -1,7 +1,8 @@
 .pad-home{position:relative;isolation:isolate;margin:12px 0 48px;padding:24px 30px 30px;border:1.5px solid var(--ink);border-radius:22px;background:oklch(0.94 0.055 105);box-shadow:6px 7px 0 var(--ink);overflow:hidden}
 .pad-home::before{content:"";position:absolute;z-index:-1;width:420px;height:420px;right:-130px;top:-180px;border:70px solid oklch(0.87 0.12 112 / .55);border-radius:50%}
 .pad-home::after{content:"";position:absolute;z-index:-1;width:210px;height:210px;left:27%;bottom:-150px;border:42px solid oklch(0.86 0.09 5 / .38);border-radius:50%}
-.pad-hero-layout{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:center;max-width:860px;margin:auto}
+.pad-bg{position:absolute;inset:0;z-index:0;width:100%;height:100%;pointer-events:none}
+.pad-hero-layout{position:relative;z-index:1;display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:center;max-width:860px;margin:auto}
 .pad-intro{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:0 4px}
 .pad-intro h1{margin:0;font-size:clamp(38px,4.2vw,58px);letter-spacing:-.065em;line-height:1.1}
 .pad-intro h1 span{display:inline-block;color:var(--danger);transform:rotate(-4deg);transform-origin:left bottom}
@@ -37,16 +38,19 @@
 /* ---- 按键 ---- */
 .meme-pad{position:relative;isolation:isolate;min-width:0;min-height:0;height:100%;border:1.5px solid #090b08;border-radius:12px;background:var(--pad-color);overflow:hidden;box-shadow:inset 0 -6px 0 oklch(0.3 0.02 115 / .18),0 5px 0 #090b08;touch-action:manipulation;user-select:none;text-align:left;transform:translateZ(0);will-change:transform;transition:transform .1s ease-out,box-shadow .1s ease-out,filter .1s ease-out}
 .meme-pad:hover{filter:saturate(1.08);transform:translateY(-2px);box-shadow:inset 0 -6px 0 oklch(0.3 0.02 115 / .15),0 7px 0 #090b08}
-.meme-pad:active{transform:translateY(5px) scale(.985);box-shadow:inset 0 -2px 0 oklch(0.3 0.02 115 / .12),0 2px 0 #090b08}
-.meme-pad.hit{animation:pad-punch .34s cubic-bezier(.22,1.1,.3,1.12);filter:brightness(1.07) saturate(1.22)}
+.meme-pad:active{transform:translateY(3px) scale(.995);box-shadow:inset 0 -2px 0 oklch(0.3 0.02 115 / .12),0 2px 0 #090b08}
+.meme-pad.hit{filter:brightness(1.08) saturate(1.24)}
 .meme-pad::before{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(circle at 70% 20%,oklch(0.98 0.02 110 / .68),transparent 54%)}
 .meme-pad::after{content:"";position:absolute;z-index:4;left:9%;right:9%;bottom:2px;height:3px;border-radius:99px;background:var(--surface);opacity:.32;box-shadow:0 0 8px var(--surface);transition:opacity .1s ease-out,transform .1s ease-out}
 .meme-pad.hit::after{opacity:1;transform:scaleX(1.14)}
 .pad-number{position:absolute;z-index:3;left:8px;top:8px;width:26px;height:26px;border:1.5px solid var(--ink);border-radius:6px;background:var(--surface);display:grid;place-items:center;font:950 12px/1 Arial,sans-serif;box-shadow:2px 2px 0 var(--ink)}
 .pad-kind{position:absolute;z-index:3;right:8px;top:9px;padding:4px 6px;border-radius:4px;background:var(--ink);color:var(--surface);font-size:8px;font-weight:850;letter-spacing:.04em}
-.pad-image{position:absolute;left:50%;top:43%;width:70%;height:67%;transform:translate(-50%,-50%);display:grid;place-items:center}
-.pad-image img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(2px 3px 0 oklch(0.2 0.02 115 / .25));transition:transform .18s ease-out;pointer-events:none}
-.meme-pad.hit .pad-image img{transform:scale(1.18) rotate(-5deg)}
+.pad-image{position:absolute;left:50%;top:43%;width:82%;height:76%;transform:translate(-50%,-50%);display:grid;place-items:center;animation:pad-idle-dance var(--dance-dur,1.04s) ease-in-out infinite;animation-delay:calc(var(--pad-order,0) * -0.12s);will-change:transform}
+.pad-image img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(2px 4px 0 oklch(0.2 0.02 115 / .22));pointer-events:none;transform-origin:50% 86%}
+.meme-pad.hit .pad-image img{animation:pad-img-pop .44s cubic-bezier(.16,1,.3,1)}
+/* 火焰大狗：抠出来的狗头配一圈火光，不把整块火焰当背景 */
+[data-source="dog"] .pad-image img,[data-source^="dog-"] .pad-image img{filter:drop-shadow(0 0 14px oklch(0.72 0.2 45 / .9)) drop-shadow(2px 4px 0 oklch(0.2 0.02 115 / .22))}
+[data-source="nailong"] .pad-image img{filter:drop-shadow(2px 3px 0 oklch(0.2 0.02 115 / .18))}
 .pad-source-symbol{font:950 clamp(23px,3vw,42px)/1 Arial,sans-serif;letter-spacing:-.06em;color:var(--ink);text-align:center}
 .pad-label{position:absolute;z-index:2;left:10px;right:10px;bottom:9px;display:flex;align-items:flex-end;justify-content:space-between;gap:6px;line-height:1.15}
 .pad-label strong{font-size:16px;font-weight:950;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 0 oklch(0.98 0.01 110 / .5)}
@@ -107,7 +111,8 @@
 .pad-library-item>strong{max-width:100%;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pad-library-item>small{max-width:100%;font-size:8px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @keyframes pad-ring{from{opacity:.9;transform:translate(-50%,-50%) scale(.55)}to{opacity:0;transform:translate(-50%,-50%) scale(6)}}
-@keyframes pad-punch{0%{transform:translateY(8px) scale(.93)}42%{transform:translateY(-4px) scale(1.05)}70%{transform:translateY(2px) scale(.995)}100%{transform:translateY(0) scale(1)}}
+@keyframes pad-idle-dance{0%,100%{transform:translate(-50%,-50%) translateY(0) rotate(var(--dance-tilt,0deg))}50%{transform:translate(-50%,-50%) translateY(-7px) rotate(calc(var(--dance-tilt,0deg) * 1.8))}}
+@keyframes pad-img-pop{0%{transform:scale(1) rotate(0)}22%{transform:scale(1.22) rotate(-7deg)}46%{transform:scale(.93) rotate(4deg)}70%{transform:scale(1.07) rotate(-2deg)}100%{transform:scale(1) rotate(0)}}
 @keyframes pad-word-pop{0%{opacity:0;transform:translate(-50%,-50%) scale(.3) rotate(var(--word-rotate,-6deg))}18%{opacity:1;transform:translate(-50%,-58%) scale(1.22) rotate(var(--word-rotate,-6deg))}55%{opacity:1;transform:translate(-50%,-68%) scale(1) rotate(var(--word-rotate,-6deg))}100%{opacity:0;transform:translate(-50%,-96%) scale(.92) rotate(var(--word-rotate,-6deg))}}
 @keyframes pad-shake-soft{0%,100%{transform:translate(0,0)}20%{transform:translate(-3px,2px)}45%{transform:translate(3px,-2px)}70%{transform:translate(-2px,-1px)}}
 @keyframes pad-shake-hard{0%,100%{transform:translate(0,0) rotate(0)}14%{transform:translate(-6px,4px) rotate(-.35deg)}34%{transform:translate(6px,-4px) rotate(.32deg)}54%{transform:translate(-4px,-2px) rotate(-.2deg)}74%{transform:translate(3px,2px) rotate(.1deg)}}
@@ -124,7 +129,7 @@
   .pad-toolbar{gap:7px}.pad-preset-chip{min-height:34px;padding:0 11px 0 9px}.pad-preset-chip strong{font-size:12px}.pad-chip-button{min-height:34px;padding:0 10px;font-size:11px}.pad-chip-button svg{width:13px;height:13px}.pad-layout-switch button{min-width:40px;min-height:28px;font-size:10px}
   .pad-playground{padding:12px 9px;border-radius:14px}
   .drum-pad-grid{gap:7px}.meme-pad{border-radius:10px}
-  .pad-number{left:5px;top:5px;width:22px;height:22px;font-size:10px}.pad-kind{right:5px;top:6px;font-size:7px;padding:3px 4px}.pad-image{width:82%;height:61%;top:42%}.pad-label{left:7px;right:7px;bottom:7px}.pad-label strong{font-size:12px}
+  .pad-number{left:5px;top:5px;width:22px;height:22px;font-size:10px}.pad-kind{right:5px;top:6px;font-size:7px;padding:3px 4px}.pad-image{width:92%;height:74%;top:43%}.pad-label{left:7px;right:7px;bottom:7px}.pad-label strong{font-size:12px}
   .pad-status{font-size:10px;gap:6px}#pad-backing-name{display:none}
   .pad-sticker-one{width:58px;height:58px;right:4px;top:-20px}.pad-backpack-head{padding:18px}.pad-backpack-head h2{font-size:21px}.pad-backpack-body{padding:16px}.pad-preset-manager{grid-template-columns:1fr}.pad-preset-actions{grid-column:auto}.pad-custom-save{grid-template-columns:1fr}.pad-custom-save>button{min-height:44px}.pad-editor-grid{gap:18px}#pad-library{grid-template-columns:repeat(3,minmax(0,1fr));max-height:280px}.pad-slot-button{min-height:58px}#pad-backpack-dialog{width:calc(100% - 20px);max-height:calc(100dvh - 20px)}
 }
