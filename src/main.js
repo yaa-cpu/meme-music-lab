@@ -2386,9 +2386,8 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
     record.classList.toggle('recording', recording);
     record.innerHTML = `${icon('record')}<span>${recording ? '停止录制' : '边弹边录'}</span>`;
     record.setAttribute('aria-pressed', String(recording));
-    const loopButton = $('#loop-button');
-    loopButton.classList.toggle('active', loop);
-    loopButton.setAttribute('aria-pressed', String(loop));
+    // 循环按钮已移除，播放始终循环
+    loop = true;
     loopButton.disabled = recording || libraryPlaying;
   }
 
@@ -2964,7 +2963,7 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
   function bindControls() {
     $('#play-button').addEventListener('click', togglePlay);
     $('#record-button').addEventListener('click', () => recording ? finishRecording() : startRecording());
-    $('#loop-button').addEventListener('click', () => { loop = !loop; saveState(); updateTransport(); showToast(loop ? '循环播放已开启' : '循环播放已关闭'); });
+
     bindChoiceWheel('#bpm-wheel', () => bpm, (value) => {
       const next = Number(value);
       if (next === bpm) return;
