@@ -351,7 +351,7 @@
   };
 
   const drumKinds = ['kick', 'snare', 'hat', 'clap', 'openhat', 'rim'];
-  const DRUM_MAP = ['kick', 'kick', 'snare', 'snare', 'hat', 'hat', 'clap', 'clap', 'openhat', 'rim', 'kick', 'snare'];
+  const DRUM_MAP = ['kick', 'kick', 'snare', 'snare', 'hat', 'tom', 'clap', 'clap', 'openhat', 'rim', 'kick', 'snare'];
 
   // 每个乐器族的默认效果器（reverb 走总线、delaySend 走附点延迟），解决"听起来干巴"。
   const FAMILY_FX = {
@@ -459,16 +459,24 @@
       osc('sine', 48, 0, .42, .55);
       osc('triangle', 120, 80, .028, .08, 'lowpass', 320);   // 鼓槌点击（短）
     } else if (kind === 'snare') {
-      osc('triangle', 190, 150, .09, .82);                    // 鼓皮
-      osc('triangle', 335, 290, .07, .46);
-      noise(.085, 'bandpass', 2000, .8, .82);                 // 响弦（短促）
-      noise(.025, 'highpass', 6000, .7, .42);                 // 瞬态
+      osc('triangle', 185, 145, .13, .9);                     // 鼓皮（更长更厚）
+      osc('triangle', 260, 210, .11, .34);
+      osc('triangle', 335, 290, .09, .5);
+      noise(.13, 'bandpass', 2000, .8, .9);                   // 响弦
+      noise(.05, 'bandpass', 900, .7, .34);                   // 鼓身中频
+      noise(.03, 'highpass', 6000, .7, .5);                   // 瞬态
     } else if (kind === 'hat') {
-      noise(.075, 'bandpass', 8200, 1.4, .22);
-      noise(.04, 'highpass', 10000, .7, .05);
+      noise(.08, 'bandpass', 3600, 1.6, .12);                 // 镲片金属"嗒"的中频
+      noise(.09, 'bandpass', 8200, 1.4, .26);
+      noise(.05, 'highpass', 10000, .7, .06);
     } else if (kind === 'openhat') {
-      noise(.28, 'bandpass', 8000, 1.2, .2);
-      noise(.16, 'highpass', 9500, .7, .04);
+      noise(.24, 'bandpass', 3400, 1.4, .12);
+      noise(.32, 'bandpass', 8000, 1.2, .24);
+      noise(.18, 'highpass', 9500, .7, .05);
+    } else if (kind === 'tom') {
+      osc('sine', 240, 130, .28, .95);                        // 通鼓：音高下坠
+      osc('triangle', 160, 95, .22, .4);
+      noise(.03, 'bandpass', 1200, 1, .12);
     } else if (kind === 'clap') {
       [0, .012, .026].forEach((offset, index) => {
         const src = register(ctx.createBufferSource());

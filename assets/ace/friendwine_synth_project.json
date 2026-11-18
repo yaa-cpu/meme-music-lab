@@ -9,10 +9,10 @@
    "label": "01 鼓组",
    "aceKind": "鼓组",
    "preset": "drumkit",
-   "gain": 1.08,
+   "gain": 1.05,
    "fx": {
     "reverb": "room",
-    "wet": 0.04
+    "wet": 0.18
    },
    "notes": [
     [
