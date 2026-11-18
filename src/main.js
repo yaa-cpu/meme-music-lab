@@ -1635,8 +1635,7 @@
       const startOffset = Math.min(sampleOffset + lead, Math.max(0, buffer.duration - .02));
       const sampleDuration = buffer.duration / playbackRate;
       const availableDuration = Math.max(.01, sampleDuration - startOffset / playbackRate);
-      // 对照 Dagou-Tap：采样本身放完整段，不靠“截短”来收干净；
-      // 快速连击时靠“重触发立刻掐掉上一声”保证节奏反馈，见下面的 choke。
+      // 打击垫：按住就播，播到采样结尾还在按就循环，松开由 releasePadSample 停止。
       const duration = padHit
         ? availableDuration
         : preview
@@ -1644,9 +1643,7 @@
           : (note?.length || 1) * stepDuration() * (hasAdjacentNext ? 1 : 1.6);
       const stopAt = when + duration;
       const attack = padHit ? .004 : Math.min(.025, duration * .08);
-      const fade = padHit
-        ? Math.min(.05, duration * .25)
-        : Math.min(hasAdjacentNext ? .42 : .11, duration * (hasAdjacentNext ? .72 : .32));
+      const fade = Math.min(hasAdjacentNext ? .42 : .11, duration * (hasAdjacentNext ? .72 : .32));
       const fadeStart = Math.max(when + attack, stopAt - fade);
       const fadeCurve = new Float32Array(97);
       for (let i = 0; i < fadeCurve.length; i++) {
@@ -1654,15 +1651,24 @@
       }
       source.buffer = buffer;
       source.playbackRate.value = playbackRate;
-      source.loop = !preview && !padHit && duration > availableDuration;
-      if (source.loop && startOffset > 0) { source.loopStart = startOffset; source.loopEnd = buffer.duration; }
+      if (padHit) {
+        source.loop = true;
+        source.loopStart = startOffset;
+        source.loopEnd = buffer.duration;
+      } else {
+        source.loop = !preview && duration > availableDuration;
+        if (source.loop && startOffset > 0) { source.loopStart = startOffset; source.loopEnd = buffer.duration; }
+      }
       gain.gain.setValueAtTime(0, when);
       gain.gain.linearRampToValueAtTime(volume, when + attack);
-      gain.gain.setValueAtTime(volume, fadeStart);
-      gain.gain.setValueCurveAtTime(fadeCurve, fadeStart, stopAt - fadeStart);
-      source.connect(gain).connect(createSoundBus(note, when, duration));
+      if (!padHit) {
+        gain.gain.setValueAtTime(volume, fadeStart);
+        gain.gain.setValueCurveAtTime(fadeCurve, fadeStart, stopAt - fadeStart);
+      }
+      // 打击垫循环播放，节点留到松开为止再断开。
+      source.connect(gain).connect(createSoundBus(note, when, padHit ? 60 : duration));
       source.start(when, startOffset);
-      source.stop(stopAt + .08);
+      if (!padHit) source.stop(stopAt + .08);
       // 打击垫重触发：同一个采样再次被敲时，直接掐掉上一声（6ms 消咔哒）再从起点重新发声，
       // 这样连击的节奏反馈靠“重新触发”而不是靠把采样截短。
       if (padHit) {
@@ -1677,7 +1683,7 @@
           } catch (_) { /* 上一声已结束 */ }
         }
         padSampleVoices.set(id, { source, gain });
-        padHeldSamples.set(id, { source, gain, start: when, end: stopAt });
+        padHeldSamples.set(id, { source, gain, start: when });
         source.addEventListener('ended', () => {
           if (padSampleVoices.get(id)?.source === source) padSampleVoices.delete(id);
         }, { once: true });

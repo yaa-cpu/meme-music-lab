@@ -182,3 +182,29 @@ body.fx-snare::after{animation:page-snare .36s ease-out}
 }
 @keyframes pad-hold-ring{0%{opacity:.8;transform:translate(-50%,-50%) scale(.6)}75%{opacity:.2;transform:translate(-50%,-50%) scale(3.2)}100%{opacity:0;transform:translate(-50%,-50%) scale(3.8)}}
 @media (prefers-reduced-motion:reduce){.meme-pad.holding{animation:none}.meme-pad.holding .pad-hit-ring{animation:none}}
+
+/* 长按视觉反馈加强版（覆盖前面的弱版本） */
+.meme-pad.holding{border-color:var(--acid);z-index:6;filter:saturate(1.4) brightness(1.12);animation:pad-hold-pulse .5s cubic-bezier(.3,.7,.4,1) infinite}
+.meme-pad.holding .pad-hit-ring{border-width:4px;border-color:var(--acid);animation:pad-hold-ring .5s ease-out infinite}
+.meme-pad.holding::before{animation:pad-hold-flash .5s ease-in-out infinite}
+.meme-pad.holding::after{opacity:1;transform:scaleX(1.22);height:5px;background:var(--acid)}
+#pad-playground.is-holding{box-shadow:0 0 0 3px var(--acid),0 0 60px oklch(.9 .19 110 / .55);transition:box-shadow .18s ease-out}
+@keyframes pad-hold-pulse{
+  0%,100%{transform:translateY(1px) scale(1.006);box-shadow:inset 0 -4px 0 oklch(.3 .02 115 / .16),0 4px 0 #090b08,0 0 0 3px var(--acid),0 0 22px oklch(.9 .19 110 / .5)}
+  50%{transform:translateY(-2px) scale(1.045);box-shadow:inset 0 -4px 0 oklch(.3 .02 115 / .16),0 4px 0 #090b08,0 0 0 6px var(--acid),0 0 56px oklch(.9 .19 110 / .85)}
+}
+@keyframes pad-hold-ring{0%{opacity:.95;transform:translate(-50%,-50%) scale(.5)}70%{opacity:.35;transform:translate(-50%,-50%) scale(4.2)}100%{opacity:0;transform:translate(-50%,-50%) scale(5)}}
+@keyframes pad-hold-flash{0%,100%{opacity:.5;filter:brightness(1)}50%{opacity:1;filter:brightness(1.5)}}
+@media (prefers-reduced-motion:reduce){.meme-pad.holding{animation:none}.meme-pad.holding .pad-hit-ring{animation:none}.meme-pad.holding::before{animation:none}}
+
+/* 长按视觉反馈：强度收敛版（保留脉冲/光圈，但不糊住按键） */
+.meme-pad.holding{filter:saturate(1.24) brightness(1.05);animation:pad-hold-pulse .62s cubic-bezier(.3,.7,.4,1) infinite}
+.meme-pad.holding .pad-hit-ring{border-width:3px;animation:pad-hold-ring .72s ease-out infinite}
+.meme-pad.holding::before{animation:pad-hold-flash .62s ease-in-out infinite}
+#pad-playground.is-holding{box-shadow:0 0 0 2px var(--acid),0 0 36px oklch(.9 .19 110 / .38)}
+@keyframes pad-hold-pulse{
+  0%,100%{transform:translateY(1px) scale(1.006);box-shadow:inset 0 -4px 0 oklch(.3 .02 115 / .16),0 4px 0 #090b08,0 0 0 3px var(--acid),0 0 16px oklch(.9 .19 110 / .42)}
+  50%{transform:translateY(-1px) scale(1.028);box-shadow:inset 0 -4px 0 oklch(.3 .02 115 / .16),0 4px 0 #090b08,0 0 0 5px var(--acid),0 0 30px oklch(.9 .19 110 / .68)}
+}
+@keyframes pad-hold-flash{0%,100%{opacity:.55;filter:brightness(1)}50%{opacity:.85;filter:brightness(1.2)}}
+@keyframes pad-hold-ring{0%{opacity:.85;transform:translate(-50%,-50%) scale(.55)}72%{opacity:.3;transform:translate(-50%,-50%) scale(3.2)}100%{opacity:0;transform:translate(-50%,-50%) scale(3.8)}}

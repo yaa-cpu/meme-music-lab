@@ -200,6 +200,56 @@
   let buttonHitTimer = null;
   let shakeTimer = null;
   let lastHit = null;
+  let holdFxTimer = null;
+
+  // 长按时的持续视觉反馈：少量但持续的火花/光圈/灯带，避免把按键糊成一片。
+  function startHoldFx(index, button) {
+    stopHoldFx();
+    let tickCount = 0;
+    const tick = () => {
+      const slot = currentPreset().slots[index];
+      if (!slot || !button || !button.isConnected) return;
+      const color = resolveColor(sourceInfo(slot).color);
+      const stage = $('#pad-playground');
+      if (stage) stage.style.setProperty('--hit-color', slot.color || color);
+      tickCount += 1;
+      const home = $('#pad-home');
+      if (home) {
+        const homeRect = home.getBoundingClientRect();
+        const rect = button.getBoundingClientRect();
+        const centerX = rect.left - homeRect.left + rect.width / 2;
+        const centerY = rect.top - homeRect.top + rect.height / 2;
+        for (let i = 0; i < 3; i++) {
+          spawnIconAt(
+            centerX + (Math.random() * 2 - 1) * rect.width * .34,
+            centerY + (Math.random() * 2 - 1) * rect.height * .24,
+            color,
+            12 + Math.random() * 18
+          );
+        }
+      }
+      if (window.PadLeds) window.PadLeds.hit(index, color);
+      if (tickCount % 2 === 0 && window.PadFX) {
+        const hit = hitGeometry(button);
+        window.PadFX.burst({ x: hit.x, y: hit.y, w: hit.w, h: hit.h, color, kind: 'hold', neighbors: [] });
+      }
+      if (tickCount % 2 === 0 && window.PadBG) {
+        const homeRect = $('#pad-home').getBoundingClientRect();
+        const rect = button.getBoundingClientRect();
+        window.PadBG.hit({ x: rect.left - homeRect.left + rect.width / 2, y: rect.top - homeRect.top + rect.height / 2, color });
+      }
+      applyDanceHit(index);
+    };
+    tick();
+    holdFxTimer = setInterval(tick, 200);
+  }
+
+  function stopHoldFx() {
+    if (holdFxTimer) clearInterval(holdFxTimer);
+    holdFxTimer = null;
+    const stage = $('#pad-playground');
+    if (stage) stage.classList.remove('is-holding');
+  }
 
   const HIT_WORDS = {
     kick: ['咚!', 'BANG!'],
@@ -566,6 +616,7 @@
     const slot = currentPreset().slots[index];
     const button = $(`.meme-pad[data-pad-index="${index}"]`);
     if (button) button.classList.remove('holding');
+    stopHoldFx();
     if (!slot) return;
     options.release?.(slot, index);
   }
@@ -584,7 +635,12 @@
       renderBackingSelect();
     }
     lastHit = { index, button, slot };
-    if (button) button.classList.add('holding');
+    if (button) {
+      button.classList.add('holding');
+      startHoldFx(index, button);
+      const stage = $('#pad-playground');
+      if (stage) stage.classList.add('is-holding');
+    }
     options.hit(slot, index);
     if (backingOn && currentPreset().backing !== 'off') options.setBacking(true, currentPreset().backing);
     if (button) burst(button, slot);
