@@ -173,6 +173,17 @@
   let convolver = null;
   let padMixInput = null;
   let padBackingInput = null;
+  let padBackingTonalInput = null;
+  let padDuckSC = null;
+  let padDuckUser = null;
+  let padBackingFilter = null;
+  let padDelay = null;
+  let padDelaySend = null;
+  let padDelayTone = null;
+  let padDelayFb = null;
+  let padDelayWet = null;
+  let padLimiter = null;
+  let padOpenHatVoice = null;
   const sampleLeads = new Map();
   const padSampleVoices = new Map();
   let padPreloadStarted = false;
@@ -1272,9 +1283,18 @@
     const output = audioCtx.createGain();
     output.gain.value = Number.isFinite(Number(note?.loopVolume)) ? clamp(Number(note.loopVolume), 0, 1) : 1;
     const preset = note?.reverbPreset || null;
-    const busInput = note?.backing && padBackingInput ? padBackingInput : note?.padBus && padMixInput ? padMixInput : null;
+    const busInput = note?.backingTonal && padBackingTonalInput ? padBackingTonalInput
+      : note?.backing && padBackingInput ? padBackingInput
+        : note?.padBus && padMixInput ? padMixInput
+          : null;
     const destination = busInput || master;
     const temporaryNodes = [output];
+    if (note?.delaySend && padDelaySend) {
+      const delayGain = audioCtx.createGain();
+      delayGain.gain.value = clamp(Number(note.delaySend), 0, .6);
+      output.connect(delayGain).connect(padDelaySend);
+      temporaryNodes.push(delayGain);
+    }
     if (!preset) {
       output.connect(busInput || mixInput);
     } else {
@@ -1320,21 +1340,55 @@
       reverbGain = audioCtx.createGain();
       padMixInput = audioCtx.createGain();
       padBackingInput = audioCtx.createGain();
+      padBackingTonalInput = audioCtx.createGain();
+      padDuckSC = audioCtx.createGain();
+      padDuckUser = audioCtx.createGain();
+      padBackingFilter = audioCtx.createBiquadFilter();
+      padDelaySend = audioCtx.createGain();
+      padDelay = audioCtx.createDelay(1);
+      padDelayTone = audioCtx.createBiquadFilter();
+      padDelayFb = audioCtx.createGain();
+      padDelayWet = audioCtx.createGain();
       const padCompressor = audioCtx.createDynamicsCompressor();
       const padOutput = audioCtx.createGain();
-      padCompressor.threshold.value = -16;
-      padCompressor.knee.value = 10;
-      padCompressor.ratio.value = 3.5;
-      padCompressor.attack.value = .004;
-      padCompressor.release.value = .16;
-      padOutput.gain.value = .82;
-      padBackingInput.gain.value = 1.5;
+      padCompressor.threshold.value = -12;
+      padCompressor.knee.value = 8;
+      padCompressor.ratio.value = 3;
+      padCompressor.attack.value = .008;
+      padCompressor.release.value = .14;
+      padOutput.gain.value = .85;
+      padBackingInput.gain.value = 1.2;
+      padBackingTonalInput.gain.value = 1.2;
+      padDuckSC.gain.value = 1;
+      padDuckUser.gain.value = 1;
+      padBackingFilter.type = 'lowpass';
+      padBackingFilter.frequency.value = 18000;
+      padBackingFilter.Q.value = .7;
+      padDelaySend.gain.value = .22;
+      padDelay.delayTime.value = .25;
+      padDelayTone.type = 'lowpass';
+      padDelayTone.frequency.value = 2600;
+      padDelayFb.gain.value = .3;
+      padDelayWet.gain.value = .5;
+      // 鼓走 padBackingInput、bass/stab/lead 走 tonal 分线；侧链只压 tonal，否则 kick 会被自己压闷。
+      padBackingTonalInput.connect(padDuckSC).connect(padBackingFilter);
+      padBackingInput.connect(padBackingFilter);
+      padBackingFilter.connect(padDuckUser).connect(padCompressor);
+      padDelaySend.connect(padDelay);
+      padDelay.connect(padDelayTone);
+      padDelayTone.connect(padDelayFb).connect(padDelay);
+      padDelayTone.connect(padDelayWet).connect(padBackingFilter);
       padMixInput.connect(padCompressor).connect(padOutput).connect(master);
-      padBackingInput.connect(padCompressor);
       master.gain.value = outputVolume / 100;
       mixInput.connect(dryGain).connect(master);
       mixInput.connect(convolver).connect(reverbGain).connect(master);
-      master.connect(audioCtx.destination);
+      padLimiter = audioCtx.createDynamicsCompressor();
+      padLimiter.threshold.value = -6;
+      padLimiter.knee.value = 0;
+      padLimiter.ratio.value = 20;
+      padLimiter.attack.value = .002;
+      padLimiter.release.value = .06;
+      master.connect(padLimiter).connect(audioCtx.destination);
       applyReverb();
     }
     if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => { /* 需要用户手势，点击后会自动恢复 */ });
@@ -2179,34 +2233,88 @@
   }
 
   const PAD_GROOVE_BPM = { sunny: 116, bounce: 138, chill: 84 };
+  const PAD_LOOP_STEPS = 256; // 16 小节编排
   function padGrooveBpm(id) { return PAD_GROOVE_BPM[id] || 116; }
-  function padStepDuration() { return 60 / padGrooveBpm(padBackingId) / 4; }
+  function padStepDuration(id = padBackingId) { return 60 / padGrooveBpm(id) / 4; }
+
+  // 侧链泵动：只用两次 setTargetAtTime，避免硬跳变咔哒；不要 cancel，调度器已提前排好后续。
+  function padPump(when, opts) {
+    if (!padDuckSC) return;
+    const depth = (opts && opts.depth) || .62;
+    const hold = (opts && opts.hold) || .021;
+    const release = (opts && opts.release) || .032;
+    const gain = padDuckSC.gain;
+    gain.setTargetAtTime(depth, when, .004);
+    gain.setTargetAtTime(1, when + hold, release);
+  }
+
+  // 用户敲击时整条底奏让位约 2dB，180ms 回来，避免和敲击抢频段。
+  function padDuckForUser(when) {
+    if (!padDuckUser) return;
+    const gain = padDuckUser.gain;
+    gain.setTargetAtTime(.78, when, .004);
+    gain.setTargetAtTime(1, when + .028, .06);
+  }
 
   function padDrumSound(kind, when, volume = 1, backing = false) {
     const type = kind.replace('drum:', '');
     withSoundBus({ loopVolume: volume, reverbPreset: 'none', padBus: true, backing }, when, .45, () => {
       if (type === 'kick') {
-        tone('sine', 168, when, .34, .95, 42);
-        tone('triangle', 78, when, .16, .3, 44);
-        tone('square', 320, when, .02, .07, 140);
-        noise(when, .03, 3000, .06);
+        tone('sine', 170, when, .32, .95, 46);
+        tone('triangle', 88, when, .12, .3, 44);
+        tone('square', 340, when, .012, .08, 150);
+        noise(when, .01, 3000, .1);
       } else if (type === 'snare') {
-        noise(when, .19, 1900, .5);
-        tone('triangle', 195, when, .12, .24, 108);
-        noise(when + .012, .06, 4200, .12);
+        noise(when, .2, 1900, .52);
+        noise(when + .012, .05, 5200, .16);
+        tone('triangle', 195, when, .1, .22, 120);
+      } else if (type === 'clap') {
+        [0, .02, .045].forEach((offset, index) => noise(when + offset, .11 - index * .012, 1450 + index * 420, .24));
       } else if (type === 'hat' || type === 'openhat') {
-        noise(when, type === 'openhat' ? .2 : .07, 7900, .22);
-        noise(when, type === 'openhat' ? .14 : .03, 10800, .1);
-      } else {
-        [0, .018, .038].forEach((offset, index) => noise(when + offset, .11 - index * .014, 1450 + index * 420, .24));
+        // 开镲被下一个闭镲收掉：一声一个 gate，house/garage 的干净感靠它。
+        const gate = audioCtx.createGain();
+        gate.gain.value = 1;
+        gate.connect(soundOutput);
+        const previous = soundOutput;
+        soundOutput = gate;
+        try {
+          noise(when, type === 'openhat' ? .2 : .07, 7900, .22);
+          noise(when, type === 'openhat' ? .14 : .03, 10800, .1);
+          tone('square', 8200, when, type === 'openhat' ? .16 : .04, .035);
+        } finally {
+          soundOutput = previous;
+        }
+        if (type === 'openhat') {
+          padOpenHatVoice = gate;
+          setTimeout(() => { try { gate.disconnect(); } catch (_) { /* 已释放 */ } }, 700);
+        } else if (padOpenHatVoice) {
+          try {
+            padOpenHatVoice.gain.cancelScheduledValues(when);
+            padOpenHatVoice.gain.setTargetAtTime(0, when, .003);
+          } catch (_) { /* 上一声已结束 */ }
+          padOpenHatVoice = null;
+        }
       }
     });
   }
 
-  function padInstrumentTone(instrument, midi, when, length, volume, backing = false) {
+  function padInstrumentTone(instrument, midi, when, length, volume, opts = {}) {
+    const options = typeof opts === 'boolean' ? { bus: opts ? 'drums' : null } : opts;
+    const tonal = options.bus === 'tonal';
     const row = nearestPitchRow(midi);
     const stepLength = padStepDuration();
-    withSoundBus({ loopVolume: volume, reverbPreset: 'none', padBus: true, backing }, when, length * stepLength, () => {
+    if (tonal && options.delaySend && padDelay) {
+      padDelay.delayTime.setTargetAtTime(stepLength * 3, when, .01);
+    }
+    withSoundBus({
+      loopVolume: volume,
+      reverbPreset: options.reverbPreset || 'none',
+      reverbWet: options.reverbWet,
+      delaySend: options.delaySend || 0,
+      padBus: true,
+      backing: Boolean(options.bus) && !tonal,
+      backingTonal: tonal
+    }, when, length * stepLength, () => {
       instrumentSound(`instrument:${instrument}`, row, when, false, { midi, length, stepLength });
     });
   }
@@ -2221,90 +2329,232 @@
     }, delay);
   }
 
-  // 三套底奏各有自己的速度和性格：迪斯科放克 / 碎拍舞曲 / 半速 lo-fi。
+  // 三套底奏各有自己的速度和性格：Disco/Funk House、2-step/Speed Garage、Lo-fi Half-time。
+  // 数组与编排来自 docs/dj-backing-guide.md 第 3 章。
   const PAD_GROOVES = {
     sunny: {
-      kick: [0, 4, 8, 12], ghostKick: [7, 15], snare: [4, 12], clap: [4, 12],
-      hat: 2, hatAccent: [2, 6, 10, 14], openHat: [14],
-      bass: [0, 3, 6, 8, 10, 14], bassOctave: [6, 14],
-      stab: [2, 7, 10, 15], stabInst: 'piano',
-      chords: [[60, 64, 67], [57, 60, 64], [57, 60, 65], [59, 62, 67]], roots: [36, 33, 29, 31],
-      lead: { inst: 'marimba', positions: [6, 14] }, swing: 0, level: 1
+      kick: [0, 4, 8, 12],
+      ghostKick: [3, 7, 11, 15],
+      snare: [4, 12],
+      clap: [4, 12],
+      hat: 1,
+      hatAccent: [2, 6, 10, 14],
+      openHat: [2, 6, 10, 14],
+      bass: [0, 3, 6, 10, 12, 14],
+      bassOctave: [3, 10],
+      stab: [2, 6, 10, 14],
+      stabInst: 'piano',
+      chords: [[64, 67, 72], [60, 64, 69], [65, 69, 72], [62, 67, 71]],
+      roots: [36, 33, 29, 31],
+      lead: { inst: 'marimba', positions: [7, 15] },
+      swing: .1,
+      swingPositions: [1, 3, 5, 7, 9, 11, 13, 15],
+      sidechain: { depth: .62, hold: .021, release: .032 },
+      level: .95,
+      bars: [
+        {},
+        { bass: [0, 3, 6, 8, 10, 12, 14] },
+        {},
+        { stab: [2, 6, 10, 14, 15] }
+      ],
+      arrange: [
+        { gain: .78, lp: 2400, mute: ['bass', 'stab'], pat: { hat: 2 } },
+        { gain: .8, lp: 3000, mute: ['bass', 'stab'], pat: { hat: 2 } },
+        { gain: .88, lp: 5000, mute: ['stab'], snareFill: [14, 15] },
+        { gain: .9, lp: 6000, mute: ['stab'], snareFill: [14, 15] },
+        { gain: 1 },
+        { gain: 1 },
+        { gain: 1 },
+        { gain: .7, lp: 700, mute: ['kick', 'bass', 'clap'], snareFill: [] },
+        { gain: .95, lp: 12000 },
+        { gain: 1 },
+        { gain: 1 },
+        { gain: .88, lp: 1800, lpEnd: 14000, mute: ['bass', 'stab'], snareFill: [8, 10, 12, 14] },
+        { gain: 1, lp: 18000 },
+        { gain: 1 },
+        { gain: 1 },
+        { gain: .92, lp: 16000, snareFill: [12, 13, 14, 15] }
+      ]
     },
     bounce: {
-      kick: [0, 3, 6, 10, 12], ghostKick: [], snare: [4, 12], clap: [4, 12],
-      hat: 1, hatAccent: [2, 6, 10, 14], openHat: [14],
-      bass: [0, 2, 5, 8, 10, 13], bassOctave: [5, 13],
-      stab: [2, 6, 10, 14], stabInst: 'synth',
-      chords: [[57, 60, 64], [53, 57, 60], [55, 59, 62], [52, 55, 59]], roots: [33, 29, 31, 28],
-      lead: { inst: '8bit', positions: [3, 11] }, swing: 0, level: 1
+      kick: [0, 3, 6, 10],
+      ghostKick: [14],
+      snare: [4, 12],
+      clap: [4, 12],
+      hat: 1,
+      hatAccent: [2, 6, 10, 14],
+      openHat: [6, 14],
+      bass: [2, 6, 10, 14],
+      bassOctave: [6, 14],
+      stab: [3, 7, 11, 15],
+      stabInst: 'organ',
+      chords: [[57, 60, 64], [53, 57, 60], [55, 59, 62], [52, 55, 59]],
+      roots: [33, 29, 31, 28],
+      lead: { inst: '8bit', positions: [7, 15] },
+      swing: .24,
+      swingPositions: [1, 3, 5, 7, 9, 11, 13, 15],
+      sidechain: { depth: .55, hold: .018, release: .027 },
+      level: 1,
+      bars: [
+        {},
+        { ghostKick: [14, 15] },
+        {},
+        { stab: [3, 7, 11, 15, 14] }
+      ],
+      arrange: [
+        { gain: .8, lp: 3000, mute: ['bass', 'stab'], pat: { hat: 2 } },
+        { gain: .82, lp: 3600, mute: ['bass', 'stab'], pat: { hat: 2 } },
+        { gain: .88, lp: 6000, mute: ['stab'], snareFill: [14, 15] },
+        { gain: .9, lp: 7000, mute: ['stab'], snareFill: [14, 15] },
+        { gain: 1 },
+        { gain: 1 },
+        { gain: 1 },
+        { gain: .75, lp: 900, mute: ['kick', 'clap'], snareFill: [] },
+        { gain: .95, lp: 12000 },
+        { gain: 1 },
+        { gain: 1 },
+        { gain: .9, lp: 2500, lpEnd: 16000, mute: ['stab'], snareFill: [8, 9, 10, 11, 12, 13, 14, 15] },
+        { gain: 1, lp: 18000 },
+        { gain: 1 },
+        { gain: 1 },
+        { gain: .95, lp: 16000, snareFill: [13, 14, 15] }
+      ]
     },
     chill: {
-      kick: [0, 10], ghostKick: [], snare: [8], clap: [15],
-      hat: 2, hatAccent: [2, 6, 10, 14], openHat: [],
-      bass: [0, 8], bassOctave: [8],
-      stab: [], stabInst: 'pad',
-      chords: [[50, 53, 57, 60], [55, 58, 62, 65], [48, 52, 55, 59], [45, 48, 52, 55]], roots: [38, 43, 36, 33],
-      lead: { inst: 'harp', positions: [4, 6, 12] }, swing: .2, level: .74
+      kick: [0, 7, 10],
+      ghostKick: [14],
+      snare: [8],
+      clap: [],
+      hat: 1,
+      hatAccent: [2, 6, 10, 14],
+      openHat: [6, 14],
+      bass: [0, 6, 10, 14],
+      bassOctave: [10],
+      stab: [],
+      stabInst: 'pad',
+      chords: [[50, 53, 57, 60], [55, 58, 62, 65], [48, 52, 55, 59], [45, 48, 52, 55]],
+      roots: [38, 43, 36, 33],
+      lead: { inst: 'harp', positions: [5, 13] },
+      swing: .2,
+      swingPositions: [1, 3, 5, 7, 9, 11, 13, 15],
+      sidechain: { depth: .7, hold: .03, release: .045 },
+      level: .74,
+      bars: [
+        {},
+        {},
+        {},
+        { ghostKick: [14], snare: [8] }
+      ],
+      arrange: [
+        { gain: .78, lp: 3500, mute: ['hat', 'snare', 'bass'] },
+        { gain: .8, lp: 4000, mute: ['hat', 'snare', 'bass'] },
+        { gain: .85, lp: 5000, mute: ['bass'] },
+        { gain: .85, lp: 5200, mute: ['bass'], snareFill: [14] },
+        { gain: .92, lp: 6000 },
+        { gain: .92, lp: 6000 },
+        { gain: .92, lp: 6000 },
+        { gain: .72, lp: 900, mute: ['kick', 'snare', 'hat'], snareFill: [] },
+        { gain: .9, lp: 7000 },
+        { gain: .95, lp: 7000 },
+        { gain: .95, lp: 7000 },
+        { gain: .88, lp: 1800, lpEnd: 9000, mute: ['lead'], snareFill: [10, 12] },
+        { gain: 1, lp: 10000 },
+        { gain: 1, lp: 10000 },
+        { gain: 1, lp: 10000 },
+        { gain: .9, lp: 9500, snareFill: [14, 15] }
+      ]
     }
   };
+
+  const PAD_SWING_POSITIONS = [1, 3, 5, 7, 9, 11, 13, 15];
+
+  function padBarPattern(groove, bar) {
+    const override = groove.bars && groove.bars[bar];
+    return override ? Object.assign({}, groove, override) : groove;
+  }
 
   function schedulePadBackingStep(step, when, id) {
     const groove = PAD_GROOVES[id] || PAD_GROOVES.sunny;
     const position = step % 16;
-    const bar = Math.floor(step / 16) % 4;
-    const stepDur = padStepDuration();
-    const swing = id === 'chill' && position % 2 === 1 ? stepDur * groove.swing : 0;
-    const t = when + swing;
-    const human = () => (Math.random() - .5) * .006;
+    const barOfLoop = Math.floor(step / 16) % 16;
+    const bar = barOfLoop % 4;
+    const stepDur = padStepDuration(id);
+    const swingPositions = groove.swingPositions || PAD_SWING_POSITIONS;
+    const swingMs = (groove.swing || 0) * stepDur * (swingPositions.indexOf(position) >= 0 ? 1 : 0);
+    const t = when + swingMs;
+    const arr = (groove.arrange && groove.arrange[barOfLoop]) || {};
+    const base = padBarPattern(groove, bar);
+    const pattern = arr.pat ? Object.assign({}, base, arr.pat) : base;
+    const muted = arr.mute || [];
+    const on = (key) => muted.indexOf(key) < 0;
+    const level = (groove.level || 1) * (arr.gain === undefined ? 1 : arr.gain);
+    const human = (ms) => (Math.random() - .5) * ((ms || 6) / 1000);
     const vary = (value) => value * (.92 + Math.random() * .16);
-    const level = groove.level;
-    const fill = bar === 3 && position >= 13;
+    const fill = arr.snareFill || (bar === 3 && position >= 13 ? [position] : []);
 
-    const kick = groove.kick.includes(position) || groove.ghostKick.includes(position);
-    const snare = groove.snare.includes(position) || fill;
-    const hat = position % groove.hat === 0;
-    const bass = groove.bass.includes(position);
-    const chord = groove.stab.includes(position) || (id === 'chill' && position % 8 === 0);
-    emitPadBeat(step, when, id, { kick, snare, hat, bass, chord, bar });
+    const kick = on('kick') && (pattern.kick.indexOf(position) >= 0 || pattern.ghostKick.indexOf(position) >= 0);
+    const snare = on('snare') && (pattern.snare.indexOf(position) >= 0 || fill.indexOf(position) >= 0);
+    const hat = on('hat') && position % pattern.hat === 0;
+    const bass = on('bass') && pattern.bass.indexOf(position) >= 0;
+    const chord = on('stab') && (pattern.stab.indexOf(position) >= 0 || (id === 'chill' && position % 8 === 0));
+    emitPadBeat(step, t, id, { kick, snare, hat, bass, chord, bar, barOfLoop, swingMs, gain: level });
 
     if (kick) {
-      const ghost = groove.ghostKick.includes(position) && !groove.kick.includes(position);
-      padDrumSound('drum:kick', t + human(), vary((ghost ? .42 : position === 0 ? .98 : .86) * level), true);
+      const ghost = pattern.ghostKick.indexOf(position) >= 0 && pattern.kick.indexOf(position) < 0;
+      padDrumSound('drum:kick', t + human(4), vary((ghost ? .42 : position === 0 ? .98 : .86) * level), true);
+      if (!ghost) padPump(t, groove.sidechain);
     }
-    if (snare) padDrumSound('drum:snare', t + human(), vary((fill ? .58 : .84) * level), true);
-    if (groove.clap.includes(position) && id !== 'chill') padDrumSound('drum:clap', t + .006, vary(.5 * level), true);
-    if (id === 'chill' && position === 15) padDrumSound('drum:clap', t, .3, true);
+    if (snare) {
+      const isFill = fill.indexOf(position) >= 0;
+      padDrumSound('drum:snare', t + human(8) + .004, vary((isFill ? .58 : .84) * level), true);
+    }
+    if (on('clap') && pattern.clap.indexOf(position) >= 0 && id !== 'chill') {
+      padDrumSound('drum:clap', t + .006, vary(.5 * level), true);
+    }
+    if (id === 'chill' && bar === 3 && position === 15) padDrumSound('drum:clap', t, .3 * level, true);
     if (hat) {
-      const open = groove.openHat.includes(position);
-      const accent = groove.hatAccent.includes(position);
-      padDrumSound(open ? 'drum:openhat' : 'drum:hat', t + human(), vary((accent ? .44 : .28) * level), true);
+      const open = pattern.openHat.indexOf(position) >= 0;
+      const accent = pattern.hatAccent.indexOf(position) >= 0;
+      padDrumSound(open ? 'drum:openhat' : 'drum:hat', t + human(open ? 4 : 6), vary((accent ? .44 : .28) * level), true);
     }
     if (bass) {
-      const octave = groove.bassOctave.includes(position) ? 12 : 0;
+      const octave = pattern.bassOctave.indexOf(position) >= 0 ? 12 : 0;
       const long = id === 'chill' ? (position === 0 ? 3.6 : 2.2) : position === 0 ? 2.4 : 1.2;
-      padInstrumentTone('bass', groove.roots[bar] + octave, t + human(), long, vary(.58 * level), true);
+      padInstrumentTone('bass', pattern.roots[bar] + octave, t + human(4), long, vary(.58 * level), { bus: 'tonal' });
     }
-    if (groove.stab.includes(position)) {
+    if (on('stab') && pattern.stab.indexOf(position) >= 0) {
       const length = id === 'chill' ? 13.5 : position === 7 ? 1.5 : .9;
-      groove.chords[bar].forEach((midi) => padInstrumentTone(groove.stabInst, midi, t + human(), length, vary(.3 * level), true));
+      pattern.chords[bar].forEach((midi) => padInstrumentTone(pattern.stabInst, midi, t + human(8) - .003, length, vary(.3 * level), {
+        bus: 'tonal', delaySend: .18, reverbPreset: 'plate', reverbWet: .12
+      }));
     }
     if (id === 'chill' && position % 8 === 0) {
-      groove.chords[bar].forEach((midi) => padInstrumentTone('pad', midi, t, position === 0 ? 7.5 : 7.2, .22 * level, true));
+      pattern.chords[bar].forEach((midi) => padInstrumentTone('pad', midi, t, position === 0 ? 7.5 : 7.2, .22 * level, {
+        bus: 'tonal', reverbPreset: 'room', reverbWet: .1
+      }));
     }
-    if (groove.lead && groove.lead.positions.includes(position)) {
-      const midi = groove.chords[bar][1] + 12 + (position % 4 === 0 ? 12 : 0);
-      padInstrumentTone(groove.lead.inst, midi, t + human(), id === 'chill' ? 2.4 : 1.2, vary(.16 * level), true);
+    if (on('lead') && pattern.lead && pattern.lead.positions.indexOf(position) >= 0) {
+      const midi = pattern.chords[bar][1] + 12 + (position % 4 === 0 ? 12 : 0);
+      padInstrumentTone(pattern.lead.inst, midi, t + human(8), id === 'chill' ? 2.4 : 1.2, vary(.16 * level), {
+        bus: 'tonal', delaySend: .22
+      });
     }
-    if (fill) padDrumSound('drum:hat', t + .03, .3, true);
+    if (arr.fillHat && position >= 14) padDrumSound('drum:hat', t + .03, .3 * level, true);
+
+    // 小节级低通：breakdown 闷住、build 小节从 lp 扫到 lpEnd。
+    if (arr.lp && padBackingFilter) {
+      const hz = arr.lpEnd ? arr.lp * Math.pow(arr.lpEnd / arr.lp, position / 16) : arr.lp;
+      padBackingFilter.frequency.setTargetAtTime(hz, when, stepDur * .5);
+    }
   }
 
   function runPadBackingScheduler() {
     if (!audioCtx || !padBackingId) return;
+    const stepDur = padStepDuration(padBackingId);
     while (padBackingNextTime < audioCtx.currentTime + .12) {
       schedulePadBackingStep(padBackingStep, padBackingNextTime, padBackingId);
-      padBackingStep = (padBackingStep + 1) % 64;
-      padBackingNextTime += padStepDuration();
+      padBackingStep = (padBackingStep + 1) % PAD_LOOP_STEPS;
+      padBackingNextTime += stepDur;
     }
   }
 
@@ -2325,6 +2575,7 @@
       padBackingId = id;
       padBackingStep = 0;
       padBackingNextTime = audioCtx.currentTime + .06;
+      if (padBackingFilter) padBackingFilter.frequency.setTargetAtTime(18000, audioCtx.currentTime, .02);
       runPadBackingScheduler();
       padBackingTimer = setInterval(runPadBackingScheduler, 25);
     } catch (_) {
@@ -2336,6 +2587,7 @@
     try {
       await ensureAudio();
       const now = audioCtx.currentTime;
+      padDuckForUser(now + .005);
       if (slot.kind === 'drum') {
         const volumes = { 'drum:kick': .62, 'drum:snare': .55, 'drum:hat': .3, 'drum:clap': .45 };
         padDrumSound(slot.source, now + .005, volumes[slot.source] || .45);
