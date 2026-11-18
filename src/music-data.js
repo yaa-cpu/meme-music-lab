@@ -64,7 +64,17 @@
     { id: 'synthLead', title: '合成 Lead', symbol: '⇞', color: '#c7b4e6', description: '流行合成主音' },
     { id: 'ukulele', title: '尤克里里', symbol: '⚲', color: '#f2d468', description: '轻快拨弦' },
     { id: 'drumkit', title: '鼓组', symbol: '▣', color: '#efabc2', description: '按音高触发底鼓/军鼓/踩镲' },
-    { id: 'subBass', title: 'Sub 贝斯', symbol: '⊏', color: '#e9a56f', description: '超低频正弦贝斯' }
+    { id: 'subBass', title: 'Sub 贝斯', symbol: '⊏', color: '#e9a56f', description: '超低频正弦贝斯' },
+    // 预设化重构后新增的合成器声部（见 src/synth-engine.js）
+    { id: 'grandPiano', title: '三角钢琴', symbol: '♪', color: '#d9ef68', description: '明亮泛音与长延音' },
+    { id: 'uprightPiano', title: '立式钢琴', symbol: '♩', color: '#e9b6d3', description: '温暖木味与短促衰减' },
+    { id: 'clavinet', title: 'Clavinet', symbol: '⌗', color: '#f2d468', description: '放克电钢与短促击弦' },
+    { id: 'stringsPizz', title: '弦乐拨奏', symbol: '≋', color: '#c7b4e6', description: '短促拨弦与木头质感' },
+    { id: 'brassSection', title: '铜管组', symbol: '♬', color: '#f2c365', description: '多把铜管齐奏' },
+    { id: 'saxTenor', title: '次中音萨克斯', symbol: '∿', color: '#e6a987', description: '低沉簧片与气息' },
+    { id: 'synthPluck', title: '合成 Pluck', symbol: '⋔', color: '#91cfe8', description: '短促滤波拨弦' },
+    { id: 'synthBell', title: '合成 Bell', symbol: '◈', color: '#a9b9df', description: 'FM 钟形与长尾音' },
+    { id: 'guitarElectric', title: '电吉他', symbol: '⚡', color: '#f2a88f', description: '清音电吉他与拨片起音' }
   ];
 
   function makeEvents(notation) {

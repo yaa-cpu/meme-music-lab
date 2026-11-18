@@ -123,10 +123,10 @@
     { name: '哈基米逐音 01', items: memeItems(['hachimi-ha', 'hachimi-ji', 'hachimi-mi', 'hachimi-nan', 'hachimi-bei', 'hachimi-lv', 'hachimi-dou', 'hachimi-8']) },
     { name: '哈基米逐音 02', items: memeItems(['hachimi-9', 'hachimi-10', 'hachimi-11', 'hachimi-12']) },
     // 参照 ACE Studio 的音源分类重排：弦乐组 / 铜管木管 / 键盘合成 / 吉他与拨弦 / 鼓组贝斯
-    { name: '弦乐组 · ACE 标准', items: instrumentItems(['violin', 'cello', 'stringsHigh', 'stringsMid', 'stringsLow', 'contrabass']) },
-    { name: '铜管与木管 · ACE 标准', items: instrumentItems(['trumpet', 'trombone', 'horn', 'sax', 'clarinet', 'flute', 'dizi']) },
-    { name: '键盘与合成 · 流行', items: instrumentItems(['piano', 'electricPiano', 'organ', 'synth', 'synthLead', 'pad']) },
-    { name: '吉他与拨弦', items: instrumentItems(['guitar', 'ukulele', 'harp', 'marimba', '8bit']) },
+    { name: '弦乐组 · ACE 标准', items: instrumentItems(['violin', 'cello', 'stringsHigh', 'stringsMid', 'stringsLow', 'stringsPizz', 'contrabass']) },
+    { name: '铜管与木管 · ACE 标准', items: instrumentItems(['trumpet', 'trombone', 'horn', 'brassSection', 'sax', 'saxTenor', 'clarinet', 'flute', 'dizi']) },
+    { name: '键盘与合成 · 流行', items: instrumentItems(['piano', 'grandPiano', 'uprightPiano', 'electricPiano', 'clavinet', 'organ', 'synth', 'synthLead', 'synthPluck', 'synthBell', 'pad']) },
+    { name: '吉他与拨弦', items: instrumentItems(['guitar', 'guitarElectric', 'ukulele', 'harp', 'marimba', '8bit']) },
     { name: '鼓组与贝斯', items: instrumentItems(['drumkit', 'bass', 'subBass']) }
   ];
   let cartridgeIndex = 0;
@@ -1564,93 +1564,25 @@
   function instrumentSound(id, row, when, preview, note) {
     const kind = id.replace('instrument:', '');
     const midi = note?.midi ?? pitches[row].midi;
-    const frequency = 440 * 2 ** ((midi - 69) / 12);
     const duration = preview ? 1.2 : Math.max(.12, (note?.length || 1) * (note?.stepLength || stepDuration()));
-    const end = when + duration;
-    const voice = (type, multiplier, volume, attack = .012, sustain = .4, detune = 0, cutoff = 5000) => {
-      const oscillator = trackSource(audioCtx.createOscillator());
-      const filter = audioCtx.createBiquadFilter();
-      const gain = audioCtx.createGain();
-      oscillator.type = type;
-      oscillator.frequency.setValueAtTime(frequency * multiplier, when);
-      oscillator.detune.value = detune;
-      filter.type = 'lowpass'; filter.frequency.value = cutoff; filter.Q.value = .45;
-      const rise = Math.min(attack, duration * .3);
-      const releaseStart = Math.max(when + rise, end - Math.min(.45, duration * .45));
-      gain.gain.setValueAtTime(.0001, when);
-      gain.gain.linearRampToValueAtTime(volume, when + rise);
-      gain.gain.exponentialRampToValueAtTime(Math.max(.0001, volume * sustain), releaseStart);
-      gain.gain.exponentialRampToValueAtTime(.0001, end);
-      oscillator.connect(filter).connect(gain).connect(soundOutput || mixInput);
-      oscillator.start(when); oscillator.stop(end + .04);
-      if (kind === 'violin' || kind === 'sax' || kind === 'cello' || kind === 'dizi' || kind.startsWith('strings')) {
-        const vibrato = trackSource(audioCtx.createOscillator());
-        const vibratoDepth = audioCtx.createGain();
-        vibrato.frequency.value = 5.4; vibratoDepth.gain.value = frequency * .009;
-        vibrato.connect(vibratoDepth).connect(oscillator.frequency);
-        vibrato.start(when + Math.min(.15, duration * .2)); vibrato.stop(end + .04);
-      }
-    };
-    if (kind === 'piano') {
-      voice('triangle', 1, .32, .004, .24); voice('sine', 2, .12, .003, .1); voice('sine', 3, .045, .002, .05);
-    } else if (kind === 'guitar') {
-      voice('triangle', 1, .28, .003, .16, 0, 2600); voice('sawtooth', 2, .065, .002, .08, 3, 2200); voice('sine', .5, .08, .004, .22);
-    } else if (kind === 'violin') {
-      voice('sawtooth', 1, .12, .14, .72, -4, 2800); voice('triangle', 1, .19, .12, .76, 4, 3400); voice('sine', 2, .04, .16, .65);
-    } else if (kind === 'bass') {
-      voice('sine', 1, .3, .006, .5); voice('sawtooth', 1, .12, .004, .28, 0, 850); voice('sine', .5, .13, .008, .4);
-    } else if (kind === 'marimba') {
-      voice('sine', 1, .32, .002, .045); voice('sine', 4, .065, .001, .02); voice('sine', 10, .014, .001, .01);
-    } else if (kind === 'harp') {
-      voice('triangle', 1, .25, .003, .12); voice('sine', 2, .11, .002, .07); voice('sine', 3, .045, .002, .04);
-    } else if (kind === 'organ') {
-      voice('sine', 1, .19, .04, .86); voice('sine', 2, .1, .035, .82); voice('sine', 3, .055, .03, .8); voice('sine', .5, .08, .04, .82);
-    } else if (kind === 'flute') {
-      voice('sine', 1, .31, .075, .7); voice('triangle', 2, .045, .09, .62, 2);
-      noise(when, Math.min(duration, .28), frequency * 2, .025);
-    } else if (kind === 'trumpet') {
-      voice('sawtooth', 1, .14, .055, .68, -3, 1900); voice('square', 1, .055, .045, .6, 3, 1700); voice('sine', 2, .035, .06, .6);
-    } else if (kind === 'sax') {
-      voice('sawtooth', 1, .1, .07, .64, -4, 1500); voice('triangle', 1, .16, .06, .7, 4, 1900); voice('sine', 2, .035, .08, .58);
-      noise(when, Math.min(duration, .3), frequency * 1.5, .014);
-    } else if (kind === '8bit') {
-      voice('square', 1, .16, .002, .32, 0, 6500); voice('square', 2, .045, .002, .2); voice('sine', .5, .045, .003, .3);
-    } else if (kind === 'pad') {
-      voice('sawtooth', 1, .055, .28, .82, -7, 1200); voice('sawtooth', 1, .055, .3, .8, 7, 1200); voice('sine', 1, .13, .25, .85);
-    } else if (kind === 'stringsHigh' || kind === 'stringsMid' || kind === 'stringsLow') {
-      const octave = kind === 'stringsHigh' ? 1 : kind === 'stringsMid' ? .5 : .25;
-      voice('sawtooth', octave, .07, .17, .78, -6, kind === 'stringsHigh' ? 4200 : 2600);
-      voice('sawtooth', octave, .065, .19, .76, 6, 3000);
-      voice('sawtooth', octave * 2, .03, .2, .7, 0, 2400);
-      voice('triangle', octave, .055, .15, .8, 0, 2200);
-    } else if (kind === 'cello') {
-      voice('sawtooth', .5, .11, .1, .75, -4, 2200); voice('triangle', .5, .1, .09, .78, 4, 2600); voice('sine', 1, .04, .12, .7);
-    } else if (kind === 'contrabass') {
-      voice('sine', .25, .28, .02, .6); voice('sawtooth', .25, .07, .03, .4, 0, 900); voice('triangle', .5, .05, .02, .5);
-    } else if (kind === 'trombone') {
-      voice('sawtooth', 1, .12, .07, .7, -3, 1600); voice('square', 1, .05, .06, .62, 3, 1500); voice('sine', .5, .06, .08, .65);
-    } else if (kind === 'horn') {
-      voice('sine', 1, .22, .12, .72); voice('triangle', 1, .1, .1, .7, 3); voice('sine', 2, .05, .14, .6);
-    } else if (kind === 'clarinet') {
-      voice('square', 1, .1, .06, .72, 0, 2600); voice('triangle', 1, .16, .07, .74, 3, 2200); voice('sine', 2, .04, .08, .6);
-    } else if (kind === 'dizi') {
-      voice('sine', 1, .28, .04, .72); voice('triangle', 2, .05, .05, .6, 3);
-      noise(when, Math.min(duration, .22), frequency * 2.4, .02);
-    } else if (kind === 'electricPiano') {
-      voice('sine', 1, .28, .004, .35); voice('sine', 2, .1, .003, .2); voice('sine', 3, .05, .002, .12); voice('sine', .5, .07, .006, .45);
-    } else if (kind === 'synthLead') {
-      voice('sawtooth', 1, .13, .02, .7, -4, 3200); voice('square', 1, .05, .015, .6, 4, 2800); voice('sine', .5, .06, .02, .62);
-    } else if (kind === 'ukulele') {
-      voice('triangle', 1, .26, .003, .14, 0, 3000); voice('sawtooth', 2, .05, .002, .09, 2, 2400); voice('sine', .5, .06, .003, .18);
-    } else if (kind === 'subBass') {
-      voice('sine', .5, .34, .01, .7); voice('sine', 1, .12, .012, .6); voice('triangle', .5, .05, .02, .5);
-    } else if (kind === 'drumkit') {
-      const drumMap = ['drum:kick', 'drum:kick', 'drum:snare', 'drum:snare', 'drum:hat', 'drum:hat', 'drum:clap', 'drum:clap', 'drum:openhat', 'drum:rim', 'drum:kick', 'drum:snare'];
-      padDrumSound(drumMap[((midi % 12) + 12) % 12], when, .85, false);
+    if (window.MemeSynth) {
+      window.MemeSynth.play({
+        ctx: audioCtx,
+        destination: soundOutput || mixInput,
+        id: kind,
+        midi,
+        when,
+        duration,
+        volume: 1,
+        velocity: note?.velocity,
+        legato: Boolean(note?.legato),
+        noiseBuffer: getNoise(),
+        trackSource
+      });
       return;
-    } else {
-      voice('square', 1, .13, .018, .48, -5, 2100); voice('sawtooth', 1, .12, .025, .42, 5, 1800); voice('sine', .5, .08, .02, .5);
     }
+    // 兜底：引擎缺失时也给一个三角波，避免整轨静音
+    tone('triangle', 440 * 2 ** ((midi - 69) / 12), when, duration, .15);
   }
 
   function triggerSound(id, row, when, preview = false, note = null, hasAdjacentNext = false) {
