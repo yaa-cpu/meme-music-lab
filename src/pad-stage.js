@@ -54,7 +54,7 @@
       name: String(preset.name || '我的打击垫').slice(0, 24),
       builtIn: Boolean(preset.builtIn),
       layout: Number(preset.layout) === 4 ? 4 : 9,
-      backing: ['sunny', 'bounce', 'chill', 'off'].includes(preset.backing) ? preset.backing : 'sunny',
+      backing: ['sunny', 'bounce', 'chill', 'friendwine', 'off'].includes(preset.backing) ? preset.backing : 'sunny',
       slots: slots.map((slot, index) => ({
         kind: ['sample', 'note', 'drum'].includes(slot.kind) ? slot.kind : 'sample',
         source: String(slot.source || fallback.slots[index].source),
@@ -333,7 +333,7 @@
     // 图案的律动周期 = 两拍，跟着当前底奏的速度走（BPM 由 pad-grooves 引擎提供）。
     const grooveBpm = (window.PadGrooves && window.PadGrooves.padGrooveBpm)
       ? window.PadGrooves.padGrooveBpm(preset.backing)
-      : ({ sunny: 124, bounce: 134, chill: 86 }[preset.backing] || 124);
+      : ({ sunny: 124, bounce: 134, chill: 86, friendwine: 130 }[preset.backing] || 124);
     $('#pad-playground').style.setProperty('--dance-dur', `${((60 / grooveBpm) * 2).toFixed(3)}s`);
     const toggle = $('#pad-loop-toggle');
     toggle.classList.toggle('active', active);

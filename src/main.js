@@ -2550,7 +2550,7 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
     { kind: 'drum', source: 'drum:hat', title: '踩镲', sub: 'HAT · 颗粒', symbol: 'HAT', color: '#d9ef68' },
     { kind: 'drum', source: 'drum:clap', title: '拍手', sub: 'CLAP · 节拍', symbol: 'CLAP', color: '#f2d468' }
   ];
-  const padLoopNames = { sunny: '柑橘跳跳糖', bounce: '像素弹跳', chill: '夜空气泡', off: '无底奏' };
+  const padLoopNames = { sunny: '柑橘跳跳糖', bounce: '像素弹跳', chill: '夜空气泡', friendwine: '朋友的酒', off: '无底奏' };
   let padBackingTimer = null;
   let padBackingId = null;
   let padBackingStep = 0;
