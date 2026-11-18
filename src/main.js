@@ -705,11 +705,12 @@
         mapped.push(`${track.label || track.aceKind || preset}→${preset}`);
         const fx = track.fx || null;
         const gain = Number.isFinite(Number(track.gain)) ? Math.max(0, Math.min(1, Number(track.gain))) : 1;
-        (track.notes || []).forEach(([midiValue, col, length]) => {
+        (track.notes || []).forEach(([midiValue, col, length, velocity]) => {
           const midi = Number(midiValue);
           const row = pitches.reduce((best, pitch, index) => Math.abs(pitch.midi - midi) < Math.abs(pitches[best].midi - midi) ? index : best, 0);
           notes.push({
             id: uid(), meme: `instrument:${preset}`, row, col: Number(col), length: Number(length), midi,
+            velocity: Number.isFinite(Number(velocity)) ? Math.max(.2, Math.min(1, Number(velocity))) : undefined,
             loopVolume: gain,
             ...(fx ? { reverbPreset: fx.reverb, reverbWet: fx.wet, delaySend: fx.delay } : {})
           });
