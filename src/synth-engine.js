@@ -452,7 +452,8 @@
     if (kind === 'kick') {
       osc('sine', 150, .42, 1.0, 46, 'lowpass', 400);         // 音高下坠的鼓皮
       osc('sine', 56, .5, .55, 40);                            // 低频鼓腔
-      noise(.012, 'highpass', 2400, .7, .12);                  // 鼓槌点击
+      osc('triangle', 120, .09, .34, 78);                      // 100–200Hz boxy 层：小喇叭也能听到鼓
+      noise(.014, 'highpass', 2400, .7, .16);                  // 鼓槌点击
     } else if (kind === 'snare') {
       osc('triangle', 195, .12, .34, 150);                     // 鼓皮音高
       osc('triangle', 330, .08, .18, 280);
