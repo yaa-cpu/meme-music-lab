@@ -1289,6 +1289,10 @@
           : null;
     const destination = busInput || master;
     const temporaryNodes = [output];
+    const panner = audioCtx.createStereoPanner();
+    panner.pan.value = clamp(Number(note?.pan) || 0, -1, 1);
+    temporaryNodes.push(panner);
+    output.connect(panner);
     if (note?.delaySend && padDelaySend) {
       const delayGain = audioCtx.createGain();
       delayGain.gain.value = clamp(Number(note.delaySend), 0, .6);
@@ -1296,12 +1300,12 @@
       temporaryNodes.push(delayGain);
     }
     if (!preset) {
-      output.connect(busInput || mixInput);
+      panner.connect(busInput || mixInput);
     } else {
       const wet = preset === 'none' ? 0 : clamp(note.reverbWet ?? reverbPresets[preset].wet, 0, .7);
       const dry = audioCtx.createGain();
       dry.gain.value = 1 - wet * .35;
-      output.connect(dry).connect(destination);
+      panner.connect(dry).connect(destination);
       temporaryNodes.push(dry);
       if (wet > 0) {
         if (!noteConvolvers.has(preset)) {
@@ -1312,7 +1316,7 @@
         }
         const send = audioCtx.createGain();
         send.gain.value = wet;
-        output.connect(send).connect(noteConvolvers.get(preset));
+        panner.connect(send).connect(noteConvolvers.get(preset));
         temporaryNodes.push(send);
       }
     }
@@ -1351,14 +1355,14 @@
       padDelayWet = audioCtx.createGain();
       const padCompressor = audioCtx.createDynamicsCompressor();
       const padOutput = audioCtx.createGain();
-      padCompressor.threshold.value = -12;
-      padCompressor.knee.value = 8;
-      padCompressor.ratio.value = 3;
-      padCompressor.attack.value = .008;
-      padCompressor.release.value = .14;
+      padCompressor.threshold.value = -14;
+      padCompressor.knee.value = 6;
+      padCompressor.ratio.value = 2.5;
+      padCompressor.attack.value = .01;
+      padCompressor.release.value = .12;
       padOutput.gain.value = .85;
-      padBackingInput.gain.value = 1.2;
-      padBackingTonalInput.gain.value = 1.2;
+      padBackingInput.gain.value = 1.1;
+      padBackingTonalInput.gain.value = 1.1;
       padDuckSC.gain.value = 1;
       padDuckUser.gain.value = 1;
       padBackingFilter.type = 'lowpass';
@@ -1445,7 +1449,7 @@
     return source;
   }
 
-  function tone(type, frequency, when, duration, volume = 0.15, endFrequency = null) {
+  function tone(type, frequency, when, duration, volume = 0.15, endFrequency = null, pan = 0) {
     const oscillator = trackSource(audioCtx.createOscillator());
     const gain = audioCtx.createGain();
     oscillator.type = type;
@@ -1454,7 +1458,14 @@
     gain.gain.setValueAtTime(0.0001, when);
     gain.gain.exponentialRampToValueAtTime(volume, when + Math.min(.018, duration / 4));
     gain.gain.exponentialRampToValueAtTime(0.0001, when + duration);
-    oscillator.connect(gain).connect(soundOutput || mixInput);
+    const destination = soundOutput || mixInput;
+    if (pan) {
+      const panner = audioCtx.createStereoPanner();
+      panner.pan.value = clamp(pan, -1, 1);
+      oscillator.connect(gain).connect(panner).connect(destination);
+    } else {
+      oscillator.connect(gain).connect(destination);
+    }
     oscillator.start(when);
     oscillator.stop(when + duration + .02);
     return oscillator;
@@ -1468,7 +1479,7 @@
     return noiseBuffer;
   }
 
-  function noise(when, duration, frequency, volume = .12) {
+  function noise(when, duration, frequency, volume = .12, pan = 0) {
     const source = trackSource(audioCtx.createBufferSource());
     const filter = audioCtx.createBiquadFilter();
     const gain = audioCtx.createGain();
@@ -1477,7 +1488,14 @@
     gain.gain.setValueAtTime(.0001, when);
     gain.gain.exponentialRampToValueAtTime(volume, when + .015);
     gain.gain.exponentialRampToValueAtTime(.0001, when + duration);
-    source.connect(filter).connect(gain).connect(soundOutput || mixInput);
+    const destination = soundOutput || mixInput;
+    if (pan) {
+      const panner = audioCtx.createStereoPanner();
+      panner.pan.value = clamp(pan, -1, 1);
+      source.connect(filter).connect(gain).connect(panner).connect(destination);
+    } else {
+      source.connect(filter).connect(gain).connect(destination);
+    }
     source.start(when); source.stop(when + duration + .02);
   }
 
@@ -2232,9 +2250,12 @@
     return pitches.reduce((best, pitch, index) => Math.abs(pitch.midi - midi) < Math.abs(pitches[best].midi - midi) ? index : best, 0);
   }
 
-  const PAD_GROOVE_BPM = { sunny: 116, bounce: 138, chill: 84 };
+  const PAD_GROOVE_BPM = { sunny: 124, bounce: 134, chill: 86 };
   const PAD_LOOP_STEPS = 256; // 16 小节编排
-  function padGrooveBpm(id) { return PAD_GROOVE_BPM[id] || 116; }
+  function padGrooveBpm(id) {
+    if (window.PadGrooves && typeof window.PadGrooves.padGrooveBpm === 'function') return window.PadGrooves.padGrooveBpm(id);
+    return PAD_GROOVE_BPM[id] || 116;
+  }
   function padStepDuration(id = padBackingId) { return 60 / padGrooveBpm(id) / 4; }
 
   // 侧链泵动：只用两次 setTargetAtTime，避免硬跳变咔哒；不要 cancel，调度器已提前排好后续。
@@ -2258,35 +2279,67 @@
 
   function padDrumSound(kind, when, volume = 1, backing = false) {
     const type = kind.replace('drum:', '');
-    withSoundBus({ loopVolume: volume, reverbPreset: 'none', padBus: true, backing }, when, .45, () => {
+    const busDuration = type === 'riser' ? 4 : type === 'impact' ? 1 : .45;
+    const busNote = { loopVolume: volume, reverbPreset: type === 'snare' ? 'plate' : 'none', padBus: true, backing };
+    if (type === 'snare') busNote.reverbWet = .15;
+    withSoundBus(busNote, when, busDuration, () => {
       if (type === 'kick') {
-        tone('sine', 170, when, .32, .95, 46);
-        tone('triangle', 88, when, .12, .3, 44);
-        tone('square', 340, when, .012, .08, 150);
-        noise(when, .01, 3000, .1);
+        tone('sine', 150, when, .3, .92, 52);
+        tone('sine', 62, when, .26, .55);
+        tone('triangle', 110, when, .045, .22, 70);
+        noise(when, .012, 3200, .18);
+        noise(when + .002, .006, 7600, .1);
+      } else if (type === 'kick:ghost') {
+        tone('sine', 140, when, .12, .6, 50);
+        noise(when, .008, 1800, .05);
       } else if (type === 'snare') {
-        noise(when, .2, 1900, .52);
-        noise(when + .012, .05, 5200, .16);
-        tone('triangle', 195, when, .1, .22, 120);
+        noise(when, .24, 1800, .5);
+        noise(when + .01, .1, 5200, .22);
+        tone('triangle', 190, when, .12, .26, 120);
+        noise(when + .004, .04, 9200, .1);
       } else if (type === 'clap') {
         [0, .02, .045].forEach((offset, index) => noise(when + offset, .11 - index * .012, 1450 + index * 420, .24));
+      } else if (type === 'rim') {
+        tone('triangle', 780, when, .012, .3);
+        noise(when, .02, 3200, .18);
+      } else if (type === 'impact') {
+        tone('sine', 90, when, .8, .8, 38);
+        noise(when, .5, 4000, .3);
+        noise(when + .02, .25, 9000, .15);
+      } else if (type === 'riser') {
+        const source = trackSource(audioCtx.createBufferSource());
+        const filter = audioCtx.createBiquadFilter();
+        const gain = audioCtx.createGain();
+        source.buffer = getNoise();
+        source.loop = true;
+        filter.type = 'bandpass';
+        filter.Q.value = 1.5;
+        filter.frequency.setValueAtTime(380, when);
+        filter.frequency.exponentialRampToValueAtTime(8200, when + 3.4);
+        gain.gain.setValueAtTime(.0001, when);
+        gain.gain.exponentialRampToValueAtTime(Math.max(.05, volume), when + 3.2);
+        gain.gain.exponentialRampToValueAtTime(.0001, when + 3.7);
+        source.connect(filter).connect(gain).connect(soundOutput || mixInput);
+        source.start(when);
+        source.stop(when + 3.8);
       } else if (type === 'hat' || type === 'openhat') {
         // 开镲被下一个闭镲收掉：一声一个 gate，house/garage 的干净感靠它。
+        const open = type === 'openhat';
         const gate = audioCtx.createGain();
         gate.gain.value = 1;
         gate.connect(soundOutput);
         const previous = soundOutput;
         soundOutput = gate;
         try {
-          noise(when, type === 'openhat' ? .2 : .07, 7900, .22);
-          noise(when, type === 'openhat' ? .14 : .03, 10800, .1);
-          tone('square', 8200, when, type === 'openhat' ? .16 : .04, .035);
+          noise(when, open ? .35 : .16, 7200, .18, open ? 0 : -.3);
+          noise(when + .002, open ? .22 : .09, 9800, .12, open ? 0 : .3);
+          [6300, 8300, 10700].forEach((frequency, index) => tone('square', frequency, when + index * .001, open ? .05 : .028, .035 - index * .008));
         } finally {
           soundOutput = previous;
         }
-        if (type === 'openhat') {
+        if (open) {
           padOpenHatVoice = gate;
-          setTimeout(() => { try { gate.disconnect(); } catch (_) { /* 已释放 */ } }, 700);
+          setTimeout(() => { try { gate.disconnect(); } catch (_) { /* 已释放 */ } }, 900);
         } else if (padOpenHatVoice) {
           try {
             padOpenHatVoice.gain.cancelScheduledValues(when);
@@ -2313,10 +2366,38 @@
       delaySend: options.delaySend || 0,
       padBus: true,
       backing: Boolean(options.bus) && !tonal,
-      backingTonal: tonal
+      backingTonal: tonal,
+      // 和弦声部按音高铺开立体声，贝斯/底鼓保持中间。
+      pan: options.pan !== undefined ? options.pan : (tonal && instrument !== 'bass' ? (((midi % 12) - 6) / 16) : 0)
     }, when, length * stepLength, () => {
       instrumentSound(`instrument:${instrument}`, row, when, false, { midi, length, stepLength });
     });
+  }
+
+  // 底奏编曲引擎适配层：引擎只产出"第几步发什么"，这里翻译成现有合成函数。
+  function padScheduleViaGrooves(step, when, id) {
+    if (!window.PadGrooves) { schedulePadBackingStep(step, when, id); return; }
+    const api = {
+      drum(kind, at, volume) {
+        const key = {
+          kick: 'drum:kick',
+          'kick:ghost': 'drum:kick:ghost',
+          snare: 'drum:snare',
+          clap: 'drum:clap',
+          hat: 'drum:hat',
+          openhat: 'drum:openhat',
+          rim: 'drum:rim',
+          impact: 'drum:impact',
+          riser: 'drum:riser'
+        }[kind] || 'drum:hat';
+        padDrumSound(key, at, volume, true);
+      },
+      tonal(inst, midi, at, lengthSteps, volume, opts) { padInstrumentTone(inst, midi, at, lengthSteps, volume, opts); },
+      pump(at, opts) { padPump(at, opts); },
+      lowpass(hz, at, tc) { if (padBackingFilter) padBackingFilter.frequency.setTargetAtTime(hz, at, tc); },
+      emit(detail) { emitPadBeat(step, when + (Number(detail && detail.swingMs) || 0), id, detail); }
+    };
+    window.PadGrooves.scheduleStep(step, when, id, api);
   }
 
   function emitPadBeat(step, when, id, flags) {
@@ -2551,9 +2632,10 @@
   function runPadBackingScheduler() {
     if (!audioCtx || !padBackingId) return;
     const stepDur = padStepDuration(padBackingId);
+    const loopSteps = window.PadGrooves ? window.PadGrooves.PAD_LOOP_STEPS : PAD_LOOP_STEPS;
     while (padBackingNextTime < audioCtx.currentTime + .12) {
-      schedulePadBackingStep(padBackingStep, padBackingNextTime, padBackingId);
-      padBackingStep = (padBackingStep + 1) % PAD_LOOP_STEPS;
+      padScheduleViaGrooves(padBackingStep, padBackingNextTime, padBackingId);
+      padBackingStep = (padBackingStep + 1) % loopSteps;
       padBackingNextTime += stepDur;
     }
   }

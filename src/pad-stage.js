@@ -276,8 +276,10 @@
     $('#pad-backing-select').value = preset.backing;
     $('#pad-backing-name').textContent = options.loopName(preset.backing);
     const active = backingOn && !studioPaused && preset.backing !== 'off';
-    // 图案的律动周期 = 两拍，跟着当前底奏的速度走。
-    const grooveBpm = { sunny: 116, bounce: 138, chill: 84 }[preset.backing] || 116;
+    // 图案的律动周期 = 两拍，跟着当前底奏的速度走（BPM 由 pad-grooves 引擎提供）。
+    const grooveBpm = (window.PadGrooves && window.PadGrooves.padGrooveBpm)
+      ? window.PadGrooves.padGrooveBpm(preset.backing)
+      : ({ sunny: 124, bounce: 134, chill: 86 }[preset.backing] || 124);
     $('#pad-playground').style.setProperty('--dance-dur', `${((60 / grooveBpm) * 2).toFixed(3)}s`);
     const toggle = $('#pad-loop-toggle');
     toggle.classList.toggle('active', active);
