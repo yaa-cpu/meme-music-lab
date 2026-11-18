@@ -412,7 +412,7 @@
     {
       id: 'friendwine-synth',
       title: '朋友的酒 DJ · 全合成器版',
-      subtitle: 'ACE 分轨（鼓组/贝斯/钢琴/吉他/其他）→ 网页合成器 6 轨',
+      subtitle: 'ACE 分轨音频转录 → 网页合成器 6 轨（副歌 16 小节）',
       url: './assets/ace/friendwine_synth_project.json'
     }
   ];
