@@ -229,7 +229,14 @@
 
   const libraryTracks = [];
 
-  const synthProjects = [];
+  const synthProjects = [
+    {
+      id: 'friendwine-rebuild',
+      title: '朋友的酒 DJ · 全乐器拆分还原',
+      subtitle: 'ACE advanced 全乐器拆分 → 逐件转录（副歌 16 小节）',
+      url: './assets/ace/friendwine_synth_project.json'
+    }
+  ];
 
   const loopPresets = [
     { id: 'four', name: '四拍律动', steps: ['1000100010001000', '0000100000001000', '1010101010101010', '0000000000000000'].map((row) => [...row].map(Number)) },
