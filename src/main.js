@@ -151,6 +151,9 @@
   let convolver = null;
   let padMixInput = null;
   let padBackingInput = null;
+  const sampleLeads = new Map();
+  const padSampleVoices = new Map();
+  let padPreloadStarted = false;
   const impulseBuffers = new Map();
   const noteConvolvers = new Map();
   const buffers = {};
@@ -1309,7 +1312,7 @@
       master.connect(audioCtx.destination);
       applyReverb();
     }
-    if (audioCtx.state === 'suspended') await audioCtx.resume();
+    if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => { /* 需要用户手势，点击后会自动恢复 */ });
     return audioCtx;
   }
 
@@ -1325,12 +1328,36 @@
       })();
     }
     try {
-      buffers[id] = await buffers[id];
-      return buffers[id];
+      const decoded = await buffers[id];
+      buffers[id] = decoded;
+      if (!sampleLeads.has(id)) sampleLeads.set(id, detectSampleLead(decoded));
+      return decoded;
     } catch (error) {
       delete buffers[id];
       throw error;
     }
+  }
+
+  // 采样开头常有几十毫秒静音，直接从头播会让人误以为"点了没反应"，这里算出第一个可听位置。
+  function detectSampleLead(buffer) {
+    try {
+      const data = buffer.getChannelData(0);
+      const limit = Math.min(data.length, Math.floor(buffer.sampleRate * 0.45));
+      const threshold = 0.012;
+      for (let index = 0; index < limit; index++) {
+        if (Math.abs(data[index]) > threshold) return Math.max(0, index / buffer.sampleRate - 0.003);
+      }
+    } catch (_) { /* 解码内容异常时按 0 处理 */ }
+    return 0;
+  }
+
+  function preloadPadSamples() {
+    if (padPreloadStarted) return;
+    padPreloadStarted = true;
+    const ids = [...new Set(memes.filter((meme) => meme.audio).map((meme) => meme.id))];
+    ensureAudio()
+      .then(() => Promise.all(ids.map((id) => loadBuffer(id).catch(() => {}))))
+      .catch(() => { /* 预加载失败时仍按需加载 */ });
   }
 
   function trackSource(source) {
@@ -1487,33 +1514,56 @@
     if (meme.type === 'original' && buffers[id] && typeof buffers[id].duration === 'number') {
       const source = trackSource(audioCtx.createBufferSource());
       const gain = audioCtx.createGain();
+      const buffer = buffers[id];
       const volume = id === 'oiia' ? .7 : .82;
       const playbackRate = 2 ** (((note?.midi ?? pitches[row].midi) - 67) / 12);
       const sampleOffset = Math.max(0, Number(note?.offset) || 0) * stepDuration() * playbackRate;
-      const sampleDuration = buffers[id].duration / playbackRate;
-      const availableDuration = Math.max(.01, sampleDuration - sampleOffset / playbackRate);
-      const duration = preview
-        ? Math.min(2.7, availableDuration)
-        : (note?.length || 1) * stepDuration() * (hasAdjacentNext ? 1 : 1.6);
+      const lead = sampleLeads.get(id) || 0;
+      const startOffset = Math.min(sampleOffset + lead, buffer.duration);
+      const sampleDuration = buffer.duration / playbackRate;
+      const availableDuration = Math.max(.01, sampleDuration - startOffset / playbackRate);
+      const padHit = Boolean(note?.padHit);
+      const duration = padHit
+        ? Math.min(.26, availableDuration)
+        : preview
+          ? Math.min(2.7, availableDuration)
+          : (note?.length || 1) * stepDuration() * (hasAdjacentNext ? 1 : 1.6);
       const stopAt = when + duration;
-      const attack = Math.min(.025, duration * .08);
-      const fade = Math.min(hasAdjacentNext ? .42 : .11, duration * (hasAdjacentNext ? .72 : .32));
+      const attack = padHit ? Math.min(.006, duration * .12) : Math.min(.025, duration * .08);
+      const fade = padHit
+        ? Math.min(.07, duration * .4)
+        : Math.min(hasAdjacentNext ? .42 : .11, duration * (hasAdjacentNext ? .72 : .32));
       const fadeStart = Math.max(when + attack, stopAt - fade);
       const fadeCurve = new Float32Array(97);
       for (let i = 0; i < fadeCurve.length; i++) {
         fadeCurve[i] = volume * (Math.cos(i / (fadeCurve.length - 1) * Math.PI / 2) ** 1.35);
       }
-      source.buffer = buffers[id];
+      source.buffer = buffer;
       source.playbackRate.value = playbackRate;
-      source.loop = !preview && duration > availableDuration;
-      if (source.loop && sampleOffset > 0) { source.loopStart = sampleOffset; source.loopEnd = buffers[id].duration; }
+      source.loop = !preview && !padHit && duration > availableDuration;
+      if (source.loop && startOffset > 0) { source.loopStart = startOffset; source.loopEnd = buffer.duration; }
       gain.gain.setValueAtTime(0, when);
       gain.gain.linearRampToValueAtTime(volume, when + attack);
       gain.gain.setValueAtTime(volume, fadeStart);
       gain.gain.setValueCurveAtTime(fadeCurve, fadeStart, stopAt - fadeStart);
       source.connect(gain).connect(createSoundBus(note, when, duration));
-      source.start(when, Math.min(sampleOffset, buffers[id].duration));
+      source.start(when, startOffset);
       source.stop(stopAt + .08);
+      // 打击垫连击：同一采样被再次敲击时，上一声快速收掉，避免声音叠成一团。
+      if (padHit) {
+        const previous = padSampleVoices.get(id);
+        if (previous) {
+          try {
+            previous.gain.gain.cancelScheduledValues(when);
+            previous.gain.gain.setTargetAtTime(0, when, .004);
+            previous.source.stop(when + .045);
+          } catch (_) { /* 上一声已结束 */ }
+        }
+        padSampleVoices.set(id, { source, gain });
+        source.addEventListener('ended', () => {
+          if (padSampleVoices.get(id)?.source === source) padSampleVoices.delete(id);
+        }, { once: true });
+      }
     } else {
       const duration = preview ? .9 : (note?.length || 1) * stepDuration() * (hasAdjacentNext ? 1 : 1.35);
       withSoundBus(note, when, duration, () => synthSound(id, row, when, preview, note, hasAdjacentNext));
@@ -2225,17 +2275,20 @@
   async function hitPadSource(slot) {
     try {
       await ensureAudio();
+      const now = audioCtx.currentTime;
       if (slot.kind === 'drum') {
         const volumes = { 'drum:kick': .62, 'drum:snare': .55, 'drum:hat': .3, 'drum:clap': .45 };
-        padDrumSound(slot.source, audioCtx.currentTime + .008, volumes[slot.source] || .45);
+        padDrumSound(slot.source, now + .005, volumes[slot.source] || .45);
         return;
       }
-      if (slot.kind === 'sample') {
-        try { await loadBuffer(slot.source); } catch (_) { /* synthesized fallback */ }
+      // 采样还没解码好时，先给一声即时的合成打击，保证"敲下去就有反应"。
+      if (slot.kind === 'sample' && !buffers[slot.source]) {
+        padDrumSound('drum:hat', now + .005, .55);
+        loadBuffer(slot.source).catch(() => { /* 仍会退回合成音色 */ });
+        return;
       }
-      const note = { midi: slot.midi, length: 2, reverbPreset: 'none', padBus: true };
-      const when = audioCtx.currentTime + .008;
-      triggerSound(slot.source, nearestPitchRow(slot.midi), when, true, note);
+      const note = { midi: slot.midi, length: 2, reverbPreset: 'none', padBus: true, padHit: true };
+      triggerSound(slot.source, nearestPitchRow(slot.midi), now + .005, false, note);
       flashMeme(slot.source, nearestPitchRow(slot.midi));
     } catch (_) {
       showToast('声音还没有准备好，请再敲一下');
@@ -2410,6 +2463,7 @@
   bindControls();
   bindDialogs();
   initPadStage();
+  preloadPadSamples();
   updateTransport();
   restoreVocalTake();
 })();
