@@ -6,7 +6,7 @@
   const BUILT_INS = [
     {
       id: 'meme-party', name: '梗图派对', builtIn: true, layout: 9, backing: 'sunny',
-      slots: ['doro', 'maodie', 'chicken', 'oiia', 'dog', 'nailong', 'dog-1', 'dog-2', 'maodie-2']
+      slots: ['doro', 'maodie', 'chicken', 'oiia', 'dog', 'nailong', 'dog-1', 'dog-2', 'bingbingbing']
         .map((source, index) => ({ kind: 'sample', source, midi: SCALE[index] }))
     },
     {

@@ -63,6 +63,11 @@
       sourceLabel: '我的裁剪 · B站原视频', soundSource: 'https://www.bilibili.com/video/BV1ZMf2BzEQL/',
       imageSource: 'https://pdan.com.cn/12761.html', originSource: 'https://www.bilibili.com/video/BV1ZMf2BzEQL/'
     },
+    {
+      id: 'bingbingbing', title: '冰冰冰', sub: '10.7 亿个冰冰冰', key: 'I', type: 'original', image: './assets/bingbingbing.svg', audio: './assets/bingbingbing.mp3', color: 'var(--p-blue)',
+      origin: '使用你提供的“10.7 亿个冰冰冰”视频音轨裁剪采样；图像为本项目绘制的本地原创冰块小人。',
+      sourceLabel: '我的裁剪 · 用户提供素材', soundSource: '', imageSource: './assets/bingbingbing.svg', originSource: ''
+    },
     ...[
       ['ha', '哈', 'Z', 3.000, 3.380, 'var(--p-acid)'],
       ['ji', '基', 'X', 3.480, 3.860, 'var(--p-pink)'],
@@ -118,7 +123,7 @@
   }));
   const memeItems = (ids) => ids.map((id) => memes.find((meme) => meme.id === id));
   const cartridges = [
-    { name: '抽象梗采样', items: memeItems(['doro', 'maodie', 'maodie-2', 'chicken', 'chicken-2', 'oiia', 'nailong', 'dog']) },
+    { name: '抽象梗采样', items: memeItems(['doro', 'maodie', 'maodie-2', 'chicken', 'chicken-2', 'oiia', 'nailong', 'dog', 'bingbingbing']) },
     { name: '大狗叫逐音', items: memeItems(['dog-1', 'dog-2', 'dog-3', 'dog-4']) },
     { name: '哈基米逐音 01', items: memeItems(['hachimi-ha', 'hachimi-ji', 'hachimi-mi', 'hachimi-nan', 'hachimi-bei', 'hachimi-lv', 'hachimi-dou', 'hachimi-8']) },
     { name: '哈基米逐音 02', items: memeItems(['hachimi-9', 'hachimi-10', 'hachimi-11', 'hachimi-12']) },
@@ -395,9 +400,12 @@
   }
 
   function renderCredits() {
+    const creditLink = (href, label) => (/^https?:/i.test(String(href || ''))
+      ? `<a href="${href}" target="_blank" rel="noopener noreferrer">${label}</a>`
+      : `<span class="credit-local">${label} · 本地素材</span>`);
     $('#credits-list').innerHTML = memes.map((meme) => `
       <div class="credit-item"><strong>${meme.title} · ${meme.sub}</strong><p>${meme.origin}</p>
-      <p><a href="${meme.originSource}" target="_blank" rel="noopener noreferrer">梗来源</a>　<a href="${meme.imageSource}" target="_blank" rel="noopener noreferrer">图像来源</a>　<a href="${meme.soundSource}" target="_blank" rel="noopener noreferrer">${meme.type === 'original' ? '音频来源' : '原声出处说明'}</a></p></div>`).join('');
+      <p>${creditLink(meme.originSource, '梗来源')}　${creditLink(meme.imageSource, '图像来源')}　${creditLink(meme.soundSource, meme.type === 'original' ? '音频来源' : '原声出处说明')}</p></div>`).join('');
   }
 
   function syncTimelineDimensions() {

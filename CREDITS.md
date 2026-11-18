@@ -10,6 +10,7 @@
 | oeeao 旋转小猫 | [Voicemod Tuna](https://tuna.voicemod.net/sound/44fcfd11-d25e-4c7d-920b-a2a5e920b219) | [Voicemod Tuna / GraphicLowSignal46689](https://tuna.voicemod.net/sound/44fcfd11-d25e-4c7d-920b-a2a5e920b219) | 用户裁剪的“旋转小猫.mp3” |
 | 叫（大狗叫，5 段） | [游侠手游](https://m.ali213.net/news/gl2607/1790643.html) | [B站 BV1ougx6tEQt](https://www.bilibili.com/video/BV1ougx6tEQt/) | 用户裁剪的完整片段及“大狗1–4.mp3” |
 | 哈哈哈哈哈（奶龙） | [皮蛋表情包](https://pdan.com.cn/12761.html) | [B站 BV1ZMf2BzEQL](https://www.bilibili.com/video/BV1ZMf2BzEQL/) | 用户裁剪的“06-奶龙捧腹笑.mp3” |
+| 冰冰冰 | 本项目绘制的原创冰块小人（`assets/bingbingbing.svg`） | 用户提供的本地视频素材“10.7亿个冰冰冰” | 用户裁剪的“冰冰冰.mp3” |
 
 Web Audio 合成仿音为本地代码生成，只在原声加载失败时作为回退，不代表官方或原视频声音。
 
