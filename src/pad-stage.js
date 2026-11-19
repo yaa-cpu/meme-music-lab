@@ -730,7 +730,8 @@
       const stage = $('#pad-playground');
       if (stage) stage.classList.add('is-holding');
     }
-    options.hit(slot, index);
+    const columns = preset.layout === 4 ? 2 : 3;
+    options.hit({ ...slot, padRow: Math.floor(index / columns) }, index);
     if (backingOn && currentPreset().backing !== 'off') options.setBacking(true, currentPreset().backing);
     if (button) burst(button, slot);
     $('#pad-live-status').innerHTML = `<strong>${sourceInfo(slot).title}</strong><span id="pad-backing-name">${options.loopName(preset.backing)}</span>`;

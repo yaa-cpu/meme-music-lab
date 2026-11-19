@@ -2050,6 +2050,41 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
     tone('triangle', 440 * 2 ** ((midi - 69) / 12), when, duration, .15);
   }
 
+  // 同一个采样在不同排鼓面点按时，从不同的“高能量位置”开始播放：
+  // 把采样分成 3 段，每段找音量最高的 60ms 窗口作为起点，避免从静音/低音量处起播。
+  const sampleStartCache = new Map();
+  function sampleStartPositions(id) {
+    if (sampleStartCache.has(id)) return sampleStartCache.get(id);
+    const buffer = buffers[id];
+    if (!buffer || typeof buffer.duration !== 'number') return [0, 0, 0];
+    const data = buffer.getChannelData(0);
+    const sampleRate = buffer.sampleRate;
+    const windowSize = Math.max(1, Math.floor(sampleRate * .06));
+    const windows = Math.floor(data.length / windowSize);
+    if (!windows) return [0, 0, 0];
+    const rms = new Float32Array(windows);
+    for (let w = 0; w < windows; w++) {
+      let sum = 0;
+      const base = w * windowSize;
+      for (let i = 0; i < windowSize; i++) {
+        const value = data[base + i] || 0;
+        sum += value * value;
+      }
+      rms[w] = Math.sqrt(sum / windowSize);
+    }
+    const positions = [];
+    for (let band = 0; band < 3; band++) {
+      const start = Math.floor(windows * band / 3);
+      const end = Math.max(start + 1, Math.floor(windows * (band + 1) / 3));
+      let best = start;
+      for (let w = start; w < end; w++) if (rms[w] > rms[best]) best = w;
+      // 起点落在高能量窗口开头，最多留出 60ms 尾音空间。
+      positions.push(Math.min(best * windowSize / sampleRate, Math.max(0, buffer.duration - .06)));
+    }
+    sampleStartCache.set(id, positions);
+    return positions;
+  }
+
   function triggerSound(id, row, when, preview = false, note = null, hasAdjacentNext = false) {
     if (id.startsWith('instrument:')) {
       const duration = preview ? 1.2 : Math.max(.12, (note?.length || 1) * stepDuration());
@@ -2071,14 +2106,16 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
       const buffer = buffers[id];
       const volume = id === 'oiia' ? .7 : .82;
       const padHitEarly = Boolean(note?.padHit);
+      const padRow = Math.max(0, Math.min(2, Math.floor(Number(note?.padRow) || 0)));
       const rawRate = 2 ** (((note?.midi ?? pitches[row].midi) - 67) / 12);
       // 参考大狗 Tap：同一采样在不同分区只做克制的音高变化，避免极高把位失真成丝丝声。
       const playbackRate = padHitEarly ? Math.min(1.32, Math.max(.7, rawRate)) : rawRate;
       const sampleOffset = Math.max(0, Number(note?.offset) || 0) * stepDuration() * playbackRate;
+      const padRowOffset = padHitEarly ? sampleStartPositions(id)[padRow] : 0;
       const lead = sampleLeads.get(id) || 0;
       const padHit = padHitEarly;
       // 打击垫固定从裁剪起点进（不做随机切段），但要一直放到采样结尾，不再只放开头 0.1s。
-      const startOffset = Math.min(sampleOffset + lead, Math.max(0, buffer.duration - .02));
+      const startOffset = Math.min(padHitEarly ? padRowOffset : sampleOffset + lead, Math.max(0, buffer.duration - .02));
       const sampleDuration = buffer.duration / playbackRate;
       const availableDuration = Math.max(.01, sampleDuration - startOffset / playbackRate);
       // 打击垫：按住就播，播到采样结尾还在按就循环，松开由 releasePadSample 停止。
@@ -3263,7 +3300,7 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
       }
       // 采样区间固定不随机：同一个按键永远从裁剪好的起点播到采样结尾。
       // 不同按键靠各自的音符（pad 槽位里的 midi）改变 pitch，从而听出不同的“位置/音色”。
-      const note = { midi: slot.midi, length: 2, reverbPreset: 'none', padBus: true, padHit: true };
+      const note = { midi: slot.midi, length: 2, reverbPreset: 'none', padBus: true, padHit: true, padRow: slot.padRow || 0 };
       triggerSound(slot.source, nearestPitchRow(slot.midi), now + .005, false, note);
       flashMeme(slot.source, nearestPitchRow(slot.midi));
     } catch (_) {
