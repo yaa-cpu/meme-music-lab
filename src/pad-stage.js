@@ -225,12 +225,17 @@
   }
 
   function uniformSamples() {
-    return (options.library.sample || []).filter((item) => options.isUnlocked('sample', item.source));
+    return options?.library?.sample || [];
   }
 
   function applyUniformSample(source) {
     const item = uniformSamples().find((entry) => entry.source === source);
     if (!item) return;
+    if (!options.isUnlocked('sample', item.source)) {
+      options.toast(`「${item.title}」未解锁：去卡带背包完成关注 / 分享 / 转发`);
+      window.location.hash = '#/backpack';
+      return;
+    }
     const preset = currentPreset();
     ensureSlotsForLayout(preset);
     preset.slots = preset.slots.map((slot, index) => ({
@@ -245,13 +250,14 @@
 
   function renderUniformPresets() {
     const strip = $('#pad-uniform-strip');
-    if (!strip) return;
+    if (!strip || !options) return;
     strip.innerHTML = uniformSamples().map((item) => {
+      const unlocked = options.isUnlocked('sample', item.source);
       const visual = item.padImage || item.image
         ? `<img src="${item.padImage || item.image}" alt="" draggable="false">`
         : `<span>${item.symbol || item.short || 'NOTE'}</span>`;
-      return `<button class="pad-uniform-card" type="button" data-uniform-source="${item.source}" style="--uniform-color:${item.color}" title="全部换成 ${item.title}">
-        <span class="pad-uniform-visual">${visual}</span><strong>${item.title}</strong>
+      return `<button class="pad-uniform-card${unlocked ? '' : ' locked'}" type="button" data-uniform-source="${item.source}" data-unlocked="${unlocked}" style="--uniform-color:${item.color}" title="${unlocked ? `全部换成 ${item.title}` : `${item.title} 未解锁，去卡带背包完成任务`}">
+        <span class="pad-uniform-visual">${visual}</span><strong>${item.title}</strong>${unlocked ? '' : '<span class="pad-uniform-lock" aria-hidden="true">🔒</span>'}
       </button>`;
     }).join('');
     $$('.pad-uniform-card', strip).forEach((button) => button.addEventListener('click', () => applyUniformSample(button.dataset.uniformSource)));
@@ -845,5 +851,5 @@
     renderPads(); renderLibrary(); renderBackingSelect();
   }
 
-  window.MemePadStage = { init };
+  window.MemePadStage = { init, refresh: () => { renderUniformPresets(); } };
 })();

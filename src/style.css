@@ -1367,3 +1367,13 @@ body[data-page="studio"] .performance-inline{flex:0 0 176px!important;height:176
 .unlock-tokens>span{font-size:11px!important;font-weight:900!important;letter-spacing:.08em!important;color:var(--muted)!important}
 .unlock-tokens>strong{display:inline-grid!important;place-items:center!important;min-width:34px!important;height:30px!important;padding:0 8px!important;border:1.5px solid var(--ink)!important;border-radius:999px!important;background:var(--acid)!important;font:900 16px/1 var(--font-display,system-ui)!important}
 .unlock-tokens>small{font-size:11px!important;color:var(--muted)!important}
+
+
+/* 换鼓预设：按钮一排；未解锁采样也展示并加锁 */
+.pad-uniform-head .pad-uniform-actions{display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;align-items:center!important;gap:6px!important}
+.pad-uniform-head{flex-wrap:nowrap!important}
+.pad-uniform-actions .pad-uniform-random{padding:0 9px!important;min-height:30px!important;font-size:10px!important;white-space:nowrap!important}
+.pad-uniform-card{position:relative}
+.pad-uniform-card.locked{filter:saturate(.35) brightness(.92)}
+.pad-uniform-card.locked::after{content:"";position:absolute;inset:0;border-radius:12px;background:oklch(0 0 0 / .8);pointer-events:none}
+.pad-uniform-card .pad-uniform-lock{position:absolute;inset:0;display:grid;place-items:center;font-size:22px;z-index:2;pointer-events:none}

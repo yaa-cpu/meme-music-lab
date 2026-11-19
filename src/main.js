@@ -3307,6 +3307,7 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
       if (active) link.setAttribute('aria-current', 'page');
       else link.removeAttribute('aria-current');
     });
+    if (route === 'pad') window.MemePadStage?.refresh?.();
     document.title = route === 'backpack' ? '采样卡带背包图鉴 · 梗图音乐坊'
       : route === 'studio' ? '线谱音序器 · 梗图音乐坊'
       : route === 'works' ? '作品背包 · 梗图音乐坊' : '梗图音乐坊';
