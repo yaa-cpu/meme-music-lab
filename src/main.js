@@ -1284,8 +1284,9 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
 
   function beginCreateGesture(event, track) {
     if (gesture || event.button !== 0) return;
-    event.preventDefault();
     const row = Number(track.dataset.row);
+    if (!selectedRows.has(row)) return;
+    event.preventDefault();
     const rect = track.getBoundingClientRect();
     const length = timelineLength();
     const col = Math.max(0, (event.clientX - rect.left) / rect.width * length);
@@ -1298,6 +1299,38 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
       type: 'create', capture: track, note, noteEl, startX: event.clientX, startY: event.clientY,
       stepWidth: rect.width / length, maxLength: maxNoteLength(note), length: note.length
     });
+  }
+
+  // 未激活轨道的空白处：单指拖动平移线谱，轻点激活该轨道
+  function beginStaffPan(event, track) {
+    if (event.button !== 0) return;
+    const scroll = $('#staff-scroll');
+    if (!scroll) return;
+    event.preventDefault();
+    const row = Number(track.dataset.row);
+    const start = { x: event.clientX, y: event.clientY, left: scroll.scrollLeft, top: scroll.scrollTop };
+    let moved = false;
+    try { track.setPointerCapture(event.pointerId); } catch (_) { /* ignore */ }
+    const move = (moveEvent) => {
+      if (moveEvent.pointerId !== event.pointerId) return;
+      const dx = moveEvent.clientX - start.x;
+      const dy = moveEvent.clientY - start.y;
+      if (!moved && Math.hypot(dx, dy) > 5) moved = true;
+      if (!moved) return;
+      scroll.scrollLeft = start.left - dx;
+      scroll.scrollTop = start.top - dy;
+    };
+    const end = (endEvent) => {
+      if (endEvent.pointerId !== event.pointerId) return;
+      track.removeEventListener('pointermove', move);
+      track.removeEventListener('pointerup', end);
+      track.removeEventListener('pointercancel', end);
+      try { track.releasePointerCapture(event.pointerId); } catch (_) { /* ignore */ }
+      if (!moved && !selectedRows.has(row)) toggleRowSelection(row);
+    };
+    track.addEventListener('pointermove', move);
+    track.addEventListener('pointerup', end);
+    track.addEventListener('pointercancel', end);
   }
 
   function beginMoveGesture(event, noteEl) {
@@ -1489,7 +1522,9 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
     const grid = $('#staff-grid');
     grid.addEventListener('pointerdown', (event) => {
       const track = event.target.closest('.rail-track');
-      if (track && !event.target.closest('.placed-note')) beginCreateGesture(event, track);
+      if (!track || event.target.closest('.placed-note')) return;
+      if (selectedRows.has(Number(track.dataset.row))) beginCreateGesture(event, track);
+      else beginStaffPan(event, track);
     });
     grid.addEventListener('keydown', (event) => {
       const noteEl = event.target.closest('.placed-note');
@@ -1510,7 +1545,7 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
         return;
       }
       const track = event.target.closest('.rail-track');
-      if (track && event.key === 'Enter') {
+      if (track && event.key === 'Enter' && selectedRows.has(Number(track.dataset.row))) {
         event.preventDefault(); placeNote(selectedId, Number(track.dataset.row), 0);
       }
     });

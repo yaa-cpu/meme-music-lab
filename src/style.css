@@ -1166,3 +1166,13 @@ body[data-page="studio"] .performance-inline{flex:0 0 176px!important;height:176
 /* 覆盖 :has 规则的更高优先级，工作台固定 176px */
 body[data-page="studio"] .performance-inline:has(.pitch-pad.piano-pad),
 body[data-page="studio"] .performance-inline{flex:0 0 176px!important;height:176px!important;min-height:0!important}
+
+
+/* 手机线谱页：LOOP 工作台褐色底 + 圆角 + 与下方工作台留缝；轨道允许自定义手势 */
+@media (max-width:520px){
+  body[data-page="studio"] .studio-region-main>.tape-strip{flex:0 0 64px!important;height:64px!important;margin:0 0 8px!important;border:1.5px solid #5a3a1d!important;border-radius:12px!important;background:#6f4a2a!important;box-shadow:none!important;overflow:hidden!important}
+  body[data-page="studio"] .studio-region-main>.tape-lane{height:20px!important;border-bottom:1px solid oklch(1 0 0 / .14)!important}
+  body[data-page="studio"] .studio-region-main>.tape-strip .tape-lane-label{background:#5a3a1d!important;color:#f4e3c6!important;border-right:1px solid oklch(1 0 0 / .14)!important}
+  body[data-page="studio"] .studio-region-main>.tape-strip .tape-track{background-color:#7c5533!important;background-image:repeating-linear-gradient(90deg,oklch(1 0 0 / .16) 0 1px,transparent 1px calc(100% / var(--tape-steps,16)))!important}
+  body[data-page="studio"] .rail-track{touch-action:none!important}
+}
