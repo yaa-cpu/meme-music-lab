@@ -1049,3 +1049,15 @@ body.phone-preview-open{overflow:hidden}
   body[data-page="studio"] .pitch-key{min-height:64px!important}
   body[data-page="studio"] .pitch-key strong{font-size:15px!important}
 }
+
+
+/* 手机线谱页：明确三块区域，区域2（运输栏+工具栏+线谱+LOOP）整体占中间，区域3工作台固定底部 */
+@media (max-width:520px){
+  body[data-page="studio"] .studio-region-main{flex:1 1 auto!important;min-height:0!important;display:flex!important;flex-direction:column!important;gap:0!important;overflow:hidden!important}
+  body[data-page="studio"] .studio-region-main>.transport{margin:0 0 2px!important;flex:0 0 auto!important}
+  body[data-page="studio"] .studio-region-main>.staff-toolbar{margin:0 0 2px!important;flex:0 0 auto!important}
+  body[data-page="studio"] .studio-region-main>.staff-scroll{flex:1 1 auto!important;min-height:0!important;margin:0!important;border-radius:8px 8px 0 0!important}
+  body[data-page="studio"] .studio-region-main>.tape-strip{flex:0 0 62px!important;margin:0!important;border-radius:0!important}
+  body[data-page="studio"] .performance-inline{flex:0 0 200px!important;margin:0!important;display:block!important}
+  body[data-page="studio"] .performance-inline .performance-console{margin:0!important;padding:0!important;border:0!important}
+}
