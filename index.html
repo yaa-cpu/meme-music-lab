@@ -8,7 +8,7 @@
   <meta name="description" content="把 Doro、耄耋、旋转小猫等梗卡放进八线谱，演奏一首抽象音乐。">
   <title>梗图音乐坊 · Meme Music Lab</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23232620'/%3E%3Cpath d='M25 45V17l25-5v27M25 24l25-5' fill='none' stroke='%23d7ed62' stroke-width='5' stroke-linecap='round'/%3E%3Ccircle cx='19' cy='46' r='8' fill='%23d7ed62'/%3E%3Ccircle cx='44' cy='40' r='8' fill='%23d7ed62'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="./src/style.css?v=hachimi4">
+  <link rel="stylesheet" href="./src/style.css?v=token2">
   <link rel="stylesheet" href="./src/pad-stage.css">
   <script defer src="./src/music-data.js"></script>
   <script defer src="./src/synth-engine.js"></script>
@@ -18,7 +18,7 @@
   <script defer src="./src/pad-bg.js"></script>
   <script defer src="./src/pad-grooves.js"></script>
   <script defer src="./src/pad-stage.js"></script>
-  <script defer src="./src/main.js?v=hachimi4"></script>
+  <script defer src="./src/main.js?v=token2"></script>
 </head>
 <body>
   <svg class="svg-defs" aria-hidden="true">
@@ -86,8 +86,8 @@
         </div>
         <div class="pad-toolbar">
           <div class="pad-toolbar-actions">
-            <button class="pad-chip-button active" id="pad-loop-toggle" type="button" aria-pressed="true" title="自动底奏：首次敲击自动开始，走到线谱区自动暂停"><svg><use href="#i-loop"/></svg><span>底奏开</span></button>
-            <button class="pad-chip-button pad-chip-primary" id="pad-backpack-open" type="button"><svg><use href="#i-spark"/></svg><span>换装</span></button>
+            <button class="pad-chip-button active" id="pad-loop-toggle" type="button" aria-pressed="true" title="自动底奏：首次敲击自动开始，走到线谱区自动暂停"><svg><use href="#i-loop"/></svg><span>换底奏</span></button>
+            <button class="pad-chip-button pad-chip-primary" id="pad-backpack-open" type="button"><svg><use href="#i-spark"/></svg><span>换鼓</span></button>
             <div class="pad-layout-switch" id="pad-layout" aria-label="打击垫布局"><button type="button" data-layout="4" aria-pressed="false">2 × 2</button><button type="button" data-layout="9" class="active" aria-pressed="true">3 × 3</button></div>
           </div>
         </div>
@@ -98,11 +98,10 @@
         </div>
         <p class="pad-status" id="pad-live-status" role="status"><strong>随便敲。</strong><span id="pad-backing-name">柑橘跳跳糖</span></p>
       </div>
-      <button class="pad-surprise" id="pad-surprise" type="button" aria-label="切换下一套打击垫预设" title="换一套玩玩">换一套</button>
-      <section class="pad-uniform" id="pad-uniform" aria-label="换装预设">
+      <section class="pad-uniform" id="pad-uniform" aria-label="换鼓预设">
         <div class="pad-uniform-head">
-          <div><strong>换装预设</strong><small>全部按键换成同一个采样</small></div>
-          <button class="pad-uniform-random" id="pad-uniform-random" type="button">随机一盒</button>
+          <div><strong>换鼓预设</strong><small>全部按键换成同一个采样</small></div>
+          <div class="pad-uniform-actions"><button class="pad-uniform-random" id="pad-random-face" type="button">随机鼓面</button><button class="pad-uniform-random" id="pad-uniform-random" type="button">随机一盒</button></div>
         </div>
         <div class="pad-uniform-strip" id="pad-uniform-strip" aria-label="抽象采样卡带盒"></div>
       </section>
@@ -203,6 +202,7 @@
         <button class="task-button" id="share-task" type="button"><strong>分享</strong></button>
         <button class="task-button" id="repost-task" type="button"><strong>转发</strong></button>
       </div>
+      <p class="unlock-tokens" aria-live="polite"><span>解锁次数</span><strong id="unlock-tokens">0</strong><small>完成关注 / 分享 / 转发各得 1 次，点击锁住的卡带消耗 1 次解锁</small></p>
       <div class="backpack-grid" id="backpack-grid"></div>
       <div class="backpack-audition" aria-label="卡带试听">
         <div class="backpack-audition-info">

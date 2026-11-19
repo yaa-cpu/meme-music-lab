@@ -421,7 +421,7 @@
     const toggle = $('#pad-loop-toggle');
     toggle.classList.toggle('active', active);
     toggle.setAttribute('aria-pressed', String(active));
-    $('span', toggle).textContent = active ? '底奏开' : '底奏关';
+    $('span', toggle).textContent = '换底奏';
     if (window.PadLeds) window.PadLeds.setActive(active);
     if (window.PadBG) window.PadBG.setActive(active);
     dance.active = active;
@@ -749,11 +749,13 @@
     $('#pad-backpack-open').addEventListener('click', openBackpack);
     $('#backpack-pad-button')?.addEventListener('click', openBackpack);
     $('#pad-preset-select')?.addEventListener('change', (event) => selectPreset(event.target.value));
-    $('#pad-surprise').addEventListener('click', () => {
+    $('#pad-random-face')?.addEventListener('click', () => {
       const builtIns = state.presets.filter((preset) => preset.builtIn);
+      if (!builtIns.length) return;
       const current = builtIns.findIndex((preset) => preset.id === state.presetId);
-      selectPreset(builtIns[(current + 1) % builtIns.length].id);
-      options.toast(`已换上「${currentPreset().name}」`);
+      const next = builtIns[(current + 1 + Math.floor(Math.random() * Math.max(1, builtIns.length - 1))) % builtIns.length];
+      selectPreset(next.id);
+      options.toast(`随机鼓面：${currentPreset().name}`);
     });
     $$('#pad-layout button').forEach((button) => button.addEventListener('click', () => {
       currentPreset().layout = Number(button.dataset.layout);

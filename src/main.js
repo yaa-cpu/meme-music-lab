@@ -19,6 +19,8 @@
   let loopClockStep = 0;
   let followedAuthor = false;
   let rewardClaims = { share: '', repost: '' };
+  let unlockTokens = 0;
+  let unlockedCartridges = new Set();
   const localDay = () => new Date().toLocaleDateString('en-CA');
 
   const memes = [
@@ -98,7 +100,8 @@
   }));
   const memeItems = (ids) => ids.map((id) => memes.find((meme) => meme.id === id));
   const cartridges = [
-    { name: '抽象梗采样', items: memeItems(['doro', 'maodie', 'maodie-2', 'chicken', 'chicken-2', 'oiia', 'nailong', 'dog', 'bingbingbing']) },
+    { name: '大狗叫', items: memeItems(['dog']) },
+    { name: '抽象梗采样', items: memeItems(['doro', 'maodie', 'maodie-2', 'chicken', 'chicken-2', 'oiia', 'nailong', 'bingbingbing']) },
     { name: '哈基米逐音', items: memeItems(['hachimi-1-3', 'hachimi-4-6', 'hachimi-7-9', 'hachimi-10-12']) },
     // 参照 ACE Studio 的音源分类重排：弦乐组 / 铜管木管 / 键盘合成 / 吉他与拨弦 / 鼓组贝斯
     { name: '弦乐组 · ACE 标准', items: instrumentItems(['violin', 'cello', 'stringsHigh', 'stringsMid', 'stringsLow', 'stringsPizz', 'contrabass']) },
@@ -122,7 +125,7 @@
   const storageKey = 'meme-music-lab-v2';
 try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old demo state */ }
   let notes = [];
-  let selectedId = 'doro';
+  let selectedId = 'dog';
   let selectedNoteId = null;
   let projectMixer = null;
   let lowShelf = null;
@@ -242,7 +245,7 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
       bpm = Math.round(Math.min(180, Math.max(60, Number(saved.bpm) || 112)));
       outputVolume = Number.isFinite(Number(saved.volume)) ? clamp(Number(saved.volume), 0, 100) : 70;
       loop = saved.loop !== false;
-      selectedId = validSource(saved.selectedId) ? saved.selectedId : 'doro';
+      selectedId = validSource(saved.selectedId) ? saved.selectedId : 'dog';
       pitchCount = [4, 5, 8, 12, 24, 49, 61, 88].includes(Number(saved.pitchCount)) ? Number(saved.pitchCount) : 8;
       pitches = musicData.getPitches(pitchCount);
       notes.forEach((note) => {
@@ -264,13 +267,15 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
       })) : [];
       followedAuthor = saved.followedAuthor === true;
       rewardClaims = { share: saved.rewardClaims?.share || '', repost: saved.rewardClaims?.repost || '' };
+      unlockTokens = Math.max(0, Math.floor(Number(saved.unlockTokens) || 0));
+      unlockedCartridges = new Set(Array.isArray(saved.unlockedCartridges) ? saved.unlockedCartridges.map(Number).filter((value) => Number.isInteger(value) && value > 0) : []);
     } else {
       notes = demoPattern.map(([meme, row, col]) => ({ id: uid(), meme, row, col, length: 1 }));
     }
   }
 
   function saveState() {
-    try { localStorage.setItem(storageKey, JSON.stringify({ notes, bpm, volume: outputVolume, loop, selectedId, pitchCount, reverbPreset, reverbWet, loopTapes, followedAuthor, rewardClaims })); } catch (_) { /* private mode */ }
+    try { localStorage.setItem(storageKey, JSON.stringify({ notes, bpm, volume: outputVolume, loop, selectedId, pitchCount, reverbPreset, reverbWet, loopTapes, followedAuthor, rewardClaims, unlockTokens, unlockedCartridges: [...unlockedCartridges] })); } catch (_) { /* private mode */ }
   }
 
   function showToast(message) {
@@ -425,6 +430,7 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
   }
 
   const cartridgeRewards = [
+    { type: 'free', cover: './assets/dog.png', symbol: '', colors: ['#f2d468', '#efabc2'] },
     { type: 'free', cover: './assets/oiia.webp', symbol: '', colors: ['#d9ef68', '#91cfe8'] },
     { type: 'follow', cover: './assets/hachimi.svg', symbol: '', colors: ['#c7b4e6', '#91cfe8'] },
     { type: 'free', cover: './assets/doro.webp', symbol: '𝄞', colors: ['#efabc2', '#c7b4e6'] },
@@ -437,14 +443,23 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
   let recordingLoopStep = null;
 
   function isCartridgeUnlocked(index) {
-    const reward = cartridgeRewards[index]?.type || 'free';
-    if (reward === 'free') return true;
-    if (!followedAuthor) return false;
-    return reward === 'follow' || rewardClaims[reward] === localDay();
+    if (index === 0) return true;
+    return unlockedCartridges.has(index);
   }
 
   function cartridgeRequirement(index) {
-    return `${rewardNames[cartridgeRewards[index]?.type] || '任务'}后解锁`;
+    return unlockTokens > 0 ? '再点一次消耗 1 个解锁次数' : '完成关注 / 分享 / 转发获得解锁次数';
+  }
+
+  function updateUnlockTokens() {
+    const label = $('#unlock-tokens');
+    if (label) label.textContent = String(unlockTokens);
+  }
+
+  function grantUnlockToken(source) {
+    unlockTokens += 1;
+    saveState(); updateUnlockTokens(); renderBackpack();
+    showToast(`完成${source}，获得 1 个解锁次数`);
   }
 
   // ── loop 底奏卡带：点左侧音阶名选中轨道 → 合成卡带 → 摆到下方 3 条卡带轨 ──
@@ -643,6 +658,7 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
   function renderBackpack() {
     const today = localDay();
     const follow = $('#follow-task');
+    updateUnlockTokens();
     follow.classList.toggle('done', followedAuthor);
     follow.setAttribute('aria-pressed', String(followedAuthor));
     $('strong', follow).textContent = followedAuthor ? '已关注' : '关注';
@@ -655,7 +671,7 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
       button.disabled = claimed;
       $('strong', button).textContent = `${type === 'share' ? '分享' : '转发'}${claimed ? ' · 已做' : ''}`;
       const small = $('small', button);
-      if (small) small.textContent = claimed ? '明天再来 · 仍需保持关注' : followedAuthor ? '每天一次 · 今日可完成' : '先关注作者，再完成任务';
+      if (small) small.textContent = claimed ? '明天再来 · 每天一次' : followedAuthor ? '完成可获得 1 个解锁次数' : '先关注作者，再完成任务';
     });
     $('#backpack-grid').innerHTML = cartridges.map((cartridge, index) => {
       const unlocked = isCartridgeUnlocked(index);
@@ -668,7 +684,17 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
     }).join('');
     $$('#backpack-grid [data-backpack]').forEach((button) => button.addEventListener('click', () => {
       const index = Number(button.dataset.backpack);
-      if (!isCartridgeUnlocked(index)) { showToast(`请先完成${cartridgeRequirement(index)}`); return; }
+      if (!isCartridgeUnlocked(index)) {
+        if (unlockTokens > 0) {
+          unlockTokens -= 1;
+          unlockedCartridges.add(index);
+          saveState(); updateUnlockTokens(); setCartridge(index); renderBackpack();
+          showToast(`已消耗 1 个解锁次数，解锁「${cartridges[index].name}」`);
+        } else {
+          showToast('解锁次数不足：先完成关注 / 分享 / 转发，或点开任务领取次数');
+        }
+        return;
+      }
       setCartridge(index);
       updateAudition();
       const performance = $('.performance');
@@ -693,8 +719,9 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
         showToast('当前浏览器不支持分享，请复制地址栏链接'); return;
       }
       rewardClaims[type] = localDay();
+      unlockTokens += 1;
       saveState(); renderBackpack();
-      showToast(`Demo 今日${label}奖励已领取，卡带已解锁`);
+      showToast(`Demo 今日${label}完成，获得 1 个解锁次数`);
     } catch (error) {
       if (error?.name !== 'AbortError') showToast(`${label}未完成，请检查浏览器分享权限`);
     }
@@ -3422,10 +3449,16 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
     $('#backpack-audition-play')?.addEventListener('click', playAudition);
   $('#backpack-audition-stop')?.addEventListener('click', stopAudition);
   $('#follow-task').addEventListener('click', () => {
-      followedAuthor = !followedAuthor;
-      if (!followedAuthor && !isCartridgeUnlocked(cartridgeIndex)) setCartridge(0);
-      saveState(); renderBackpack();
-      showToast(followedAuthor ? 'Demo 已标记关注，哈基米 01 已解锁' : 'Demo 已取消关注，任务奖励卡带暂时锁定');
+      if (!followedAuthor) {
+        followedAuthor = true;
+        unlockTokens += 1;
+        saveState(); renderBackpack();
+        showToast('Demo 已标记关注，获得 1 个解锁次数');
+      } else {
+        followedAuthor = false;
+        saveState(); renderBackpack();
+        showToast('已取消关注（已获得的解锁次数保留）');
+      }
     });
     $('#share-task').addEventListener('click', () => completeShareTask('share'));
     $('#repost-task').addEventListener('click', () => completeShareTask('repost'));
