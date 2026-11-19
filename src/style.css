@@ -1005,3 +1005,29 @@ body.phone-preview-open{overflow:hidden}
   body[data-page="studio"] .pitch-key{min-height:38px!important}
   body[data-page="studio"] .pitch-key strong{font-size:11px!important}
 }
+
+
+/* 手机线谱页：采样工作台保持原结构（标题/卡带轮+采样卡/音阶键），不重排成怪样子 */
+@media (max-width:520px){
+  body[data-page="studio"] .sample-console{display:grid!important;grid-template-columns:84px minmax(0,1fr)!important;grid-template-rows:auto auto!important;gap:4px 7px!important;align-items:center!important;padding:0 0 4px!important;margin:0!important;border:0!important}
+  body[data-page="studio"] .sample-console-head{grid-column:1/-1!important;grid-row:1!important;display:flex!important;min-height:18px!important;margin:0!important;padding:0!important;gap:6px!important}
+  body[data-page="studio"] .sample-console-head strong{font-size:10px!important}
+  body[data-page="studio"] .sample-console-head small{font-size:8px!important}
+  body[data-page="studio"] .sample-console-head .sample-console-hint{display:none!important}
+  body[data-page="studio"] .cartridge-changer{grid-column:1!important;grid-row:2!important;display:flex!important;padding:0!important;border:0!important;min-width:0!important}
+  body[data-page="studio"] .cartridge-heading{display:none!important}
+  body[data-page="studio"] .cartridge-wheel-shell{width:82px!important;height:112px!important;flex:0 0 112px!important;border-width:1px!important;box-shadow:2px 2px 0 var(--ink)!important}
+  body[data-page="studio"] .cartridge-wheel{inset:6px 5px!important;height:100px!important}
+  body[data-page="studio"] .meme-grid.sample-note-row{grid-column:2!important;grid-row:2!important;max-height:112px!important;padding:0 0 2px!important;gap:6px!important}
+  body[data-page="studio"] .card-button.sample-note{flex:0 0 112px!important;height:64px!important;min-height:0!important;padding:5px 7px!important;grid-template-columns:36px minmax(0,1fr) 22px!important;gap:6px!important}
+  body[data-page="studio"] .sample-note-avatar{width:36px!important;height:42px!important}
+  body[data-page="studio"] .sample-note .keycap{display:none!important}
+  body[data-page="studio"] .sample-note .note-chip{width:22px!important;height:22px!important}
+  body[data-page="studio"] .now-playing{display:none!important}
+  body[data-page="studio"] .performance-body{display:block!important}
+  body[data-page="studio"] .pitch-pad{display:grid!important;grid-template-columns:repeat(var(--pitch-count,4),minmax(0,1fr))!important;gap:6px!important;margin-top:6px!important}
+  body[data-page="studio"] .pitch-key{min-height:62px!important;padding:6px 4px!important;border-width:1.5px!important;border-radius:8px!important}
+  body[data-page="studio"] .pitch-key strong{font-size:14px!important;line-height:1.15!important}
+  body[data-page="studio"] .pitch-key small{display:block!important;font-size:8px!important}
+  body[data-page="studio"] .performance-inline .performance-console{padding:4px 0 0!important}
+}
