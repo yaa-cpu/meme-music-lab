@@ -3501,8 +3501,8 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
     });
     $('#replace-melody').addEventListener('click', replaceMainMelodyWithSelection);
     $('#demo-button').addEventListener('click', loadDemo);
-    $('#import-project').addEventListener('click', () => $('#project-file').click());
-    $('#project-file').addEventListener('change', async (event) => {
+    $('#import-project')?.addEventListener('click', () => $('#project-file')?.click());
+    $('#project-file')?.addEventListener('change', async (event) => {
       const file = event.target.files && event.target.files[0];
       event.target.value = '';
       if (!file) return;
