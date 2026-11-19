@@ -1293,3 +1293,15 @@ body[data-page="studio"] .performance-inline{flex:0 0 176px!important;height:176
   body[data-page="pad"] .pad-hero-layout{margin:0 auto!important;width:100%!important}
   body[data-page="pad"] .site-footer{display:flex!important;background:oklch(0.94 0.055 105)!important;color:var(--ink)!important;border-top:0!important;margin-top:0!important}
 }
+
+
+/* 打击垫页：修复顶栏被压缩；节奏背景层全屏跟随（不再被卡片裁切） */
+@media (max-width:520px){
+  body[data-page="pad"] .site-header{position:relative!important;z-index:10!important;width:100%!important;max-width:none!important;margin:0!important;align-self:stretch!important;box-sizing:border-box!important}
+  body[data-page="pad"] .pad-bg{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;z-index:0!important}
+  body[data-page="pad"] .pad-home{overflow:visible!important}
+  body[data-page="pad"] .pad-home::before{position:fixed!important;top:-120px!important;right:-90px!important;z-index:0!important}
+  body[data-page="pad"] .pad-home::after{position:fixed!important;left:20%!important;bottom:-120px!important;z-index:0!important}
+  body[data-page="pad"] .pad-hero-layout{position:relative!important;z-index:2!important}
+  body[data-page="pad"] .pad-sticker{position:absolute!important;z-index:3!important}
+}
