@@ -25,6 +25,14 @@
         .map((source, index) => ({ kind: 'sample', source, midi: SCALE[index] }))
     },
     {
+      id: 'mega-36', name: '3×12 大狗鼓阵', builtIn: true, layout: 36, backing: 'friendwine',
+      slots: Array.from({ length: 36 }, (_, index) => ({
+        kind: 'sample',
+        source: ['dog-1', 'dog-2', 'dog-3', 'dog-4'][index % 4],
+        midi: 36 + index
+      }))
+    },
+    {
       id: 'instrument-toy', name: '乐器玩具箱', builtIn: true, layout: 9, backing: 'friendwine',
       slots: ['piano', 'marimba', 'harp', 'guitar', 'flute', '8bit', 'bass', 'synth', 'pad']
         .map((id, index) => ({ kind: 'note', source: `instrument:${id}`, midi: SCALE[index] }))
@@ -47,13 +55,13 @@
 
   function normalizePreset(preset) {
     const fallback = BUILT_INS[0];
-    const slots = Array.isArray(preset.slots) ? preset.slots.slice(0, 9) : [];
+    const slots = Array.isArray(preset.slots) ? preset.slots.slice(0, 36) : [];
     while (slots.length < 9) slots.push(clone(fallback.slots[slots.length]));
     return {
       id: String(preset.id || `custom-${Date.now()}`),
       name: String(preset.name || '我的打击垫').slice(0, 24),
       builtIn: Boolean(preset.builtIn),
-      layout: Number(preset.layout) === 4 ? 4 : 9,
+      layout: [4, 9, 36].includes(Number(preset.layout)) ? Number(preset.layout) : 9,
       backing: ['sunny', 'bounce', 'chill', 'friendwine', 'off'].includes(preset.backing) ? preset.backing : 'friendwine',
       slots: slots.map((slot, index) => ({
         kind: ['sample', 'note', 'drum'].includes(slot.kind) ? slot.kind : 'sample',
@@ -91,7 +99,17 @@
     return options.sourceInfo(slot.kind, slot.source);
   }
 
+  function ensureSlotsForLayout(preset) {
+    while (preset.slots.length < preset.layout) {
+      const base = preset.slots.slice(0, 9);
+      const template = base[preset.slots.length % base.length] || BUILT_INS[0].slots[preset.slots.length % 9];
+      preset.slots.push({ kind: template.kind, source: template.source, midi: 36 + (preset.slots.length % 48) });
+    }
+    if (preset.slots.length > 36) preset.slots.length = 36;
+  }
+
   function visibleSlots() {
+    ensureSlotsForLayout(currentPreset());
     return currentPreset().slots.slice(0, currentPreset().layout);
   }
 
@@ -105,9 +123,11 @@
   function renderPads() {
     const preset = currentPreset();
     const grid = $('#drum-pad-grid');
-    grid.style.setProperty('--pad-columns', preset.layout === 4 ? 2 : 3);
-    grid.style.setProperty('--pad-rows', preset.layout === 4 ? 2 : 3);
+    ensureSlotsForLayout(preset);
+    grid.style.setProperty('--pad-columns', preset.layout === 4 ? 2 : preset.layout === 36 ? 12 : 3);
+    grid.style.setProperty('--pad-rows', preset.layout === 4 ? 2 : preset.layout === 36 ? 3 : 3);
     grid.classList.toggle('four-pads', preset.layout === 4);
+    grid.classList.toggle('many-pads', preset.layout === 36);
     grid.innerHTML = visibleSlots().map((slot, index) => {
       const source = sourceInfo(slot);
       const padImage = source.padImage || source.image;
@@ -658,7 +678,7 @@
   }
 
   function openBackpack() {
-    editingSlot = Math.min(editingSlot, currentPreset().layout - 1);
+    editingSlot = Math.max(0, Math.min(editingSlot, currentPreset().layout - 1));
     renderPresets(); renderSlotPicker(); renderLibrary(); renderBackingSelect();
     $('#pad-backpack-dialog').showModal();
   }

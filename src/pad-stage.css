@@ -208,3 +208,14 @@ body.fx-snare::after{animation:page-snare .36s ease-out}
 }
 @keyframes pad-hold-flash{0%,100%{opacity:.55;filter:brightness(1)}50%{opacity:.85;filter:brightness(1.2)}}
 @keyframes pad-hold-ring{0%{opacity:.85;transform:translate(-50%,-50%) scale(.55)}72%{opacity:.3;transform:translate(-50%,-50%) scale(3.2)}100%{opacity:0;transform:translate(-50%,-50%) scale(3.8)}}
+
+
+/* 3×12 鼓阵：按键变小，隐藏文字细节 */
+.drum-pad-grid.many-pads{gap:5px}
+.drum-pad-grid.many-pads .meme-pad{border-radius:7px}
+.drum-pad-grid.many-pads .pad-label,
+.drum-pad-grid.many-pads .pad-kind,
+.drum-pad-grid.many-pads .pad-number{display:none}
+.drum-pad-grid.many-pads .pad-image{inset:8%}
+.drum-pad-grid.many-pads .pad-source-symbol{font-size:14px}
+.drum-pad-grid.many-pads .meme-pad::after{display:none}
