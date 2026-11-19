@@ -674,14 +674,17 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
   }
 
   function renderSongs() {
-    const demos = musicData.songs.map((song, index) => `<div class="library-song-wrap"><button class="song-card" type="button" data-song="${song.id}"><span class="song-number">0${index + 1}</span><span><strong>${song.title}</strong><small>${song.subtitle}</small></span><span class="song-play">${icon('play')} 播放演示</span></button>${song.source ? `<a class="track-source" href="${song.source}" target="_blank" rel="noopener noreferrer">参考视频 ${icon('arrow')}</a>` : ''}</div>`).join('');
-    const tracks = musicData.libraryTracks.map((track, index) => `<div class="library-song-wrap"><button class="song-card library-track-card" type="button" data-track="${track.id}" aria-pressed="false"><span class="song-number">0${musicData.songs.length + index + 1}</span><span><strong>${track.title}</strong><small>${track.subtitle}</small></span><span class="song-play">${icon('play')} ${track.action || '播放整曲'}</span></button><a class="track-source" href="${track.source}" target="_blank" rel="noopener noreferrer">视频来源 ${icon('arrow')}</a></div>`).join('');
-    const projects = (musicData.synthProjects || []).map((project, index) => `<div class="library-song-wrap"><button class="song-card" type="button" data-project="${project.id}"><span class="song-number">0${musicData.songs.length + musicData.libraryTracks.length + index + 1}</span><span><strong>${project.title}</strong><small>${project.subtitle}</small></span><span class="song-play">${icon('play')} 载入工程</span></button></div>`).join('');
-    $('#song-grid').innerHTML = demos + tracks + projects;
-    $$('[data-song]').forEach((button) => button.addEventListener('click', () => loadSong(button.dataset.song)));
-    $$('[data-track]').forEach((button) => button.addEventListener('click', () => toggleLibraryTrack(button.dataset.track)));
+    const card = (dataset, cover, title) => `<button class="work-card" type="button" ${dataset}><span class="work-cover"><img src="${cover}" alt="${title} 封面"></span><strong class="work-name">${title}</strong></button>`;
+    const demos = musicData.songs.map((song) => card(`data-song="${song.id}"`, song.cover || './assets/doro.webp', song.shortTitle || song.title)).join('');
+    const projects = (musicData.synthProjects || []).map((project) => card(`data-project="${project.id}"`, project.cover || './assets/dog.png', project.shortTitle || project.title)).join('');
+    $('#song-grid').innerHTML = demos + projects;
+    $$('[data-song]').forEach((button) => button.addEventListener('click', () => {
+      loadSong(button.dataset.song);
+      location.hash = '#/studio';
+    }));
     $$('[data-project]').forEach((button) => button.addEventListener('click', () => {
       const project = (musicData.synthProjects || []).find((item) => item.id === button.dataset.project);
+      location.hash = '#/studio';
       if (project) loadSynthProject(project.url);
     }));
   }

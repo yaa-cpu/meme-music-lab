@@ -207,7 +207,7 @@
 
   const songs = [
     {
-      id: 'birthday', title: '生日快乐', subtitle: '中英两段 · 附点弱起 · 旋律／和弦／低音', instrument: 'instrument:piano', bpm: 112, pitchCount: 49,
+      id: 'birthday', title: '生日快乐', cover: './assets/doro.webp', subtitle: '中英两段 · 附点弱起 · 旋律／和弦／低音', instrument: 'instrument:piano', bpm: 112, pitchCount: 49,
       source: 'https://www.bilibili.com/video/BV1sps5zcE6p/',
       events: [
         ...makeTrack('flute', `${birthdayPhrase} ${birthdayPhrase}`),
@@ -216,12 +216,12 @@
       ]
     },
     {
-      id: 'twinkle', title: '一闪一闪亮晶晶', subtitle: 'D 调完整六段 · 长笛／竖琴／低音', instrument: 'instrument:flute', bpm: 144, pitchCount: 49,
+      id: 'twinkle', title: '一闪一闪亮晶晶', cover: './assets/maodie.webp', subtitle: 'D 调完整六段 · 长笛／竖琴／低音', instrument: 'instrument:flute', bpm: 144, pitchCount: 49,
       source: 'https://www.bilibili.com/video/BV1wVmtBNEEh/',
       events: [...makeTrack('flute', twinklePhrase), ...makeArpeggio('harp', twinkleBars), ...makeBass('bass', twinkleBars)]
     },
     {
-      id: 'firefly', title: '虫儿飞', subtitle: 'F 调主歌与副歌 · 长笛／竖琴／低音', instrument: 'instrument:flute', bpm: 104, pitchCount: 49,
+      id: 'firefly', title: '虫儿飞', cover: './assets/oiia.webp', subtitle: 'F 调主歌与副歌 · 长笛／竖琴／低音', instrument: 'instrument:flute', bpm: 104, pitchCount: 49,
       source: 'https://www.bilibili.com/video/BV1L8411v7v5/',
       events: [...makeTrack('flute', `${fireflyVerse} ${fireflyChorus}`), ...makeArpeggio('harp', fireflyBars), ...makeBass('bass', fireflyBars)]
     },
@@ -233,6 +233,8 @@
     {
       id: 'friendwine-rebuild',
       title: '朋友的酒 DJ · 全乐器拆分还原',
+      shortTitle: '朋友的酒',
+      cover: './assets/dog.png',
       subtitle: 'ACE advanced 全乐器拆分 → 逐件转录（副歌 16 小节）',
       url: './assets/ace/friendwine_synth_project.json'
     }

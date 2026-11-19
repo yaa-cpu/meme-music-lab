@@ -837,3 +837,14 @@ body[data-page="backpack"] .backpack{border-top:0;margin-top:0;padding-top:0}
 
 .staff-toolbar a.small-button{color:inherit;text-decoration:none;cursor:pointer}
 body[data-page="works"] .songbook{margin-top:0;border-top:0;padding-top:0}
+
+
+/* 作品背包：只有封面 + 精简作品名，点击回线谱 */
+#song-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.work-card{display:flex;flex-direction:column;gap:0;padding:0;border:1.5px solid var(--ink);border-radius:12px;background:var(--surface);box-shadow:3px 3px 0 var(--ink);overflow:hidden;text-align:left;cursor:pointer;transition:transform .12s,box-shadow .12s}
+.work-card:hover{transform:translateY(-3px);box-shadow:5px 6px 0 var(--ink)}
+.work-cover{display:block;aspect-ratio:16/10;overflow:hidden;background:oklch(0.92 0.02 115);border-bottom:1.5px solid var(--ink)}
+.work-cover img{width:100%;height:100%;object-fit:cover;display:block}
+.work-name{display:block;padding:10px 12px;font-size:15px;font-weight:900;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:900px){#song-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:520px){#song-grid{grid-template-columns:1fr}}
