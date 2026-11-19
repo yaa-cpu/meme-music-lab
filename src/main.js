@@ -1166,6 +1166,7 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
       $('.note-resize', noteEl).addEventListener('pointerdown', (event) => beginResizeGesture(event, noteEl));
     });
     $$('#staff-grid .pitch-label').forEach((label) => {
+      bindAxisPan(label, 'vertical');
       label.addEventListener('click', () => toggleRowSelection(Number(label.dataset.row)));
       label.addEventListener('keydown', (event) => {
         if (event.key !== 'Enter' && event.key !== ' ') return;
@@ -1302,6 +1303,47 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
   }
 
   // 未激活轨道的空白处：单指拖动平移线谱，轻点激活该轨道
+  // 单指拖动专门负责一个方向：音阶名列只滚纵向，标尺只滚横向
+  function bindAxisPan(element, axis) {
+    if (!element || element.dataset.axisPanBound) return;
+    element.dataset.axisPanBound = '1';
+    let state = null;
+    let suppressClick = false;
+    element.addEventListener('pointerdown', (event) => {
+      if (event.button !== 0) return;
+      const scroll = $('#staff-scroll');
+      if (!scroll) return;
+      event.preventDefault();
+      state = { id: event.pointerId, x: event.clientX, y: event.clientY, left: scroll.scrollLeft, top: scroll.scrollTop, moved: false };
+      try { element.setPointerCapture(event.pointerId); } catch (_) { /* ignore */ }
+    });
+    element.addEventListener('pointermove', (event) => {
+      if (!state || event.pointerId !== state.id) return;
+      const dx = event.clientX - state.x;
+      const dy = event.clientY - state.y;
+      if (!state.moved && Math.hypot(dx, dy) > 4) state.moved = true;
+      if (!state.moved) return;
+      const scroll = $('#staff-scroll');
+      if (axis === 'vertical') scroll.scrollTop = state.top - dy;
+      else if (axis === 'horizontal') scroll.scrollLeft = state.left - dx;
+      else { scroll.scrollLeft = state.left - dx; scroll.scrollTop = state.top - dy; }
+    });
+    const end = (event) => {
+      if (!state || event.pointerId !== state.id) return;
+      suppressClick = state.moved;
+      state = null;
+      try { element.releasePointerCapture(event.pointerId); } catch (_) { /* ignore */ }
+    };
+    element.addEventListener('pointerup', end);
+    element.addEventListener('pointercancel', end);
+    element.addEventListener('click', (event) => {
+      if (!suppressClick) return;
+      suppressClick = false;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }, true);
+  }
+
   function beginStaffPan(event, track) {
     if (event.button !== 0) return;
     const scroll = $('#staff-scroll');
@@ -1519,6 +1561,7 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
   }
 
   function bindStaff() {
+    bindAxisPan($('#ruler'), 'horizontal');
     const grid = $('#staff-grid');
     grid.addEventListener('pointerdown', (event) => {
       const track = event.target.closest('.rail-track');

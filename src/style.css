@@ -1176,3 +1176,10 @@ body[data-page="studio"] .performance-inline{flex:0 0 176px!important;height:176
   body[data-page="studio"] .studio-region-main>.tape-strip .tape-track{background-color:#7c5533!important;background-image:repeating-linear-gradient(90deg,oklch(1 0 0 / .16) 0 1px,transparent 1px calc(100% / var(--tape-steps,16)))!important}
   body[data-page="studio"] .rail-track{touch-action:none!important}
 }
+
+
+/* 音阶名列/标尺的拖动方向由脚本控制 */
+@media (max-width:520px){
+  body[data-page="studio"] .pitch-label{touch-action:none!important}
+  body[data-page="studio"] .ruler{touch-action:none!important}
+}
