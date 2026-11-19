@@ -878,3 +878,10 @@ body[data-page="works"] .songbook{margin-top:0;border-top:0;padding-top:0}
 .transport .mini-wheel-control{position:relative!important;justify-content:flex-start!important;gap:0!important}
 .transport .mini-wheel-control>span{position:absolute!important;top:4px!important;left:0!important;right:0!important;z-index:3!important;text-align:center!important;font-size:8px!important;line-height:1!important;letter-spacing:.02em!important;color:oklch(0.86 0.02 115)!important;pointer-events:none!important;text-shadow:0 1px 0 var(--ink),0 0 4px var(--ink)}
 .transport .mini-wheel{height:100%!important;flex:1 1 100%!important;min-height:0!important}
+
+
+/* 标签水平居中、文字贴顶；按钮文字也置顶 */
+.transport .mini-wheel-control>span{top:2px!important}
+.transport .control-button{justify-content:flex-start!important;gap:0!important;padding:6px 2px 4px!important}
+.transport .control-button span{order:1!important;width:100%!important;text-align:center!important}
+.transport .control-button svg{order:2!important;margin:auto 0 6px!important}
