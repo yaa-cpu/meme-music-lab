@@ -111,6 +111,7 @@
     { name: '鼓组与贝斯', items: instrumentItems(['drumkit', 'bass', 'subBass']) }
   ];
   let cartridgeIndex = 0;
+  let cartridgePickerMode = false;
   let cartridgeGesture = null;
   let wheelAccumulator = 0;
   let wheelResetTimer = null;
@@ -387,6 +388,13 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
       if (wheel.hasPointerCapture(event.pointerId)) wheel.releasePointerCapture(event.pointerId);
       cartridgeGesture = null;
       const steps = Math.abs(offset) > 10 ? Math.max(1, Math.round(Math.abs(offset) / 44)) * Math.sign(offset) : 0;
+      if (steps === 0 && !cancelled) {
+        // 单击卡带轮：打开卡带背包，选一个卡带替换线谱卡带。
+        cartridgePickerMode = true;
+        showToast('选择卡带替换线谱卡带');
+        location.hash = '#/backpack';
+        return;
+      }
       setCartridge(cartridgeIndex - steps);
       updateCartridgeWheel();
     };
@@ -398,6 +406,13 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
       else if (event.key === 'ArrowDown' || event.key === 'ArrowRight') next += 1;
       else if (event.key === 'Home') next = 0;
       else if (event.key === 'End') next = cartridges.length - 1;
+      else if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        cartridgePickerMode = true;
+        showToast('选择卡带替换线谱卡带');
+        location.hash = '#/backpack';
+        return;
+      }
       else return;
       event.preventDefault(); setCartridge(next);
     });
@@ -688,15 +703,29 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
         if (unlockTokens > 0) {
           unlockTokens -= 1;
           unlockedCartridges.add(index);
+          const wasPicker = cartridgePickerMode;
           saveState(); updateUnlockTokens(); setCartridge(index); renderBackpack();
           showToast(`已消耗 1 个解锁次数，解锁「${cartridges[index].name}」`);
+          if (wasPicker) {
+            cartridgePickerMode = false;
+            location.hash = '#/studio';
+            showToast(`已解锁并替换线谱卡带「${cartridges[index].name}」`);
+            return;
+          }
         } else {
           showToast('解锁次数不足：先完成关注 / 分享 / 转发，或点开任务领取次数');
         }
         return;
       }
+      const wasPicker = cartridgePickerMode;
       setCartridge(index);
       updateAudition();
+      if (wasPicker) {
+        cartridgePickerMode = false;
+        location.hash = '#/studio';
+        showToast(`已替换线谱卡带「${cartridges[index].name}」`);
+        return;
+      }
       const performance = $('.performance');
       if (performance) performance.scrollIntoView({ behavior: 'smooth', block: 'center' });
       else window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -3364,6 +3393,7 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
   function applyPage() {
     const route = currentPage();
     document.body.dataset.page = route;
+    if (route !== 'backpack' && cartridgePickerMode) cartridgePickerMode = false;
     window.dispatchEvent(new CustomEvent('meme-page-change', { detail: { route } }));
     PAGE_SECTIONS.forEach((selector) => {
       document.querySelectorAll(selector).forEach((section) => {
