@@ -1210,3 +1210,11 @@ body[data-page="studio"] .performance-inline{flex:0 0 176px!important;height:176
 
 /* 点击标尺时的可点击提示 */
 .ruler-label{cursor:pointer}
+
+
+/* 手机顶栏：三个导航按钮在整条顶栏中居中，LOGO 左、帮助右 */
+@media (max-width:520px){
+  .site-header{position:relative!important}
+  .page-nav{position:absolute!important;left:50%!important;top:50%!important;transform:translate(-50%,-50%)!important;width:auto!important;flex:0 0 auto!important;justify-content:center!important;align-items:center!important;margin:0!important;order:0!important;gap:4px!important}
+  .header-actions{margin-left:auto!important}
+}
