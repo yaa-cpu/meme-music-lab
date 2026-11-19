@@ -871,3 +871,10 @@ body[data-page="works"] .songbook{margin-top:0;border-top:0;padding-top:0}
   .transport .control-button span{display:none!important}
   .transport .mini-wheel-track strong{font-size:8px!important}
 }
+
+
+/* 运输栏：标签放进控件内部，所有控件从左往右排列 */
+.transport{justify-content:flex-start!important;column-gap:8px!important}
+.transport .mini-wheel-control{position:relative!important;justify-content:flex-start!important;gap:0!important}
+.transport .mini-wheel-control>span{position:absolute!important;top:4px!important;left:0!important;right:0!important;z-index:3!important;text-align:center!important;font-size:8px!important;line-height:1!important;letter-spacing:.02em!important;color:oklch(0.86 0.02 115)!important;pointer-events:none!important;text-shadow:0 1px 0 var(--ink),0 0 4px var(--ink)}
+.transport .mini-wheel{height:100%!important;flex:1 1 100%!important;min-height:0!important}
