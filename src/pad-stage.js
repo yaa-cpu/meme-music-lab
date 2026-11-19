@@ -20,8 +20,8 @@
       ]
     },
     {
-      id: 'hachimi-melody', name: '哈基米旋律', builtIn: true, layout: 9, backing: 'friendwine',
-      slots: ['hachimi-ha', 'hachimi-ji', 'hachimi-mi', 'hachimi-nan', 'hachimi-bei', 'hachimi-lv', 'hachimi-dou', 'hachimi-8', 'hachimi-9']
+      id: 'hachimi-melody', name: '哈基米旋律', builtIn: true, layout: 4, backing: 'friendwine',
+      slots: ['hachimi-1-3', 'hachimi-4-6', 'hachimi-7-9', 'hachimi-10-12']
         .map((source, index) => ({ kind: 'sample', source, midi: SCALE[index] }))
     },
     {

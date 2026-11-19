@@ -64,28 +64,12 @@
       sourceLabel: '我的裁剪 · 用户提供素材', soundSource: '', imageSource: './assets/bingbingbing.svg', originSource: ''
     },
     ...[
-      ['ha', '哈', 'Z', 3.000, 3.380, 'var(--p-acid)'],
-      ['ji', '基', 'X', 3.480, 3.860, 'var(--p-pink)'],
-      ['mi', '米', 'C', 3.980, 4.380, 'var(--p-blue)'],
-      ['nan', '南', 'V', 4.475, 4.660, 'var(--p-yellow)'],
-      ['bei', '北', 'B', 4.718, 4.895, 'var(--p-green)'],
-      ['lv', '绿', 'N', 4.955, 5.330, 'var(--p-accent)'],
-      ['dou', '豆', 'M', 5.452, 5.800, 'oklch(0.85 0.15 82)']
-    ].map(([slug, title, key, start, end, color], index) => ({
-      id: `hachimi-${slug}`, title, sub: `哈基米逐音 ${String(index + 1).padStart(2, '0')}`, key, type: 'original', image: './assets/hachimi.svg', audio: `./assets/hachimi-${slug}.mp3`, color,
-      origin: `《哈基米之歌》“哈基米南北绿豆”；使用你提供的第 ${index + 1} 段裁剪采样。`,
-      sourceLabel: `我的裁剪 · 原视频约 ${start.toFixed(2)} 秒`, soundSource: `https://www.bilibili.com/video/BV1WfFJzyEjv/?t=${Math.floor(start)}`,
-      imageSource: './assets/hachimi.svg', originSource: 'https://www.bilibili.com/video/BV1WfFJzyEjv/?t=3'
-    })),
-    ...[
       ['maodie-2', '哈！2', '耄耋哈气 2', 'Q', 'maodie-2.mp3', 'var(--p-accent)', './assets/maodie.webp', '耄耋哈气2.mp3', 'https://www.bilibili.com/video/BV1DMduY9E5K/'],
       ['chicken-2', '鸡 2', '鸡你太美 2', 'W', 'chicken-2.mp3', 'var(--p-blue)', './assets/chicken.svg', '鸡你太美1.mp3', 'https://www.bilibili.com/video/BV1J4411v7g6/?t=24'],
-      ...[8, 9, 10, 11, 12].map((number, index) => [
-        `hachimi-${number}`, `片段 ${String(number).padStart(2, '0')}`, `哈基米逐音 ${String(number).padStart(2, '0')}`,
-        ['F', 'G', 'H', 'O', 'P'][index], `hachimi-${number}.mp3`,
-        ['var(--p-acid)', 'var(--p-pink)', 'var(--p-blue)', 'var(--p-yellow)', 'var(--p-green)'][index],
-        './assets/hachimi.svg', `哈基米南北绿豆${number}.mp3`, 'https://www.bilibili.com/video/BV1WfFJzyEjv/?t=3'
-      ])
+      ['hachimi-1-3', '哈基米 1–3', '逐音 1–3', 'Z', 'hachimi-seg-1.mp3', 'var(--p-acid)', './assets/hachimi.svg', '哈基米 1-3.mp3', 'https://www.bilibili.com/video/BV1WfFJzyEjv/?t=3'],
+      ['hachimi-4-6', '哈基米 4–6', '逐音 4–6', 'X', 'hachimi-seg-2.mp3', 'var(--p-pink)', './assets/hachimi.svg', '哈基米 4-6.mp3', 'https://www.bilibili.com/video/BV1WfFJzyEjv/?t=3'],
+      ['hachimi-7-9', '哈基米 7–9', '逐音 7–9', 'C', 'hachimi-seg-3.mp3', 'var(--p-blue)', './assets/hachimi.svg', '哈基米 7-9.mp3', 'https://www.bilibili.com/video/BV1WfFJzyEjv/?t=3'],
+      ['hachimi-10-12', '哈基米 10–12', '逐音 10–12', 'V', 'hachimi-seg-4.mp3', 'var(--p-yellow)', './assets/hachimi.svg', '哈基米 10-12.mp3', 'https://www.bilibili.com/video/BV1WfFJzyEjv/?t=3']
     ].map(([id, title, sub, key, file, color, image, fileName, source]) => ({
       id, title, sub, key, type: 'original', image, audio: `./assets/${file}`, color,
       origin: `使用你提供的“${fileName}”裁剪采样。`, sourceLabel: '我的裁剪 · 原始来源',
@@ -115,8 +99,7 @@
   const memeItems = (ids) => ids.map((id) => memes.find((meme) => meme.id === id));
   const cartridges = [
     { name: '抽象梗采样', items: memeItems(['doro', 'maodie', 'maodie-2', 'chicken', 'chicken-2', 'oiia', 'nailong', 'dog', 'bingbingbing']) },
-    { name: '哈基米逐音 01', items: memeItems(['hachimi-ha', 'hachimi-ji', 'hachimi-mi', 'hachimi-nan', 'hachimi-bei', 'hachimi-lv', 'hachimi-dou', 'hachimi-8']) },
-    { name: '哈基米逐音 02', items: memeItems(['hachimi-9', 'hachimi-10', 'hachimi-11', 'hachimi-12']) },
+    { name: '哈基米逐音', items: memeItems(['hachimi-1-3', 'hachimi-4-6', 'hachimi-7-9', 'hachimi-10-12']) },
     // 参照 ACE Studio 的音源分类重排：弦乐组 / 铜管木管 / 键盘合成 / 吉他与拨弦 / 鼓组贝斯
     { name: '弦乐组 · ACE 标准', items: instrumentItems(['violin', 'cello', 'stringsHigh', 'stringsMid', 'stringsLow', 'stringsPizz', 'contrabass']) },
     { name: '铜管与木管 · ACE 标准', items: instrumentItems(['trumpet', 'trombone', 'horn', 'brassSection', 'sax', 'saxTenor', 'clarinet', 'flute', 'dizi']) },
@@ -444,7 +427,6 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
   const cartridgeRewards = [
     { type: 'free', cover: './assets/oiia.webp', symbol: '', colors: ['#d9ef68', '#91cfe8'] },
     { type: 'follow', cover: './assets/hachimi.svg', symbol: '', colors: ['#c7b4e6', '#91cfe8'] },
-    { type: 'share', cover: './assets/hachimi.svg', symbol: '', colors: ['#efabc2', '#f2d468'] },
     { type: 'free', cover: './assets/doro.webp', symbol: '𝄞', colors: ['#efabc2', '#c7b4e6'] },
     { type: 'free', cover: './assets/maodie.webp', symbol: '♯', colors: ['#f2c365', '#e6a987'] },
     { type: 'follow', cover: './assets/chicken.svg', symbol: '⌨', colors: ['#91cfe8', '#c7b4e6'] },

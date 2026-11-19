@@ -167,7 +167,7 @@ h2{font-size:20px;line-height:1.25;font-weight:900;letter-spacing:-.02em}
 .sample-console-label>small{font-size:9px;color:var(--muted);margin-top:3px}
 .meme-grid.sample-note-row{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(104px,1fr);gap:8px;min-width:0;overflow-x:auto;padding:2px 2px 7px;scroll-snap-type:x proximity;scrollbar-width:thin;overscroll-behavior-x:contain}
 .sample-note-row .sample-note{scroll-snap-align:start}
-.sample-note-row .sample-note[data-meme="hachimi-ha"]{margin-left:8px}
+.sample-note-row .sample-note[data-meme="hachimi-1-3"]{margin-left:8px}
 .card-button.sample-note{min-width:0;min-height:58px;display:grid;grid-template-columns:38px minmax(0,1fr) 23px;align-items:center;gap:7px;padding:6px;border-radius:7px;box-shadow:2px 2px 0 var(--ink)}
 .card-button.sample-note:hover{transform:translateY(-1px);box-shadow:3px 4px 0 var(--ink)}
 .sample-note-avatar{width:38px;height:42px;display:block;border:1px solid var(--ink);border-radius:5px;background:var(--card-color);overflow:hidden}
@@ -391,7 +391,7 @@ dialog[open]{animation:dialog-in .18s ease-out}
 .cartridge-meta small{display:block;margin-top:4px;font-size:9px;color:var(--muted);white-space:nowrap}
 .cartridge-console .meme-grid.sample-note-row{display:grid;grid-auto-flow:row;grid-auto-columns:auto;grid-template-columns:minmax(0,1fr);grid-template-rows:repeat(8,50px);gap:7px;min-width:0;overflow:visible;padding:2px 2px 7px;scroll-snap-type:none}
 .cartridge-console .card-button.sample-note{width:100%;height:50px;min-height:0;display:grid;grid-template-columns:40px minmax(0,1fr) 26px;align-items:center;gap:8px;padding:5px 7px;border-radius:7px;box-shadow:2px 2px 0 var(--ink);scroll-snap-align:none}
-.cartridge-console .sample-note-row .sample-note[data-meme="hachimi-ha"]{margin-left:0}
+.cartridge-console .sample-note-row .sample-note[data-meme="hachimi-1-3"]{margin-left:0}
 .cartridge-console .sample-note-avatar{width:40px;height:38px;flex:none}
 .cartridge-console .sample-note-copy strong{font-size:14px}
 .cartridge-console .sample-note-copy small{font-size:9px;margin-top:2px}
