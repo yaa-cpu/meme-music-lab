@@ -1330,3 +1330,15 @@ body[data-page="studio"] .performance-inline{flex:0 0 176px!important;height:176
 #pad-backpack-dialog #pad-slot-picker .pad-slot-button{width:100%!important;height:100%!important;padding:0!important;border-radius:12px!important;box-shadow:2px 2px 0 var(--ink)!important}
 #pad-backpack-dialog #pad-slot-picker .pad-slot-button.active{outline:3px solid var(--ink)!important;outline-offset:2px!important;z-index:3!important}
 #pad-backpack-dialog #pad-slot-picker .pad-slot-button.drag-over{outline:3px dashed var(--acid)!important;outline-offset:2px!important;filter:brightness(1.08) saturate(1.15)!important}
+
+
+/* 背包页底部：卡带试听 */
+.backpack-audition{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;flex-wrap:wrap!important;margin-top:18px!important;padding:14px 16px!important;border:1.5px solid var(--ink)!important;border-radius:16px!important;background:var(--surface)!important;box-shadow:3px 3px 0 var(--ink)!important}
+.backpack-audition-info{display:flex!important;flex-direction:column!important;gap:2px!important;min-width:0!important}
+.backpack-audition-info>span{font-size:10px!important;font-weight:900!important;letter-spacing:.12em!important;color:var(--muted)!important}
+.backpack-audition-info>strong{font-size:18px!important;line-height:1.2!important}
+.backpack-audition-info>small{font-size:11px!important;color:var(--muted)!important}
+.backpack-audition-actions{display:flex!important;gap:8px!important;align-items:center!important}
+.backpack-audition-actions button{min-height:42px!important;padding:0 18px!important;border:1.5px solid var(--ink)!important;border-radius:999px!important;background:var(--surface)!important;font:900 13px/1 var(--font-display,system-ui)!important;box-shadow:2px 2px 0 var(--ink)!important;cursor:pointer!important}
+.backpack-audition-actions .audition-play{background:var(--acid)!important}
+.backpack-audition-actions button:active{transform:translateY(1px)!important;box-shadow:1px 1px 0 var(--ink)!important}

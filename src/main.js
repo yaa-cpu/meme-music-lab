@@ -621,6 +621,49 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
     });
   }
 
+  let auditionTimers = [];
+  let auditionToken = 0;
+
+  function updateAudition() {
+    const cartridge = cartridges[cartridgeIndex];
+    const name = $('#backpack-audition-name');
+    if (name) name.textContent = cartridge ? cartridge.name : '试听';
+  }
+
+  function stopAudition() {
+    auditionToken += 1;
+    auditionTimers.forEach((timer) => clearTimeout(timer));
+    auditionTimers = [];
+    const status = $('#backpack-audition-status');
+    if (status) status.textContent = '已停止 · 点试听重新播放';
+  }
+
+  async function playAudition() {
+    const cartridge = cartridges[cartridgeIndex];
+    if (!cartridge) return;
+    stopAudition();
+    const token = auditionToken;
+    const status = $('#backpack-audition-status');
+    const items = cartridge.items.slice(0, 8);
+    if (status) status.textContent = `试听中 · ${cartridge.items.length} 段采样`;
+    try {
+      await ensureAudio();
+    } catch (_) {
+      showToast('声音引擎启动失败，请检查浏览器音频权限');
+      if (status) status.textContent = '声音引擎未启动';
+      return;
+    }
+    items.forEach((item, index) => {
+      const timer = setTimeout(() => {
+        if (token !== auditionToken) return;
+        try { performMeme(item.id, nearestPitchRow(60 + (index % 5) * 2), false); } catch (_) { /* ignore */ }
+        if (status && index === items.length - 1) status.textContent = `已试听 · ${cartridge.name}`;
+        auditionTimers = auditionTimers.filter((entry) => entry !== timer);
+      }, index * 460);
+      auditionTimers.push(timer);
+    });
+  }
+
   function renderBackpack() {
     const today = localDay();
     const follow = $('#follow-task');
@@ -651,11 +694,13 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
       const index = Number(button.dataset.backpack);
       if (!isCartridgeUnlocked(index)) { showToast(`请先完成${cartridgeRequirement(index)}`); return; }
       setCartridge(index);
+      updateAudition();
       const performance = $('.performance');
       if (performance) performance.scrollIntoView({ behavior: 'smooth', block: 'center' });
       else window.scrollTo({ top: 0, behavior: 'smooth' });
       showToast(`已装上「${cartridges[index].name}」`);
     }));
+    updateAudition();
   }
 
   async function completeShareTask(type) {
@@ -3398,7 +3443,9 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
     $('#make-tape').addEventListener('click', makeTape);
     $('#staff-scroll').addEventListener('scroll', syncTapeScroll, { passive: true });
     window.addEventListener('resize', syncTapeScroll, { passive: true });
-    $('#follow-task').addEventListener('click', () => {
+    $('#backpack-audition-play')?.addEventListener('click', playAudition);
+  $('#backpack-audition-stop')?.addEventListener('click', stopAudition);
+  $('#follow-task').addEventListener('click', () => {
       followedAuthor = !followedAuthor;
       if (!followedAuthor && !isCartridgeUnlocked(cartridgeIndex)) setCartridge(0);
       saveState(); renderBackpack();
