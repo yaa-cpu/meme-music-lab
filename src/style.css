@@ -1218,3 +1218,10 @@ body[data-page="studio"] .performance-inline{flex:0 0 176px!important;height:176
   .page-nav{position:absolute!important;left:50%!important;top:50%!important;transform:translate(-50%,-50%)!important;width:auto!important;flex:0 0 auto!important;justify-content:center!important;align-items:center!important;margin:0!important;order:0!important;gap:4px!important}
   .header-actions{margin-left:auto!important}
 }
+
+
+/* 修复线谱页 body 变成 flex 后 header 收缩导致导航换行的问题 */
+@media (max-width:520px){
+  body[data-page="studio"] .site-header{width:100%!important;max-width:none!important;margin:0!important;align-self:stretch!important;box-sizing:border-box!important}
+  .page-nav a{white-space:nowrap!important}
+}
