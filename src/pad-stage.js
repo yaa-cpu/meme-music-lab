@@ -25,14 +25,6 @@
         .map((source, index) => ({ kind: 'sample', source, midi: SCALE[index] }))
     },
     {
-      id: 'mega-36', name: '3×12 大狗鼓阵', builtIn: true, layout: 36, backing: 'friendwine',
-      slots: Array.from({ length: 36 }, (_, index) => ({
-        kind: 'sample',
-        source: ['dog-1', 'dog-2', 'dog-3', 'dog-4'][index % 4],
-        midi: 36 + index
-      }))
-    },
-    {
       id: 'instrument-toy', name: '乐器玩具箱', builtIn: true, layout: 9, backing: 'friendwine',
       slots: ['piano', 'marimba', 'harp', 'guitar', 'flute', '8bit', 'bass', 'synth', 'pad']
         .map((id, index) => ({ kind: 'note', source: `instrument:${id}`, midi: SCALE[index] }))
@@ -61,7 +53,7 @@
       id: String(preset.id || `custom-${Date.now()}`),
       name: String(preset.name || '我的打击垫').slice(0, 24),
       builtIn: Boolean(preset.builtIn),
-      layout: [4, 9, 36].includes(Number(preset.layout)) ? Number(preset.layout) : 9,
+      layout: Number(preset.layout) === 4 ? 4 : 9,
       backing: ['sunny', 'bounce', 'chill', 'friendwine', 'off'].includes(preset.backing) ? preset.backing : 'friendwine',
       slots: slots.map((slot, index) => ({
         kind: ['sample', 'note', 'drum'].includes(slot.kind) ? slot.kind : 'sample',
@@ -126,10 +118,9 @@
     const preset = currentPreset();
     const grid = $('#drum-pad-grid');
     ensureSlotsForLayout(preset);
-    grid.style.setProperty('--pad-columns', preset.layout === 4 ? 2 : preset.layout === 36 ? 12 : 3);
-    grid.style.setProperty('--pad-rows', preset.layout === 4 ? 2 : preset.layout === 36 ? 3 : 3);
+    grid.style.setProperty('--pad-columns', preset.layout === 4 ? 2 : 3);
+    grid.style.setProperty('--pad-rows', preset.layout === 4 ? 2 : 3);
     grid.classList.toggle('four-pads', preset.layout === 4);
-    grid.classList.toggle('many-pads', preset.layout === 36);
     grid.innerHTML = visibleSlots().map((slot, index) => {
       const source = sourceInfo(slot);
       const padImage = source.padImage || source.image;

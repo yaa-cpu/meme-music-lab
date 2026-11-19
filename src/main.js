@@ -451,11 +451,11 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
     { type: 'free', cover: './assets/dog.png', symbol: '', colors: ['#f2d468', '#efabc2'] },
     { type: 'follow', cover: './assets/hachimi.svg', symbol: '', colors: ['#c7b4e6', '#91cfe8'] },
     { type: 'share', cover: './assets/hachimi.svg', symbol: '', colors: ['#efabc2', '#f2d468'] },
-    { type: 'free', cover: '', symbol: '𝄞', colors: ['#efabc2', '#c7b4e6'] },
-    { type: 'free', cover: '', symbol: '♯', colors: ['#f2c365', '#e6a987'] },
-    { type: 'follow', cover: '', symbol: '⌨', colors: ['#91cfe8', '#c7b4e6'] },
-    { type: 'repost', cover: '', symbol: '♪', colors: ['#b9dcae', '#d9ef68'] },
-    { type: 'free', cover: '', symbol: '▣', colors: ['#e9a56f', '#efabc2'] }
+    { type: 'free', cover: './assets/doro.webp', symbol: '𝄞', colors: ['#efabc2', '#c7b4e6'] },
+    { type: 'free', cover: './assets/maodie.webp', symbol: '♯', colors: ['#f2c365', '#e6a987'] },
+    { type: 'follow', cover: './assets/chicken.svg', symbol: '⌨', colors: ['#91cfe8', '#c7b4e6'] },
+    { type: 'repost', cover: './assets/hachimi.svg', symbol: '♪', colors: ['#b9dcae', '#d9ef68'] },
+    { type: 'free', cover: './assets/bingbingbing.svg', symbol: '▣', colors: ['#e9a56f', '#efabc2'] }
   ];
   const rewardNames = { follow: '关注作者', share: '今日分享', repost: '今日转发' };
   let recordingLoopStep = null;
