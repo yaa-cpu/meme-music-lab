@@ -885,3 +885,6 @@ body[data-page="works"] .songbook{margin-top:0;border-top:0;padding-top:0}
 .transport .control-button{justify-content:flex-start!important;gap:0!important;padding:6px 2px 4px!important}
 .transport .control-button span{order:1!important;width:100%!important;text-align:center!important}
 .transport .control-button svg{order:2!important;margin:auto 0 6px!important}
+
+/* 轮盘高亮行垂直居中 */
+.mini-wheel::after{top:50%!important;transform:translateY(-50%)}

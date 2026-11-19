@@ -899,6 +899,10 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
     }
   }
 
+  function wheelCenterOffset(wheel) {
+    return Math.max(0, (wheel.clientHeight - 24) / 2);
+  }
+
   function syncChoiceWheel(id, value) {
     const wheel = $(id);
     if (!wheel) return;
@@ -917,7 +921,7 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
       });
     }
     index = Math.max(0, index);
-    $('.mini-wheel-track', wheel).style.transform = `translateY(${10 - index * 24}px)`;
+    $('.mini-wheel-track', wheel).style.transform = `translateY(${wheelCenterOffset(wheel) - index * 24}px)`;
     items.forEach((item, itemIndex) => item.classList.toggle('active', itemIndex === index));
     wheel.setAttribute('aria-valuenow', String(index + 1));
     wheel.setAttribute('aria-valuetext', items[index]?.textContent.trim() || String(value));
@@ -966,7 +970,7 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
       const raw = event.clientY - gestureState.startY;
       const atEdge = (gestureState.startIndex === 0 && raw > 0) || (gestureState.startIndex === values.length - 1 && raw < 0);
       gestureState.offset = raw * (atEdge ? .25 : 1);
-      track.style.transform = `translateY(${10 - gestureState.startIndex * 24 + gestureState.offset}px)`;
+      track.style.transform = `translateY(${wheelCenterOffset(wheel) - gestureState.startIndex * 24 + gestureState.offset}px)`;
     });
     const finish = (event, cancelled = false) => {
       if (!gestureState || event.pointerId !== gestureState.pointerId) return;
