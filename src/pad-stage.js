@@ -160,9 +160,24 @@
   }
 
   function renderSlotPicker() {
-    $('#pad-slot-picker').innerHTML = visibleSlots().map((slot, index) => {
+    const preset = currentPreset();
+    const picker = $('#pad-slot-picker');
+    picker.style.setProperty('--pad-columns', preset.layout === 4 ? 2 : 3);
+    picker.style.setProperty('--pad-rows', preset.layout === 4 ? 2 : 3);
+    picker.innerHTML = visibleSlots().map((slot, index) => {
       const source = sourceInfo(slot);
-      return `<button type="button" class="pad-slot-button${index === editingSlot ? ' active' : ''}" data-slot="${index}" aria-pressed="${index === editingSlot}"><span>${index + 1}</span><strong>${source.title}</strong></button>`;
+      const padImage = source.padImage || source.image;
+      const visual = padImage
+        ? `<img src="${padImage}" alt="" draggable="false">`
+        : `<span class="pad-source-symbol" aria-hidden="true">${source.symbol || source.short || 'NOTE'}</span>`;
+      const kindName = { sample: '梗采样', note: '乐器音符', drum: '鼓点' }[slot.kind];
+      return `<button type="button" class="meme-pad pad-slot-button${index === editingSlot ? ' active' : ''}" data-slot="${index}" style="--pad-color:${source.color};--pad-order:${index}" aria-pressed="${index === editingSlot}" aria-label="第 ${index + 1} 键：${source.title}，拖声音到这里替换">
+        <span class="pad-number">${index + 1}</span>
+        <span class="pad-kind">${kindName}</span>
+        <span class="pad-image">${visual}</span>
+        <span class="pad-label"><strong>${source.title}</strong><small>${slot.kind === 'sample' || slot.kind === 'note' ? `音阶 ${index + 1} · ${slot.midi}` : source.sub || kindName}</small></span>
+        <span class="pad-hit-ring" aria-hidden="true"></span>
+      </button>`;
     }).join('');
     $$('.pad-slot-button').forEach((button) => {
       button.addEventListener('click', () => {
@@ -200,7 +215,7 @@
     if (!slot) return;
     const source = sourceInfo(slot);
     $('#pad-editing-title').textContent = `拖到 ${editingSlot + 1} 号按键`;
-    $('#pad-editing-current').textContent = `${source.title} · 从下面把声音拖到任意按键即可替换`;
+    $('#pad-editing-current').textContent = `${source.title} · 把下面的声音拖到鼓面上即可替换`;
     $$('#pad-kind-tabs button').forEach((button) => {
       const active = button.dataset.kind === editingKind;
       button.classList.toggle('active', active);

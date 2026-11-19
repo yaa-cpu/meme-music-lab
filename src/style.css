@@ -1276,3 +1276,17 @@ body[data-page="studio"] .performance-inline{flex:0 0 176px!important;height:176
 .backpack-card.locked .backpack-cover{filter:saturate(.4) brightness(.82)!important}
 .backpack-card.locked::before{content:"🔒";position:absolute!important;inset:0!important;z-index:6!important;display:grid!important;place-items:center!important;border-radius:15px!important;background:oklch(0 0 0 / .38)!important;font-size:24px!important;line-height:1!important;pointer-events:none!important}
 .backpack-card.locked::after{display:none!important}
+
+
+/* 采样背包顶部：直接显示主页鼓面，作为拖拽释放目标 */
+#pad-slot-picker{display:grid;grid-template-columns:repeat(var(--pad-columns,3),minmax(0,1fr));grid-template-rows:repeat(var(--pad-rows,3),minmax(0,1fr));gap:8px;width:100%;max-width:300px;margin:4px auto 8px}
+#pad-slot-picker .pad-slot-button{width:100%;height:auto;aspect-ratio:1 / 1;min-height:0;padding:0;border-radius:10px;box-shadow:2px 2px 0 var(--ink)}
+#pad-slot-picker .pad-slot-button.active{outline:3px solid var(--ink);outline-offset:2px}
+#pad-slot-picker .pad-slot-button.drag-over{outline:3px dashed var(--acid);outline-offset:2px;filter:brightness(1.08) saturate(1.2)}
+#pad-slot-picker .pad-slot-button .pad-label small{display:none}
+#pad-slot-picker .pad-slot-button .pad-label strong{font-size:11px}
+#pad-slot-picker .pad-slot-button .pad-image{inset:12%}
+#pad-slot-picker .pad-slot-button .pad-kind{display:none}
+#pad-slot-picker .pad-slot-button .pad-number{font-size:9px}
+#pad-slot-picker .pad-slot-button .pad-hit-ring{display:none}
+.pad-preset-tip{text-align:center}
