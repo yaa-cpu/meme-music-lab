@@ -1061,3 +1061,23 @@ body.phone-preview-open{overflow:hidden}
   body[data-page="studio"] .performance-inline{flex:0 0 200px!important;margin:0!important;display:block!important}
   body[data-page="studio"] .performance-inline .performance-console{margin:0!important;padding:0!important;border:0!important}
 }
+
+
+/* 手机线谱页：61 键钢琴音阶也要能看到键盘；线谱横线加深 */
+@media (max-width:520px){
+  body[data-page="studio"] .staff-row{border-bottom:1px solid oklch(0.55 0.02 115)!important}
+  body[data-page="studio"] .performance-inline:has(.pitch-pad.piano-pad){flex:0 0 262px!important}
+  body[data-page="studio"] .pitch-pad.piano-pad{display:block!important;width:100%!important}
+  body[data-page="studio"] .piano-scroll{height:96px!important;border:1px solid var(--ink)!important;border-radius:8px!important}
+  body[data-page="studio"] .piano-keyboard{height:92px!important}
+  body[data-page="studio"] .piano-keyboard .pitch-key.white-key{height:90px!important}
+  body[data-page="studio"] .piano-keyboard .pitch-key.black-key{height:58px!important}
+  body[data-page="studio"] .piano-keyboard .pitch-key strong{font-size:9px!important;bottom:6px!important}
+}
+
+
+/* 手机线谱页：保证每一行线谱的横线可见 */
+@media (max-width:520px){
+  body[data-page="studio"] .staff-row{position:relative!important}
+  body[data-page="studio"] .staff-row::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:oklch(0.55 0.02 115);pointer-events:none;z-index:3}
+}
