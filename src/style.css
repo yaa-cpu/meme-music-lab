@@ -1313,3 +1313,28 @@ body[data-page="studio"] .performance-inline{flex:0 0 176px!important;height:176
   body[data-page="pad"] main{background:transparent!important}
   body[data-page="pad"] .pad-home{background:oklch(0.94 0.055 105)!important}
 }
+
+
+/* 换装弹窗：按图2改成「鼓面在上 + 分类 + 大图声音库」单列布局 */
+#pad-backpack-dialog .pad-editor-grid{display:flex!important;flex-direction:column!important;gap:12px!important}
+#pad-backpack-dialog .pad-editor-column{width:100%!important;min-width:0!important}
+#pad-backpack-dialog #pad-editing-title,
+#pad-backpack-dialog #pad-editing-current,
+#pad-backpack-dialog .pad-preset-tip{display:none!important}
+#pad-backpack-dialog #pad-slot-picker{max-width:none!important;width:100%!important;margin:0!important;gap:8px!important}
+#pad-backpack-dialog #pad-slot-picker .pad-slot-button{aspect-ratio:1 / 1!important;border-radius:12px!important}
+#pad-backpack-dialog .pad-slot-button .pad-label small{display:none!important}
+#pad-backpack-dialog .pad-slot-button .pad-kind{display:none!important}
+#pad-backpack-dialog .pad-slot-button .pad-label strong{font-size:12px!important}
+#pad-backpack-dialog .pad-slot-button.active{outline:3px solid var(--ink)!important;outline-offset:2px!important}
+#pad-backpack-dialog #pad-library{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important}
+#pad-backpack-dialog .pad-library-item{position:relative!important;display:block!important;aspect-ratio:1 / 1!important;padding:0!important;overflow:hidden!important;border-radius:14px!important;border:1.5px solid var(--ink)!important;background:var(--surface)!important}
+#pad-backpack-dialog .pad-library-visual{position:absolute!important;inset:0!important;display:block!important;width:100%!important;height:100%!important}
+#pad-backpack-dialog .pad-library-visual img{width:100%!important;height:100%!important;object-fit:cover!important}
+#pad-backpack-dialog .pad-library-visual span{display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;height:100%!important;font-size:28px!important}
+#pad-backpack-dialog .pad-library-item strong,
+#pad-backpack-dialog .pad-library-item small{display:none!important}
+#pad-backpack-dialog .pad-library-item[disabled]{filter:saturate(.45)!important}
+#pad-backpack-dialog .pad-library-item[disabled]::after{content:"🔒"!important;position:absolute!important;inset:0!important;display:grid!important;place-items:center!important;background:oklch(0 0 0 / .28)!important;font-size:24px!important;z-index:3!important}
+#pad-backpack-dialog #pad-kind-tabs{width:100%!important}
+#pad-backpack-dialog .pad-backpack-body{padding-top:12px!important}
