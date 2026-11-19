@@ -3240,6 +3240,20 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
     padCombo = 0;
   }
 
+  function stopPadSamples() {
+    if (!audioCtx) return;
+    const now = audioCtx.currentTime;
+    padHeldSamples.forEach((held) => {
+      try {
+        held.gain.gain.cancelScheduledValues(now);
+        held.gain.gain.setTargetAtTime(0, now, .008);
+        held.source.stop(now + .035);
+      } catch (_) { /* already stopped */ }
+    });
+    padHeldSamples.clear();
+    padSampleVoices.clear();
+  }
+
   async function setPadBacking(enabled, id) {
     const generation = ++padBackingGeneration;
     if (!enabled || id === 'off') { clearPadBacking(); return; }
@@ -3350,6 +3364,7 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
   function applyPage() {
     const route = currentPage();
     document.body.dataset.page = route;
+    window.dispatchEvent(new CustomEvent('meme-page-change', { detail: { route } }));
     PAGE_SECTIONS.forEach((selector) => {
       document.querySelectorAll(selector).forEach((section) => {
         section.hidden = PAGE_ROUTES[route].indexOf(selector) < 0;

@@ -380,6 +380,32 @@
 
   let studioPaused = false;
 
+  const PAD_IDLE_PAUSE_MS = 8000;
+  let padIdleTimer = null;
+
+  function pausePadPlayback() {
+    clearTimeout(padIdleTimer);
+    padIdleTimer = null;
+    if (!studioPaused) {
+      studioPaused = true;
+      options.setBacking(false, currentPreset().backing);
+      renderBackingSelect();
+    }
+    options.stopPads?.();
+  }
+
+  function schedulePadIdlePause() {
+    clearTimeout(padIdleTimer);
+    padIdleTimer = null;
+    if (document.body.dataset.page !== 'pad') return;
+    padIdleTimer = setTimeout(pausePadPlayback, PAD_IDLE_PAUSE_MS);
+  }
+
+  function notePadActivity() {
+    if (document.body.dataset.page !== 'pad') return;
+    schedulePadIdlePause();
+  }
+
   function resetBeatVisuals() {
     const stage = $('#pad-playground');
     stage.classList.remove('beat-kick', 'beat-snare');
@@ -754,6 +780,18 @@
   }
 
   function bindControls() {
+    ['pointerdown', 'keydown', 'wheel', 'touchstart'].forEach((type) => {
+      window.addEventListener(type, notePadActivity, { passive: true, capture: true });
+    });
+    window.addEventListener('meme-page-change', (event) => {
+      if (event.detail?.route === 'pad') schedulePadIdlePause();
+      else pausePadPlayback();
+    });
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) pausePadPlayback();
+      else schedulePadIdlePause();
+    });
+    schedulePadIdlePause();
     $('#pad-backpack-open').addEventListener('click', openBackpack);
     $('#backpack-pad-button')?.addEventListener('click', openBackpack);
     $('#pad-preset-select')?.addEventListener('change', (event) => selectPreset(event.target.value));
