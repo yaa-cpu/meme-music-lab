@@ -1121,3 +1121,14 @@ body.phone-preview-open{overflow:hidden}
   body[data-page="studio"] .card-button.sample-note .sample-note-avatar{width:40px!important;height:40px!important}
   body[data-page="studio"] .card-button.sample-note .note-chip{width:40px!important;height:40px!important;border-radius:8px!important}
 }
+
+
+/* 40x40 图标更明确的圆角矩形轮廓 */
+.card-button.sample-note .sample-note-avatar,
+.card-button.sample-note .note-chip{border-radius:10px!important;border:1px solid oklch(0.35 0.02 115 / .55)!important}
+.card-button.sample-note .note-chip{display:grid!important;place-items:center!important}
+
+
+/* 覆盖手机媒体查询里旧的 8px 圆角，统一 40x40 + 10px 圆角 */
+body[data-page="studio"] .card-button.sample-note .note-chip{border-radius:10px!important;width:40px!important;height:40px!important}
+body[data-page="studio"] .card-button.sample-note .sample-note-avatar{border-radius:10px!important;width:40px!important;height:40px!important}
