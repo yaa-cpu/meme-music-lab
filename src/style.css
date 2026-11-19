@@ -1107,3 +1107,17 @@ body.phone-preview-open{overflow:hidden}
 @media (max-width:520px){
   body[data-page="studio"] .piano-keyboard{min-width:0!important}
 }
+
+
+/* 采样卡里的图标统一成 40×40 的 1:1 圆角矩形 */
+.meme-grid.sample-note-row{grid-auto-columns:minmax(152px,1fr)!important}
+.card-button.sample-note{grid-template-columns:40px minmax(0,1fr) 40px!important;gap:8px!important;min-height:56px!important}
+.card-button.sample-note .sample-note-avatar{width:40px!important;height:40px!important;flex-basis:40px!important;border-radius:8px!important}
+.card-button.sample-note .sample-note-avatar img{border-radius:7px!important}
+.card-button.sample-note .note-chip{position:static!important;width:40px!important;height:40px!important;border-radius:8px!important}
+.card-button.sample-note .note-chip svg{width:20px!important;height:20px!important}
+@media (max-width:520px){
+  body[data-page="studio"] .card-button.sample-note{flex:0 0 168px!important;height:64px!important;grid-template-columns:40px minmax(0,1fr) 40px!important;gap:7px!important}
+  body[data-page="studio"] .card-button.sample-note .sample-note-avatar{width:40px!important;height:40px!important}
+  body[data-page="studio"] .card-button.sample-note .note-chip{width:40px!important;height:40px!important;border-radius:8px!important}
+}
