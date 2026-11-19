@@ -47,7 +47,7 @@
       imageSource: 'https://tuna.voicemod.net/sound/44fcfd11-d25e-4c7d-920b-a2a5e920b219', originSource: 'https://filmora.wondershare.com/trending-topic/oiia-cat-meme-video.html'
     },
     {
-      id: 'dog', title: '叫', sub: '大狗叫 · 完整', key: 'K', type: 'original', image: './assets/dog.png', audio: './assets/dog-audio.mp3', color: 'var(--p-yellow)',
+      id: 'dog', title: '大狗叫', sub: '单一完整采样', key: 'K', type: 'original', image: './assets/dog.png', audio: './assets/dog-audio.mp3', color: 'var(--p-yellow)',
       origin: '使用你提供的“05-大狗叫.mp3”裁剪采样。',
       sourceLabel: '我的裁剪 · B站原视频', soundSource: 'https://www.bilibili.com/video/BV1ougx6tEQt/',
       imageSource: 'https://m.ali213.net/news/gl2607/1790643.html', originSource: 'https://www.bilibili.com/video/BV1ougx6tEQt/'
@@ -80,10 +80,6 @@
     ...[
       ['maodie-2', '哈！2', '耄耋哈气 2', 'Q', 'maodie-2.mp3', 'var(--p-accent)', './assets/maodie.webp', '耄耋哈气2.mp3', 'https://www.bilibili.com/video/BV1DMduY9E5K/'],
       ['chicken-2', '鸡 2', '鸡你太美 2', 'W', 'chicken-2.mp3', 'var(--p-blue)', './assets/chicken.svg', '鸡你太美1.mp3', 'https://www.bilibili.com/video/BV1J4411v7g6/?t=24'],
-      ['dog-1', '叫 1', '大狗叫逐音 1', 'E', 'dog-1.mp3', 'var(--p-yellow)', './assets/dog.png', '大狗1.mp3', 'https://www.bilibili.com/video/BV1ougx6tEQt/'],
-      ['dog-2', '叫 2', '大狗叫逐音 2', 'R', 'dog-2.mp3', 'var(--p-yellow)', './assets/dog.png', '大狗2.mp3', 'https://www.bilibili.com/video/BV1ougx6tEQt/'],
-      ['dog-3', '叫 3', '大狗叫逐音 3', 'T', 'dog-3.mp3', 'var(--p-yellow)', './assets/dog.png', '大狗3.mp3', 'https://www.bilibili.com/video/BV1ougx6tEQt/'],
-      ['dog-4', '叫 4', '大狗叫逐音 4', 'U', 'dog-4.mp3', 'var(--p-yellow)', './assets/dog.png', '大狗4.mp3', 'https://www.bilibili.com/video/BV1ougx6tEQt/'],
       ...[8, 9, 10, 11, 12].map((number, index) => [
         `hachimi-${number}`, `片段 ${String(number).padStart(2, '0')}`, `哈基米逐音 ${String(number).padStart(2, '0')}`,
         ['F', 'G', 'H', 'O', 'P'][index], `hachimi-${number}.mp3`,
@@ -119,7 +115,6 @@
   const memeItems = (ids) => ids.map((id) => memes.find((meme) => meme.id === id));
   const cartridges = [
     { name: '抽象梗采样', items: memeItems(['doro', 'maodie', 'maodie-2', 'chicken', 'chicken-2', 'oiia', 'nailong', 'dog', 'bingbingbing']) },
-    { name: '大狗叫逐音', items: memeItems(['dog-1', 'dog-2', 'dog-3', 'dog-4']) },
     { name: '哈基米逐音 01', items: memeItems(['hachimi-ha', 'hachimi-ji', 'hachimi-mi', 'hachimi-nan', 'hachimi-bei', 'hachimi-lv', 'hachimi-dou', 'hachimi-8']) },
     { name: '哈基米逐音 02', items: memeItems(['hachimi-9', 'hachimi-10', 'hachimi-11', 'hachimi-12']) },
     // 参照 ACE Studio 的音源分类重排：弦乐组 / 铜管木管 / 键盘合成 / 吉他与拨弦 / 鼓组贝斯
@@ -448,7 +443,6 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
 
   const cartridgeRewards = [
     { type: 'free', cover: './assets/oiia.webp', symbol: '', colors: ['#d9ef68', '#91cfe8'] },
-    { type: 'free', cover: './assets/dog.png', symbol: '', colors: ['#f2d468', '#efabc2'] },
     { type: 'follow', cover: './assets/hachimi.svg', symbol: '', colors: ['#c7b4e6', '#91cfe8'] },
     { type: 'share', cover: './assets/hachimi.svg', symbol: '', colors: ['#efabc2', '#f2d468'] },
     { type: 'free', cover: './assets/doro.webp', symbol: '𝄞', colors: ['#efabc2', '#c7b4e6'] },

@@ -6,16 +6,16 @@
   const BUILT_INS = [
     {
       id: 'meme-party', name: '梗图派对', builtIn: true, layout: 9, backing: 'friendwine',
-      slots: ['doro', 'maodie', 'chicken', 'oiia', 'dog', 'nailong', 'dog-1', 'dog-2', 'bingbingbing']
+      slots: ['doro', 'maodie', 'chicken', 'oiia', 'dog', 'nailong', 'dog', 'dog', 'bingbingbing']
         .map((source, index) => ({ kind: 'sample', source, midi: SCALE[index] }))
     },
     {
       id: 'dog-groove', name: '大狗节奏站', builtIn: true, layout: 4, backing: 'friendwine',
       slots: [
         { kind: 'drum', source: 'drum:kick' }, { kind: 'drum', source: 'drum:snare' },
-        { kind: 'sample', source: 'dog-1', midi: 60 }, { kind: 'sample', source: 'dog-3', midi: 67 },
+        { kind: 'sample', source: 'dog', midi: 60 }, { kind: 'sample', source: 'dog', midi: 67 },
         { kind: 'drum', source: 'drum:hat' }, { kind: 'drum', source: 'drum:clap' },
-        { kind: 'sample', source: 'dog-2', midi: 64 }, { kind: 'sample', source: 'dog-4', midi: 69 },
+        { kind: 'sample', source: 'dog', midi: 64 }, { kind: 'sample', source: 'dog', midi: 69 },
         { kind: 'note', source: 'instrument:8bit', midi: 76 }
       ]
     },
