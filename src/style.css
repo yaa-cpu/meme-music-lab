@@ -967,3 +967,21 @@ body.phone-preview-open{overflow:hidden}
   body[data-page="studio"] .pitch-key strong{font-size:10px!important}
   body[data-page="studio"] .pitch-key small{display:none!important}
 }
+
+
+/* 手机线谱页：底部工作台继续压缩，把更多高度让给线谱 */
+@media (max-width:520px){
+  body[data-page="studio"] .tape-strip{flex:0 0 62px!important;height:62px!important}
+  body[data-page="studio"] .tape-lane{height:20px!important}
+  body[data-page="studio"] .tape-lane-label{font-size:7px!important;line-height:1!important}
+  body[data-page="studio"] .meme-grid.sample-note-row{max-height:48px!important;padding-bottom:2px!important}
+  body[data-page="studio"] .card-button.sample-note{flex:0 0 92px!important;height:46px!important;min-height:0!important;padding:3px 5px!important;grid-template-columns:30px minmax(0,1fr) 18px!important;gap:4px!important;border-radius:6px!important}
+  body[data-page="studio"] .sample-note-avatar{width:30px!important;height:32px!important}
+  body[data-page="studio"] .sample-note .keycap{display:none!important}
+  body[data-page="studio"] .sample-note .note-chip{width:18px!important;height:18px!important}
+  body[data-page="studio"] .pitch-pad{gap:2px!important;margin-top:2px!important}
+  body[data-page="studio"] .pitch-key{min-height:32px!important;padding:1px!important}
+  body[data-page="studio"] .pitch-key small{display:none!important}
+  body[data-page="studio"] .pitch-key strong{font-size:10px!important;line-height:1.1!important}
+  body[data-page="studio"] .performance-inline .performance-console{padding:2px 0 0!important}
+}
