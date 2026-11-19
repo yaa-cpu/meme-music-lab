@@ -168,6 +168,7 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
   let schedulerTimer = null;
   let endTimer = null;
   let playheadFrame = null;
+  let playStartStep = 0;
   let scheduleGeneration = 0;
   let dragData = null;
   let gesture = null;
@@ -1562,6 +1563,11 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
 
   function bindStaff() {
     bindAxisPan($('#ruler'), 'horizontal');
+    $('#ruler').addEventListener('click', (event) => {
+      const label = event.target.closest('.ruler-label');
+      if (!label) return;
+      seekPreview(Number(label.dataset.ruler));
+    });
     const grid = $('#staff-grid');
     grid.addEventListener('pointerdown', (event) => {
       const track = event.target.closest('.rail-track');
@@ -2207,6 +2213,7 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
 
   function playPosition() {
     if (recording) return advanceRecordingPosition();
+    if (!isPlaying) return playStartStep;
     const elapsed = isPlaying && audioCtx ? Math.max(0, audioCtx.currentTime - currentStepStartedAt) : 0;
     return currentStep + elapsed / stepDuration();
   }
@@ -2220,7 +2227,7 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
     });
     $('#playhead').style.transform = `translateX(${position * stepWidth}px)`;
     window.MemeRecordStage.draw(position);
-    if (recording) {
+    if (isPlaying || recording) {
       $$('.ruler-label').forEach((label) => label.classList.toggle('current', Number(label.dataset.ruler) === currentStep));
       const scroller = $('#staff-scroll');
       scroller.scrollLeft = Math.max(0, 68 + position * stepWidth - scroller.clientWidth * .42);
@@ -2300,7 +2307,8 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
       isPlaying = true;
       scheduleGeneration += 1;
       const generation = scheduleGeneration;
-      currentStep = 0; nextStep = 0; loopClockStep = 0;
+      const startAtStep = Math.max(0, Math.min(playbackLength() - 1, Math.round(playStartStep) || 0));
+      currentStep = startAtStep; nextStep = startAtStep; loopClockStep = startAtStep;
       nextNoteTime = audioCtx.currentTime + .07;
       currentStepStartedAt = nextNoteTime;
       if (recording) {
@@ -2310,7 +2318,7 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
         recordingTriggeredIds.clear();
         recordingLoopStep = null;
       } else {
-        scheduleVocal(nextNoteTime);
+        scheduleVocal(nextNoteTime, startAtStep);
       }
       $('#playhead').classList.add('visible');
       updateTransport(); updatePlayhead();
@@ -2407,13 +2415,14 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
     micBuffer = await audioCtx.decodeAudioData(await micBlob.arrayBuffer());
   }
 
-  function scheduleVocal(when) {
+  function scheduleVocal(when, fromStep = 0) {
     if (recording || !micBuffer) return;
     const source = trackSource(audioCtx.createBufferSource());
     source.buffer = micBuffer;
     source.connect(mixInput);
     const startAt = when + micStartStep * stepDuration();
-    source.start(startAt);
+    const offsetSteps = Math.max(0, fromStep - micStartStep);
+    source.start(startAt, offsetSteps * stepDuration());
     source.stop(startAt + micBuffer.duration + .05);
   }
 
@@ -2583,6 +2592,20 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
     record.setAttribute('aria-pressed', String(recording));
     // 循环按钮已移除，播放始终循环
     loop = true;
+  }
+
+  // 点击标尺：改变音频预览/播放起点
+  async function seekPreview(step) {
+    const target = Math.max(0, Math.min(playbackLength() - 1, Math.round(step)));
+    playStartStep = target;
+    if (isPlaying) {
+      stopPlayback();
+      await startPlayback();
+    } else {
+      currentStep = target;
+      updatePlayhead();
+      $('#play-status').textContent = `预览位置：第 ${target + 1} 步`;
+    }
   }
 
   function togglePlay() {

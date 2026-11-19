@@ -1206,3 +1206,7 @@ body[data-page="studio"] .performance-inline{flex:0 0 176px!important;height:176
 
 /* 手机预览的单排顶栏下不再显示刘海遮挡 */
 .phone-notch{display:none!important}
+
+
+/* 点击标尺时的可点击提示 */
+.ruler-label{cursor:pointer}
