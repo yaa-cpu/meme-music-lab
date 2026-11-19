@@ -3161,6 +3161,11 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
     document.title = route === 'backpack' ? '采样卡带背包图鉴 · 梗图音乐坊'
       : route === 'studio' ? '线谱音序器 · 梗图音乐坊'
       : route === 'works' ? '作品背包 · 梗图音乐坊' : '梗图音乐坊';
+    if (route !== 'studio') {
+      document.body.classList.remove('sample-open');
+      const toggle = $('#sample-toggle');
+      if (toggle) { toggle.setAttribute('aria-expanded', 'false'); toggle.textContent = '采样台'; }
+    }
     if (route !== 'pad') window.scrollTo(0, 0);
   }
   window.addEventListener('hashchange', applyPage);
@@ -3274,6 +3279,11 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
     syncChoiceWheel('#reverb-predelay-wheel', Math.round(reverbPreDelaySec * 1000));
     syncChoiceWheel('#reverb-damp-wheel', Math.round(reverbDamping));
     $('#delete-note').addEventListener('click', () => { if (selectedNoteId) removeNoteById(selectedNoteId); });
+    $('#sample-toggle')?.addEventListener('click', () => {
+      const open = document.body.classList.toggle('sample-open');
+      $('#sample-toggle').setAttribute('aria-expanded', String(open));
+      $('#sample-toggle').textContent = open ? '收起采样台' : '采样台';
+    });
     $('#clear-button').addEventListener('click', () => {
       if (!notes.length && !micBlob && !micBuffer) { showToast('谱面已经是空的'); return; }
       stopPlayback(); clearVocalTake(); notes = []; renderRuler(); renderStaff(); saveState();
