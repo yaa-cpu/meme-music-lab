@@ -284,7 +284,7 @@
       if (tickCount % 2 === 0 && window.PadBG) {
         const homeRect = $('#pad-home').getBoundingClientRect();
         const rect = button.getBoundingClientRect();
-        window.PadBG.hit({ x: rect.left - homeRect.left + rect.width / 2, y: rect.top - homeRect.top + rect.height / 2, color });
+        window.PadBG.hit({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2, color });
       }
       applyDanceHit(index);
     };
@@ -647,11 +647,10 @@
     }
     if (window.PadLeds) window.PadLeds.hit(Number(button.dataset.padIndex), color);
     if (window.PadBG) {
-      const homeRect = $('#pad-home').getBoundingClientRect();
       const rect = button.getBoundingClientRect();
       window.PadBG.hit({
-        x: rect.left - homeRect.left + rect.width / 2,
-        y: rect.top - homeRect.top + rect.height / 2,
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2,
         color
       });
     }

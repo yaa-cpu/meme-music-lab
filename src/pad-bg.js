@@ -55,9 +55,9 @@
 
   function resize() {
     if (!canvas || !stage) return;
-    const rect = stage.getBoundingClientRect();
-    width = Math.max(1, Math.round(rect.width));
-    height = Math.max(1, Math.round(rect.height));
+    const origin = canvas.getBoundingClientRect();
+    width = Math.max(1, Math.round(origin.width));
+    height = Math.max(1, Math.round(origin.height));
     dpr = Math.min(2, window.devicePixelRatio || 1);
     canvas.width = Math.round(width * dpr);
     canvas.height = Math.round(height * dpr);
@@ -65,7 +65,6 @@
     const deck = stage.querySelector('#pad-playground');
     if (deck) {
       const box = deck.getBoundingClientRect();
-      const origin = stage.getBoundingClientRect();
       deckBox = {
         x: box.left - origin.left + box.width / 2,
         y: box.top - origin.top + box.height / 2,

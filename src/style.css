@@ -1305,3 +1305,11 @@ body[data-page="studio"] .performance-inline{flex:0 0 176px!important;height:176
   body[data-page="pad"] .pad-hero-layout{position:relative!important;z-index:2!important}
   body[data-page="pad"] .pad-sticker{position:absolute!important;z-index:3!important}
 }
+
+
+/* 全屏节奏背景：顶栏不再用底色遮住背景顶部 */
+@media (max-width:520px){
+  body[data-page="pad"] .site-header{background:transparent!important}
+  body[data-page="pad"] main{background:transparent!important}
+  body[data-page="pad"] .pad-home{background:oklch(0.94 0.055 105)!important}
+}
