@@ -162,23 +162,24 @@
   function renderSlotPicker() {
     const preset = currentPreset();
     const picker = $('#pad-slot-picker');
-    picker.style.setProperty('--pad-columns', preset.layout === 4 ? 2 : 3);
-    picker.style.setProperty('--pad-rows', preset.layout === 4 ? 2 : 3);
-    picker.innerHTML = visibleSlots().map((slot, index) => {
+    const columns = preset.layout === 4 ? 2 : 3;
+    const rows = preset.layout === 4 ? 2 : 3;
+    picker.className = 'pad-playground dialog-pad-surface';
+    picker.innerHTML = `<div class="drum-pad-grid" style="--pad-columns:${columns};--pad-rows:${rows}">${visibleSlots().map((slot, index) => {
       const source = sourceInfo(slot);
       const padImage = source.padImage || source.image;
       const visual = padImage
         ? `<img src="${padImage}" alt="" draggable="false">`
         : `<span class="pad-source-symbol" aria-hidden="true">${source.symbol || source.short || 'NOTE'}</span>`;
       const kindName = { sample: '梗采样', note: '乐器音符', drum: '鼓点' }[slot.kind];
-      return `<button type="button" class="meme-pad pad-slot-button${index === editingSlot ? ' active' : ''}" data-slot="${index}" style="--pad-color:${source.color};--pad-order:${index}" aria-pressed="${index === editingSlot}" aria-label="第 ${index + 1} 键：${source.title}，拖声音到这里替换">
+      return `<button type="button" class="meme-pad pad-slot-button${index === editingSlot ? ' active' : ''}" data-slot="${index}" style="--pad-color:${source.color};--pad-order:${index};--dance-tilt:${index % 2 ? '-2.5deg' : '2.5deg'}" aria-pressed="${index === editingSlot}" aria-label="第 ${index + 1} 键：${source.title}，拖声音到这里替换">
         <span class="pad-number">${index + 1}</span>
         <span class="pad-kind">${kindName}</span>
         <span class="pad-image">${visual}</span>
         <span class="pad-label"><strong>${source.title}</strong><small>${slot.kind === 'sample' || slot.kind === 'note' ? `音阶 ${index + 1} · ${slot.midi}` : source.sub || kindName}</small></span>
         <span class="pad-hit-ring" aria-hidden="true"></span>
       </button>`;
-    }).join('');
+    }).join('')}</div>`;
     $$('.pad-slot-button').forEach((button) => {
       button.addEventListener('click', () => {
         editingSlot = Number(button.dataset.slot);

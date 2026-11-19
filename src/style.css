@@ -1265,16 +1265,6 @@ body[data-page="studio"] .performance-inline{flex:0 0 176px!important;height:176
 
 
 /* 采样背包顶部：直接显示主页鼓面，作为拖拽释放目标 */
-#pad-slot-picker{display:grid;grid-template-columns:repeat(var(--pad-columns,3),minmax(0,1fr));grid-template-rows:repeat(var(--pad-rows,3),minmax(0,1fr));gap:8px;width:100%;max-width:300px;margin:4px auto 8px}
-#pad-slot-picker .pad-slot-button{width:100%;height:auto;aspect-ratio:1 / 1;min-height:0;padding:0;border-radius:10px;box-shadow:2px 2px 0 var(--ink)}
-#pad-slot-picker .pad-slot-button.active{outline:3px solid var(--ink);outline-offset:2px}
-#pad-slot-picker .pad-slot-button.drag-over{outline:3px dashed var(--acid);outline-offset:2px;filter:brightness(1.08) saturate(1.2)}
-#pad-slot-picker .pad-slot-button .pad-label small{display:none}
-#pad-slot-picker .pad-slot-button .pad-label strong{font-size:11px}
-#pad-slot-picker .pad-slot-button .pad-image{inset:12%}
-#pad-slot-picker .pad-slot-button .pad-kind{display:none}
-#pad-slot-picker .pad-slot-button .pad-number{font-size:9px}
-#pad-slot-picker .pad-slot-button .pad-hit-ring{display:none}
 .pad-preset-tip{text-align:center}
 
 
@@ -1321,13 +1311,7 @@ body[data-page="studio"] .performance-inline{flex:0 0 176px!important;height:176
 #pad-backpack-dialog #pad-editing-title,
 #pad-backpack-dialog #pad-editing-current,
 #pad-backpack-dialog .pad-preset-tip{display:none!important}
-#pad-backpack-dialog #pad-slot-picker{max-width:none!important;width:100%!important;margin:0!important;gap:8px!important}
-#pad-backpack-dialog #pad-slot-picker .pad-slot-button{aspect-ratio:1 / 1!important;border-radius:12px!important}
-#pad-backpack-dialog .pad-slot-button .pad-label small{display:none!important}
-#pad-backpack-dialog .pad-slot-button .pad-kind{display:none!important}
-#pad-backpack-dialog .pad-slot-button .pad-label strong{font-size:12px!important}
-#pad-backpack-dialog .pad-slot-button.active{outline:3px solid var(--ink)!important;outline-offset:2px!important}
-#pad-backpack-dialog #pad-library{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important}
+#pad-backpack-dialog #pad-backpack-dialog #pad-backpack-dialog #pad-library{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important}
 #pad-backpack-dialog .pad-library-item{position:relative!important;display:block!important;aspect-ratio:1 / 1!important;padding:0!important;overflow:hidden!important;border-radius:14px!important;border:1.5px solid var(--ink)!important;background:var(--surface)!important}
 #pad-backpack-dialog .pad-library-visual{position:absolute!important;inset:0!important;display:block!important;width:100%!important;height:100%!important}
 #pad-backpack-dialog .pad-library-visual img{width:100%!important;height:100%!important;object-fit:cover!important}
@@ -1338,3 +1322,11 @@ body[data-page="studio"] .performance-inline{flex:0 0 176px!important;height:176
 #pad-backpack-dialog .pad-library-item[disabled]::after{content:"🔒"!important;position:absolute!important;inset:0!important;display:grid!important;place-items:center!important;background:oklch(0 0 0 / .28)!important;font-size:24px!important;z-index:3!important}
 #pad-backpack-dialog #pad-kind-tabs{width:100%!important}
 #pad-backpack-dialog .pad-backpack-body{padding-top:12px!important}
+
+
+/* 换装弹窗：顶部直接复用主页鼓面（.pad-playground + .drum-pad-grid + .meme-pad） */
+#pad-backpack-dialog #pad-slot-picker{display:grid!important;grid-template-columns:1fr!important;grid-template-rows:1fr!important;width:100%!important;max-width:none!important;margin:0!important;padding:12px!important;border-radius:16px!important;aspect-ratio:1 / 1!important}
+#pad-backpack-dialog #pad-slot-picker .drum-pad-grid{width:100%!important;height:100%!important;gap:9px!important}
+#pad-backpack-dialog #pad-slot-picker .pad-slot-button{width:100%!important;height:100%!important;padding:0!important;border-radius:12px!important;box-shadow:2px 2px 0 var(--ink)!important}
+#pad-backpack-dialog #pad-slot-picker .pad-slot-button.active{outline:3px solid var(--ink)!important;outline-offset:2px!important;z-index:3!important}
+#pad-backpack-dialog #pad-slot-picker .pad-slot-button.drag-over{outline:3px dashed var(--acid)!important;outline-offset:2px!important;filter:brightness(1.08) saturate(1.15)!important}
