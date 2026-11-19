@@ -248,18 +248,19 @@
     { id: 'dance', name: '舞曲碎拍', steps: ['1000001001000100', '0000100100001000', '1010101010101010', '0000100000001000'].map((row) => [...row].map(Number)) }
   ];
 
-  function getPianoLayout(pitches, className = 'pitch-key') {
+  function getPianoLayout(pitches, className = 'pitch-key', keyWidth = 44) {
     let whiteIndex = 0;
     let blackCount = 0;
     const markup = pitches.slice().reverse().map((pitch) => {
       const row = pitches.findIndex((item) => item.midi === pitch.midi);
       const black = pitch.name.includes('#');
-      const left = black ? whiteIndex * 44 - 14 : whiteIndex * 44;
+      const blackWidth = Math.round(keyWidth * .64);
+      const left = black ? whiteIndex * keyWidth - Math.round(blackWidth / 2) : whiteIndex * keyWidth;
       if (black) blackCount++; else whiteIndex++;
       const label = !black && pitch.name.startsWith('C') ? `<strong>${pitch.name}</strong>` : '';
       return `<button type="button" class="${className} piano-key ${black ? 'black-key' : 'white-key'}" data-row="${row}" data-midi="${pitch.midi}" style="left:${left}px;--key-color:${pitch.color};--lane-color:${pitch.color}" aria-label="演奏 ${pitch.name}" title="${pitch.name} · ${pitch.cn}">${label}</button>`;
     }).join('');
-    return { markup, width: whiteIndex * 44, whiteCount: whiteIndex, blackCount };
+    return { markup, width: whiteIndex * keyWidth, whiteCount: whiteIndex, blackCount, keyWidth };
   }
 
   window.MemeMusicData = {

@@ -1081,3 +1081,29 @@ body.phone-preview-open{overflow:hidden}
   body[data-page="studio"] .staff-row{position:relative!important}
   body[data-page="studio"] .staff-row::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:oklch(0.55 0.02 115);pointer-events:none;z-index:3}
 }
+
+
+/* 工作台固定高度：钢琴键盘居中，音阶变化不再改变工作台高度 */
+@media (max-width:520px){
+  body[data-page="studio"] .performance-inline{flex:0 0 200px!important}
+  body[data-page="studio"] .performance-inline:has(.pitch-pad.piano-pad){flex:0 0 200px!important}
+  body[data-page="studio"] .piano-scroll{height:92px!important;display:block!important}
+  body[data-page="studio"] .piano-keyboard{margin:0 auto!important;height:90px!important}
+  body[data-page="studio"] .piano-keyboard .pitch-key.white-key{height:88px!important}
+  body[data-page="studio"] .piano-keyboard .pitch-key.black-key{height:56px!important}
+}
+
+
+/* 手机钢琴键宽度与 JS 布局一致；工作台高度固定不随音阶变化 */
+@media (max-width:520px){
+  body[data-page="studio"] .performance-inline,
+  body[data-page="studio"] .performance-inline:has(.pitch-pad.piano-pad){flex:0 0 220px!important;height:220px!important}
+  body[data-page="studio"] .piano-keyboard .pitch-key.white-key{width:40px!important}
+  body[data-page="studio"] .piano-keyboard .pitch-key.black-key{width:26px!important}
+}
+
+
+/* 少量音阶时钢琴键盘居中（不被 min-width:100% 拉满） */
+@media (max-width:520px){
+  body[data-page="studio"] .piano-keyboard{min-width:0!important}
+}

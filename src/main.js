@@ -1181,19 +1181,15 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
   function renderPitchPad() {
     const pad = $('#pitch-pad');
     pad.style.setProperty('--pitch-count', pitchCount);
-    pad.classList.toggle('piano-pad', pitchCount > 8);
-    if (pitchCount > 8) {
-      const layout = musicData.getPianoLayout(pitches);
-      pad.innerHTML = `<div class="piano-scroll" tabindex="0" aria-label="${pitchCount} 键钢琴，横向滑动查看全部音域"><div class="piano-keyboard" style="width:${layout.width}px">${layout.markup}</div></div>`;
-    } else {
-      pad.innerHTML = pitches.map((pitch, row) => ({ pitch, row })).reverse().map(({ pitch, row }, index) => `<button type="button" class="pitch-key" data-row="${row}" style="--key-color:${pitch.color}" aria-label="用 ${sourceInfo(selectedId).title} 演奏 ${pitch.name}"><kbd>${index + 1}</kbd><strong>${pitch.name}</strong><small>${pitch.cn}</small></button>`).join('');
-    }
+    // 不论多少音阶，统一使用钢琴键盘；手机上每次最多显示约 14 个键，其余横向滚动
+    pad.classList.add('piano-pad');
+    const compact = window.matchMedia('(max-width:520px)').matches;
+    const layout = musicData.getPianoLayout(pitches, 'pitch-key', compact ? 40 : 44);
+    pad.innerHTML = `<div class="piano-scroll" tabindex="0" aria-label="${pitchCount} 键钢琴，横向滑动查看全部音域"><div class="piano-keyboard" style="width:${layout.width}px">${layout.markup}</div></div>`;
     $$('.pitch-key').forEach((key) => key.addEventListener('click', () => performMeme(selectedId, Number(key.dataset.row), true)));
-    if (pitchCount > 8) {
-      const scroller = $('.piano-scroll', pad);
-      const middle = $('.piano-key[data-midi="60"]', pad);
-      if (scroller && middle) scroller.scrollLeft = Math.max(0, middle.offsetLeft - scroller.clientWidth * .42);
-    }
+    const scroller = $('.piano-scroll', pad);
+    const middle = $('.piano-key[data-midi="60"]', pad);
+    if (scroller && middle) scroller.scrollLeft = Math.max(0, middle.offsetLeft - scroller.clientWidth * .42);
   }
 
   function selectMeme(id) {
