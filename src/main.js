@@ -76,6 +76,16 @@
       id, title, sub, key, type: 'original', image, audio: `./assets/${file}`, color,
       origin: `使用你提供的“${fileName}”裁剪采样。`, sourceLabel: '我的裁剪 · 原始来源',
       soundSource: source, imageSource: image, originSource: source
+    })),
+    ...[
+      ['hachimi-ha', '哈', '哈基米逐音 · 哈', 'hachimi-ha.mp3', 'var(--p-acid)'],
+      ['hachimi-ji', '基', '哈基米逐音 · 基', 'hachimi-ji.mp3', 'var(--p-pink)'],
+      ['hachimi-mi', '米', '哈基米逐音 · 米', 'hachimi-mi.mp3', 'var(--p-blue)']
+    ].map(([id, title, sub, file, color]) => ({
+      id, title, sub, key: '', hidden: true, type: 'original', image: './assets/hachimi.svg', audio: `./assets/${file}`, color,
+      origin: '哈基米南北绿豆逐音裁剪；仅用于打击垫按行区分哈/基/米。',
+      sourceLabel: '我的裁剪 · 原始来源', soundSource: 'https://www.bilibili.com/video/BV1WfFJzyEjv/?t=3',
+      imageSource: './assets/hachimi.svg', originSource: 'https://www.bilibili.com/video/BV1WfFJzyEjv/?t=3'
     }))
   ];
   // 打击垫上用的透明抠图（原始素材保留给线谱/图鉴等需要完整画面的地方）。
@@ -407,7 +417,7 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
     const creditLink = (href, label) => (/^https?:/i.test(String(href || ''))
       ? `<a href="${href}" target="_blank" rel="noopener noreferrer">${label}</a>`
       : `<span class="credit-local">${label} · 本地素材</span>`);
-    $('#credits-list').innerHTML = memes.map((meme) => `
+    $('#credits-list').innerHTML = memes.filter((meme) => !meme.hidden).map((meme) => `
       <div class="credit-item"><strong>${meme.title} · ${meme.sub}</strong><p>${meme.origin}</p>
       <p>${creditLink(meme.originSource, '梗来源')}　${creditLink(meme.imageSource, '图像来源')}　${creditLink(meme.soundSource, meme.type === 'original' ? '音频来源' : '原声出处说明')}</p></div>`).join('');
   }
@@ -3273,7 +3283,7 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
 
   function initPadStage() {
     if (!window.MemePadStage) return;
-    const samples = memes.map((meme) => ({ kind: 'sample', source: meme.id, title: meme.title, sub: meme.sub, image: meme.image, padImage: meme.padImage, color: meme.color }));
+    const samples = memes.filter((meme) => !meme.hidden).map((meme) => ({ kind: 'sample', source: meme.id, title: meme.title, sub: meme.sub, image: meme.image, padImage: meme.padImage, color: meme.color }));
     const instrumentNotes = musicData.instruments.map((instrument) => ({ kind: 'note', source: `instrument:${instrument.id}`, title: instrument.title, sub: instrument.description, symbol: instrument.symbol, color: instrument.color }));
     window.MemePadStage.init({
       library: { sample: samples, note: instrumentNotes, drum: padDrums },
