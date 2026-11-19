@@ -626,15 +626,17 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
     const follow = $('#follow-task');
     follow.classList.toggle('done', followedAuthor);
     follow.setAttribute('aria-pressed', String(followedAuthor));
-    $('strong', follow).textContent = followedAuthor ? '已关注作者' : '关注作者';
-    $('small', follow).textContent = followedAuthor ? '再次点击可在 Demo 中取消' : '关注后解锁哈基米 01';
+    $('strong', follow).textContent = followedAuthor ? '已关注' : '关注';
+    const followSmall = $('small', follow);
+    if (followSmall) followSmall.textContent = followedAuthor ? '再次点击可在 Demo 中取消' : '关注后解锁哈基米 01';
     ['share', 'repost'].forEach((type) => {
       const button = $(`#${type}-task`);
       const claimed = rewardClaims[type] === today;
       button.classList.toggle('done', claimed);
       button.disabled = claimed;
-      $('strong', button).textContent = `${type === 'share' ? '分享作品' : '转发动态'}${claimed ? ' · 今日已完成' : ''}`;
-      $('small', button).textContent = claimed ? '明天再来 · 仍需保持关注' : followedAuthor ? '每天一次 · 今日可完成' : '先关注作者，再完成任务';
+      $('strong', button).textContent = `${type === 'share' ? '分享' : '转发'}${claimed ? ' · 已做' : ''}`;
+      const small = $('small', button);
+      if (small) small.textContent = claimed ? '明天再来 · 仍需保持关注' : followedAuthor ? '每天一次 · 今日可完成' : '先关注作者，再完成任务';
     });
     $('#backpack-grid').innerHTML = cartridges.map((cartridge, index) => {
       const unlocked = isCartridgeUnlocked(index);
@@ -649,7 +651,9 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
       const index = Number(button.dataset.backpack);
       if (!isCartridgeUnlocked(index)) { showToast(`请先完成${cartridgeRequirement(index)}`); return; }
       setCartridge(index);
-      $('.performance').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const performance = $('.performance');
+      if (performance) performance.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      else window.scrollTo({ top: 0, behavior: 'smooth' });
       showToast(`已装上「${cartridges[index].name}」`);
     }));
   }

@@ -758,32 +758,6 @@
       editingKind = button.dataset.kind;
       renderEditingSummary(); renderLibrary();
     }));
-    $('#pad-preset-save').addEventListener('click', () => {
-      const input = $('#pad-custom-name');
-      const name = input.value.trim();
-      if (!name) {
-        input.focus();
-        options.toast('先给你的预设起个名字');
-        return;
-      }
-      const preset = { ...clone(currentPreset()), id: `custom-${Date.now().toString(36)}`, name, builtIn: false };
-      state.presets.push(preset);
-      state.presetId = preset.id;
-      input.value = '';
-      saveState(); renderPresets();
-      options.toast(`已保存我的预设「${name}」`);
-    });
-    $('#pad-custom-name').addEventListener('keydown', (event) => {
-      if (event.key === 'Enter') { event.preventDefault(); $('#pad-preset-save').click(); }
-    });
-    $('#pad-preset-delete').addEventListener('click', () => {
-      const preset = currentPreset();
-      if (preset.builtIn) return;
-      state.presets = state.presets.filter((item) => item.id !== preset.id);
-      state.presetId = 'meme-party';
-      saveState(); selectPreset(state.presetId);
-      options.toast('自定义预设已删除');
-    });
     const dialog = $('#pad-backpack-dialog');
     dialog.addEventListener('click', (event) => {
       if (event.target !== dialog) return;

@@ -1231,3 +1231,24 @@ body[data-page="studio"] .performance-inline{flex:0 0 176px!important;height:176
 .pad-slot-button.drag-over{outline:2px dashed var(--ink);background:var(--acid)}
 .pad-library-item[draggable="true"]{cursor:grab}
 .pad-library-item.dragging{opacity:.45}
+
+
+/* 背包页：三个任务一行；采样盒统一 60×60、15px 圆角 */
+.backpack-tasks{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important}
+.task-button{min-height:44px!important;padding:6px 4px!important;align-items:center!important;justify-content:center!important;text-align:center!important}
+.task-button strong{font-size:13px!important}
+.task-button small{display:none!important}
+.backpack-grid{display:grid!important;grid-template-columns:repeat(auto-fill,60px)!important;gap:10px!important;align-items:start!important;justify-content:start!important;margin-top:14px!important}
+.backpack-card{width:60px!important;height:60px!important;min-height:0!important;border-radius:15px!important;border:1.5px solid var(--ink)!important;padding:0!important;overflow:hidden!important;box-shadow:2px 2px 0 var(--ink)!important}
+.backpack-cover{height:100%!important;min-height:0!important;padding:0!important;border:0!important;border-radius:15px!important;justify-content:center!important;align-items:center!important;overflow:hidden!important}
+.backpack-cover>img{position:absolute!important;width:100%!important;height:100%!important;right:0!important;top:0!important;left:0!important;bottom:0!important;transform:none!important;object-fit:cover!important;z-index:1!important;filter:none!important}
+.backpack-cover>small,
+.backpack-cover>strong,
+.backpack-instrument,
+.cover-orbit,
+.cover-note{display:none!important}
+.backpack-card-meta{display:none!important}
+.backpack-card.locked .backpack-cover{filter:saturate(.35)}
+.backpack-card.locked::after{content:"锁";position:absolute;right:3px;top:2px;z-index:5;padding:1px 4px;border:1px solid var(--ink);border-radius:5px;background:var(--surface);font:900 8px/1.2 Arial,sans-serif;color:var(--danger)}
+.backpack-card.locked .backpack-cover::after{display:none!important}
+.backpack{min-height:0!important}
