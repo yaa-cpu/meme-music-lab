@@ -224,6 +224,39 @@
     });
   }
 
+  function uniformSamples() {
+    return (options.library.sample || []).filter((item) => options.isUnlocked('sample', item.source));
+  }
+
+  function applyUniformSample(source) {
+    const item = uniformSamples().find((entry) => entry.source === source);
+    if (!item) return;
+    const preset = currentPreset();
+    ensureSlotsForLayout(preset);
+    preset.slots = preset.slots.map((slot, index) => ({
+      kind: 'sample',
+      source: item.source,
+      midi: slot.midi || 36 + index
+    }));
+    saveState();
+    renderPads(); renderSlotPicker(); renderLibrary();
+    options.toast(`所有按键已换成「${item.title}」`);
+  }
+
+  function renderUniformPresets() {
+    const strip = $('#pad-uniform-strip');
+    if (!strip) return;
+    strip.innerHTML = uniformSamples().map((item) => {
+      const visual = item.padImage || item.image
+        ? `<img src="${item.padImage || item.image}" alt="" draggable="false">`
+        : `<span>${item.symbol || item.short || 'NOTE'}</span>`;
+      return `<button class="pad-uniform-card" type="button" data-uniform-source="${item.source}" style="--uniform-color:${item.color}" title="全部换成 ${item.title}">
+        <span class="pad-uniform-visual">${visual}</span><strong>${item.title}</strong>
+      </button>`;
+    }).join('');
+    $$('.pad-uniform-card', strip).forEach((button) => button.addEventListener('click', () => applyUniformSample(button.dataset.uniformSource)));
+  }
+
   function renderLibrary() {
     const items = options.library[editingKind] || [];
     $('#pad-library').innerHTML = items.map((item) => {
@@ -764,6 +797,13 @@
       editingKind = button.dataset.kind;
       renderEditingSummary(); renderLibrary();
     }));
+    const randomUniform = $('#pad-uniform-random');
+    if (randomUniform) randomUniform.addEventListener('click', () => {
+      const samples = uniformSamples();
+      if (!samples.length) return;
+      const item = samples[Math.floor(Math.random() * samples.length)];
+      applyUniformSample(item.source);
+    });
     const dialog = $('#pad-backpack-dialog');
     dialog.addEventListener('click', (event) => {
       if (event.target !== dialog) return;
@@ -796,6 +836,7 @@
     if (window.PadFX) window.PadFX.init({ canvas: $('#pad-fx'), stage: $('#pad-playground') });
     if (window.PadLeds) window.PadLeds.init({ canvas: $('#pad-leds'), stage: $('#pad-playground') });
     if (window.PadBG) window.PadBG.init({ canvas: $('#pad-bg'), stage: $('#pad-home') });
+    renderUniformPresets();
     bindControls();
     window.addEventListener('meme-pad-beat', syncBeatLights);
     window.addEventListener('meme-pad-rating', (event) => showRating(event.detail));
