@@ -888,3 +888,14 @@ body[data-page="works"] .songbook{margin-top:0;border-top:0;padding-top:0}
 
 /* 轮盘高亮行垂直居中 */
 .mini-wheel::after{top:50%!important;transform:translateY(-50%)}
+
+
+/* 运输栏：删除键放最右；选中音符时混响组变绿 = 单音混响模式 */
+.transport{display:flex!important;align-items:stretch!important;gap:8px!important}
+.transport>.transport-row{display:contents!important}
+.transport .transport-delete{margin-left:auto!important}
+.transport .transport-delete:disabled{opacity:.35!important;cursor:not-allowed!important}
+.transport.note-edit .transport-reverb .mini-wheel{border-color:#7ed957!important;box-shadow:inset 0 1px 0 rgba(126,217,87,.25),0 0 0 2px rgba(126,217,87,.45)!important}
+.transport.note-edit .transport-reverb .mini-wheel::after{border-color:rgba(126,217,87,.9)!important;background:rgba(126,217,87,.10)!important}
+.transport.note-edit .transport-reverb .mini-wheel-track>span.active{color:#9ff07a!important}
+.transport.note-edit .transport-reverb .mini-wheel-control>span{color:#9ff07a!important}

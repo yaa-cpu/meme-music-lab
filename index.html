@@ -127,6 +127,7 @@
               <div class="mini-wheel-control"><span>衰减</span><div class="mini-wheel" id="reverb-decay-wheel" role="slider" tabindex="0" aria-label="混响衰减百分比，拖动或滚动切换"><div class="mini-wheel-track" data-min="50" data-max="200" data-step="10" data-unit="%"></div></div></div>
               <div class="mini-wheel-control"><span>预延迟</span><div class="mini-wheel" id="reverb-predelay-wheel" role="slider" tabindex="0" aria-label="混响预延迟毫秒，拖动或滚动切换"><div class="mini-wheel-track" data-min="0" data-max="80" data-step="5" data-unit="ms"></div></div></div>
               <div class="mini-wheel-control"><span>亮度</span><div class="mini-wheel" id="reverb-damp-wheel" role="slider" tabindex="0" aria-label="混响亮度赫兹，拖动或滚动切换"><div class="mini-wheel-track" data-min="2000" data-max="12000" data-step="500" data-unit="Hz"></div></div></div>
+              <button class="control-button transport-delete" id="delete-note" type="button" aria-label="删除所选音符" title="删除所选音符" disabled><svg><use href="#i-trash"/></svg><span>删除</span></button>
             </div>
           </div>
         </div>
@@ -218,18 +219,6 @@
   </main>
 
   <footer class="site-footer"><span>梗图音乐坊 / 一个不太正经的音乐实验</span><span>建议戴耳机，别在深夜外放。</span></footer>
-
-  <div class="note-fx" id="note-fx" hidden role="group" aria-label="所选音符的独立混响设置">
-    <div class="note-fx-circle note-fx-preset" id="note-fx-preset-wheel" role="slider" tabindex="0" aria-label="混响预设，上下拖动或滚动切换" aria-valuemin="1" aria-valuemax="6" aria-valuenow="1" aria-valuetext="跟随全局" title="混响预设 · 上下拖动">
-      <svg viewBox="0 0 48 48" aria-hidden="true"><rect x="9" y="8" width="24" height="27" rx="4" fill="#e7374c"/><rect x="17" y="16" width="24" height="27" rx="4" fill="#f7fbf4" stroke="#298fc2" stroke-width="2"/></svg>
-      <div class="mini-wheel-track fx-wheel-values"><span data-value="inherit">跟随全局</span><span data-value="none">无混响</span><span data-value="room">小房间</span><span data-value="hall">大厅</span><span data-value="church">教堂</span><span data-value="plate">金属板</span></div>
-    </div>
-    <div class="note-fx-circle note-fx-wet" id="note-fx-wet-wheel" role="slider" tabindex="0" aria-label="混响干湿比例，上下拖动或滚动切换" aria-valuemin="1" aria-valuemax="8" aria-valuenow="1" aria-valuetext="0%" title="干湿比例 · 上下拖动">
-      <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M11 19a15 15 0 0 1 25-5l3 3M37 9v8h-8M37 30a15 15 0 0 1-25 5l-3-3m0 5v-8h8" fill="none" stroke="#f7fbf4" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><strong id="note-fx-percent">0%</strong>
-      <div class="mini-wheel-track fx-wheel-values"><span data-value="0">0%</span><span data-value="0.1">10%</span><span data-value="0.2">20%</span><span data-value="0.3">30%</span><span data-value="0.4">40%</span><span data-value="0.5">50%</span><span data-value="0.6">60%</span><span data-value="0.7">70%</span></div>
-    </div>
-    <button class="note-fx-circle note-fx-delete" id="note-fx-delete" type="button" aria-label="删除所选音符" title="删除音符"><svg><use href="#i-trash"/></svg></button>
-  </div>
 
   <dialog id="pad-backpack-dialog" aria-labelledby="pad-backpack-title">
     <div class="pad-backpack-head">

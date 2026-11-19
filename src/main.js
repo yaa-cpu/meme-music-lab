@@ -152,6 +152,7 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
   let masterHPF = null;
   let lowBoost = 0;
   let reverbSendBuses = new Map();
+  let noteReverbConvolvers = new Map();
   let reverbDecayScale = 1;
   let reverbPreDelaySec = .02;
   let reverbDamping = 6000;
@@ -1044,26 +1045,27 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
 
   function formatLength(length) { return Number(length.toFixed(2)).toString(); }
 
-  let noteFxTimer = null;
+  function selectedNote() { return notes.find((item) => item.id === selectedNoteId) || null; }
 
-  function wakeNoteFx() {
-    const panel = $('#note-fx');
-    if (panel.hidden || !selectedNoteId) return;
-    clearTimeout(noteFxTimer);
-    panel.classList.remove('auto-hidden');
-    positionNoteFx();
-    noteFxTimer = setTimeout(() => panel.classList.add('auto-hidden'), 2800);
+  function syncGlobalReverbWheels() {
+    syncChoiceWheel('#reverb-wheel', reverbPreset);
+    syncChoiceWheel('#reverb-wet-wheel', reverbWet);
+    syncChoiceWheel('#reverb-decay-wheel', Math.round(reverbDecayScale * 100));
+    syncChoiceWheel('#reverb-predelay-wheel', Math.round(reverbPreDelaySec * 1000));
+    syncChoiceWheel('#reverb-damp-wheel', Math.round(reverbDamping));
   }
 
   function closeNoteFx() {
     selectedNoteId = null;
-    clearTimeout(noteFxTimer);
-    $('#note-fx').hidden = true;
-    $('#note-fx').classList.remove('auto-hidden');
+    const transport = $('.transport');
+    if (transport) transport.classList.remove('note-edit');
     $$('.placed-note.selected').forEach((noteEl) => {
       noteEl.classList.remove('selected');
       noteEl.setAttribute('aria-pressed', 'false');
     });
+    const deleteButton = $('#delete-note');
+    if (deleteButton) deleteButton.disabled = true;
+    syncGlobalReverbWheels();
   }
 
   function updateNoteFxBadge(note) {
@@ -1071,60 +1073,41 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
     if (!noteEl) return;
     noteEl.classList.toggle('fx-override', Boolean(note.reverbPreset));
     const badge = $('.note-fx-badge', noteEl);
+    if (!badge) return;
     badge.hidden = !note.reverbPreset;
     badge.textContent = note.reverbPreset === 'none' ? 'DRY' : 'FX';
   }
 
-  function positionNoteFx() {
-    const panel = $('#note-fx');
-    if (panel.hidden || !selectedNoteId) return;
-    const noteEl = $$('.placed-note').find((item) => item.dataset.noteId === selectedNoteId);
-    if (!noteEl) { panel.style.visibility = 'hidden'; return; }
-    const noteRect = noteEl.getBoundingClientRect();
-    const staffRect = $('#staff-scroll').getBoundingClientRect();
-    const visible = noteRect.right > staffRect.left && noteRect.left < staffRect.right && noteRect.bottom > staffRect.top && noteRect.top < staffRect.bottom;
-    panel.style.visibility = visible ? 'visible' : 'hidden';
-    if (!visible) return;
-    const width = panel.offsetWidth;
-    const height = panel.offsetHeight;
-    const left = clamp(noteRect.left + noteRect.width / 2 - width / 2, 8, Math.max(8, window.innerWidth - width - 8));
-    let top = noteRect.top - height - 10;
-    if (top < 8) top = noteRect.bottom + 10;
-    top = clamp(top, 8, Math.max(8, window.innerHeight - height - 8));
-    panel.style.left = `${Math.round(left)}px`;
-    panel.style.top = `${Math.round(top)}px`;
-  }
-
   function syncNoteFx() {
-    const note = notes.find((item) => item.id === selectedNoteId);
+    const note = selectedNote();
     if (!note) { closeNoteFx(); return; }
     const source = sourceInfo(note.meme);
-    const preset = note.reverbPreset;
-    const wet = Math.round((preset ? (note.reverbWet ?? reverbPresets[preset].wet) : reverbWet) * 10) / 10;
-    const panel = $('#note-fx');
-    panel.hidden = false;
-    panel.setAttribute('aria-label', `${source.title} · ${pitches[note.row]?.name || '音高'}的独立混响设置`);
-    syncChoiceWheel('#note-fx-preset-wheel', preset || 'inherit');
-    syncChoiceWheel('#note-fx-wet-wheel', wet);
-    $('#note-fx-wet-wheel').setAttribute('aria-disabled', String(!preset || preset === 'none'));
-    $('#note-fx-percent').textContent = `${Math.round(wet * 100)}%`;
-    $('#note-fx-preset-wheel').title = `混响预设：${$('#note-fx-preset-wheel').getAttribute('aria-valuetext')} · 上下拖动`;
+    const transport = $('.transport');
+    if (transport) transport.classList.add('note-edit');
+    const preset = note.reverbPreset || reverbPreset;
+    const wet = note.reverbPreset
+      ? (note.reverbWet ?? (reverbPresets[note.reverbPreset]?.wet ?? 0))
+      : reverbWet;
+    syncChoiceWheel('#reverb-wheel', preset);
+    syncChoiceWheel('#reverb-wet-wheel', Math.round(wet * 10) / 10);
+    syncChoiceWheel('#reverb-decay-wheel', Math.round((note.reverbDecayScale ?? reverbDecayScale) * 100));
+    syncChoiceWheel('#reverb-predelay-wheel', Math.round((note.reverbPreDelaySec ?? reverbPreDelaySec) * 1000));
+    syncChoiceWheel('#reverb-damp-wheel', Math.round(note.reverbDamping ?? reverbDamping));
+    const deleteButton = $('#delete-note');
+    if (deleteButton) deleteButton.disabled = false;
     $$('.placed-note').forEach((noteEl) => {
       const selected = noteEl.dataset.noteId === note.id;
       noteEl.classList.toggle('selected', selected);
       noteEl.setAttribute('aria-pressed', String(selected));
     });
     updateNoteFxBadge(note);
-    positionNoteFx();
+    $('#play-status').textContent = `${source.title} · ${pitches[note.row]?.name || ''} · 绿色控件用于单独设置这个音的混响`;
   }
 
   function selectNoteById(id) {
     if (!notes.some((note) => note.id === id)) { closeNoteFx(); return; }
     selectedNoteId = id;
     syncNoteFx();
-    wakeNoteFx();
-    const note = notes.find((item) => item.id === id);
-    $('#play-status').textContent = `${sourceInfo(note.meme).title} · ${pitches[note.row]?.name || ''} · 可单独设置混响`;
   }
 
   function noteMarkup(note) {
@@ -1526,7 +1509,7 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
         } else if (event.key === 'Delete' || event.key === 'Backspace') {
           event.preventDefault(); removeNoteById(id);
         } else if (event.key === 'Enter') {
-          event.preventDefault(); selectNoteById(id); $('#note-fx-preset-wheel').focus({ preventScroll: true });
+          event.preventDefault(); selectNoteById(id); $('#reverb-wheel').focus({ preventScroll: true });
         }
         return;
       }
@@ -1559,15 +1542,19 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
     });
   }
 
-  function buildImpulse(preset) {
-    if (impulseBuffers.has(preset)) return impulseBuffers.get(preset);
-    const settings = reverbPresets[preset];
+  function buildImpulse(preset, overrides = null) {
+    const settings = reverbPresets[preset] || reverbPresets.plate;
+    const decayScale = Number(overrides && overrides.decayScale != null ? overrides.decayScale : reverbDecayScale) || 1;
+    const preDelaySec = Number(overrides && overrides.preDelaySec != null ? overrides.preDelaySec : reverbPreDelaySec) || 0;
+    const damping = Number(overrides && overrides.damping != null ? overrides.damping : reverbDamping) || 6000;
+    const cacheKey = `${preset}|${decayScale}|${preDelaySec.toFixed(4)}|${damping}`;
+    if (impulseBuffers.has(cacheKey)) return impulseBuffers.get(cacheKey);
     const sr = audioCtx.sampleRate;
-    const pre = Math.floor(sr * Math.max(0, reverbPreDelaySec));
-    const body = Math.max(2, Math.floor(sr * settings.seconds * reverbDecayScale));
+    const pre = Math.floor(sr * Math.max(0, preDelaySec));
+    const body = Math.max(2, Math.floor(sr * settings.seconds * decayScale));
     const length = pre + body;
     const impulse = audioCtx.createBuffer(2, length, sr);
-    const dampAlpha = 1 - Math.exp(-2 * Math.PI * Math.max(800, reverbDamping) / sr);
+    const dampAlpha = 1 - Math.exp(-2 * Math.PI * Math.max(800, damping) / sr);
     for (let channel = 0; channel < 2; channel++) {
       const data = impulse.getChannelData(channel);
       let previous = 0;
@@ -1583,7 +1570,7 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
         data[i] = damped * envelope * early;
       }
     }
-    impulseBuffers.set(preset, impulse);
+    impulseBuffers.set(cacheKey, impulse);
     return impulse;
   }
 
@@ -1594,9 +1581,24 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
     reverbSendBuses.forEach((entry) => {
       try { entry.conv.buffer = buildImpulse(entry.preset); } catch (_) { /* ignore */ }
     });
+    noteReverbConvolvers.forEach((entry) => {
+      try { entry.conv.buffer = buildImpulse(entry.preset, entry.overrides); } catch (_) { /* ignore */ }
+    });
     if (convolver) {
       try { convolver.buffer = buildImpulse(reverbPreset); } catch (_) { /* ignore */ }
     }
+  }
+
+  // 某个音使用独立混响参数时，创建它自己的卷积器（缓存复用）
+  function noteReverbInput(preset, overrides) {
+    const key = `${preset}|${overrides.decayScale ?? ''}|${overrides.preDelaySec ?? ''}|${overrides.damping ?? ''}`;
+    if (!noteReverbConvolvers.has(key)) {
+      const conv = audioCtx.createConvolver();
+      conv.buffer = buildImpulse(preset, overrides);
+      conv.connect(reverbGain);
+      noteReverbConvolvers.set(key, { conv, preset, overrides });
+    }
+    return noteReverbConvolvers.get(key).conv;
   }
 
   // 每个混响预设一条总线：音符按自己的 wet 值往总线里送，全局混响 wet 再统一缩放。
@@ -1650,7 +1652,10 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
     if (wet > 0) {
       const send = audioCtx.createGain();
       send.gain.value = wet;
-      panner.connect(send).connect(reverbInput(preset || reverbPreset));
+      const overrides = preset && preset !== 'none' && (note?.reverbDecayScale != null || note?.reverbPreDelaySec != null || note?.reverbDamping != null)
+        ? { decayScale: note.reverbDecayScale, preDelaySec: note.reverbPreDelaySec, damping: note.reverbDamping }
+        : null;
+      panner.connect(send).connect(overrides ? noteReverbInput(preset, overrides) : reverbInput(preset || reverbPreset));
       temporaryNodes.push(send);
     }
     const tail = preset && preset !== 'none' ? reverbPresets[preset].seconds : 0;
@@ -3180,7 +3185,19 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
     bindChoiceWheel('#scale-wheel', () => pitchCount, (value) => {
       if (Number(value) !== pitchCount) refreshScale(Number(value));
     });
-    bindChoiceWheel('#reverb-wheel', () => reverbPreset, async (value) => {
+    bindChoiceWheel('#reverb-wheel', () => {
+      const note = selectedNote();
+      return note ? (note.reverbPreset || reverbPreset) : reverbPreset;
+    }, async (value) => {
+      const note = selectedNote();
+      if (note) {
+        note.reverbPreset = value;
+        note.reverbWet = value === 'none' ? 0 : Math.round(reverbPresets[value].wet * 10) / 10;
+        saveState(); syncNoteFx();
+        const names = { none: '无混响', room: '小房间', hall: '大厅', church: '教堂', plate: '金属板' };
+        showToast(`这个音：${names[value]}`);
+        return;
+      }
       if (value === reverbPreset) return;
       reverbPreset = value;
       reverbWet = Math.round(reverbPresets[reverbPreset].wet * 10) / 10;
@@ -3188,24 +3205,67 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
       const names = { none: '无混响', room: '小房间', hall: '大厅', church: '教堂', plate: '金属板' };
       showToast(`混响预设：${names[reverbPreset]}`);
     });
-    bindChoiceWheel('#reverb-wet-wheel', () => reverbWet, async (value) => {
+    bindChoiceWheel('#reverb-wet-wheel', () => {
+      const note = selectedNote();
+      if (!note) return reverbWet;
+      const preset = note.reverbPreset || reverbPreset;
+      return Math.round((note.reverbWet ?? (reverbPresets[preset]?.wet ?? 0)) * 10) / 10;
+    }, async (value) => {
+      const note = selectedNote();
+      if (note) {
+        note.reverbWet = clamp(Number(value), 0, .7);
+        if (!note.reverbPreset) note.reverbPreset = reverbPreset === 'none' ? 'plate' : reverbPreset;
+        saveState(); syncNoteFx();
+        $('#play-status').textContent = `这个音的湿声 ${Math.round(note.reverbWet * 100)}%`;
+        return;
+      }
       const wet = Number(value);
       if (wet === reverbWet) return;
       reverbWet = clamp(wet, 0, .7);
       await ensureAudio(); applyReverb(); saveState();
       $('#play-status').textContent = `全局湿声 ${Math.round(reverbWet * 100)}%`;
     });
-    bindChoiceWheel('#reverb-decay-wheel', () => Math.round(reverbDecayScale * 100), (value) => {
+    bindChoiceWheel('#reverb-decay-wheel', () => {
+      const note = selectedNote();
+      return Math.round((note?.reverbDecayScale ?? reverbDecayScale) * 100);
+    }, (value) => {
+      const note = selectedNote();
+      if (note) {
+        note.reverbDecayScale = Number(value) / 100;
+        saveState(); syncNoteFx();
+        $('#play-status').textContent = `这个音的混响衰减 ${value}%`;
+        return;
+      }
       reverbDecayScale = Number(value) / 100;
       refreshReverbImpulses();
       $('#play-status').textContent = `混响衰减 ${value}%`;
     });
-    bindChoiceWheel('#reverb-predelay-wheel', () => Math.round(reverbPreDelaySec * 1000), (value) => {
+    bindChoiceWheel('#reverb-predelay-wheel', () => {
+      const note = selectedNote();
+      return Math.round((note?.reverbPreDelaySec ?? reverbPreDelaySec) * 1000);
+    }, (value) => {
+      const note = selectedNote();
+      if (note) {
+        note.reverbPreDelaySec = Number(value) / 1000;
+        saveState(); syncNoteFx();
+        $('#play-status').textContent = `这个音的预延迟 ${value}ms`;
+        return;
+      }
       reverbPreDelaySec = Number(value) / 1000;
       refreshReverbImpulses();
       $('#play-status').textContent = `混响预延迟 ${value}ms`;
     });
-    bindChoiceWheel('#reverb-damp-wheel', () => Math.round(reverbDamping), (value) => {
+    bindChoiceWheel('#reverb-damp-wheel', () => {
+      const note = selectedNote();
+      return Math.round(note?.reverbDamping ?? reverbDamping);
+    }, (value) => {
+      const note = selectedNote();
+      if (note) {
+        note.reverbDamping = Number(value);
+        saveState(); syncNoteFx();
+        $('#play-status').textContent = `这个音的混响亮度 ${value}Hz`;
+        return;
+      }
       reverbDamping = Number(value);
       refreshReverbImpulses();
       $('#play-status').textContent = `混响亮度 ${value}Hz`;
@@ -3213,27 +3273,7 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
     syncChoiceWheel('#reverb-decay-wheel', Math.round(reverbDecayScale * 100));
     syncChoiceWheel('#reverb-predelay-wheel', Math.round(reverbPreDelaySec * 1000));
     syncChoiceWheel('#reverb-damp-wheel', Math.round(reverbDamping));
-    bindChoiceWheel('#note-fx-preset-wheel', () => notes.find((item) => item.id === selectedNoteId)?.reverbPreset || 'inherit', (value) => {
-      const note = notes.find((item) => item.id === selectedNoteId);
-      if (!note || value === (note.reverbPreset || 'inherit')) return;
-      note.reverbPreset = value === 'inherit' ? null : value;
-      note.reverbWet = value === 'inherit' ? null : value === 'none' ? 0 : Math.round(reverbPresets[value].wet * 10) / 10;
-      saveState(); syncNoteFx();
-      const names = { inherit: '跟随全局', none: '无混响', room: '小房间', hall: '大厅', church: '教堂', plate: '金属板' };
-      showToast(`音符混响：${names[value]}`);
-    });
-    bindChoiceWheel('#note-fx-wet-wheel', () => {
-      const note = notes.find((item) => item.id === selectedNoteId);
-      const wet = note?.reverbPreset ? (note.reverbWet ?? reverbPresets[note.reverbPreset].wet) : reverbWet;
-      return Math.round(wet * 10) / 10;
-    }, (value) => {
-      const note = notes.find((item) => item.id === selectedNoteId);
-      if (!note?.reverbPreset || note.reverbPreset === 'none') return;
-      note.reverbWet = clamp(Number(value), 0, .7);
-      saveState(); syncNoteFx();
-    });
-    $('#note-fx-delete').addEventListener('click', () => { if (selectedNoteId) removeNoteById(selectedNoteId); });
-    ['pointerdown', 'wheel', 'keydown'].forEach((type) => $('#note-fx').addEventListener(type, wakeNoteFx, { passive: true }));
+    $('#delete-note').addEventListener('click', () => { if (selectedNoteId) removeNoteById(selectedNoteId); });
     $('#clear-button').addEventListener('click', () => {
       if (!notes.length && !micBlob && !micBuffer) { showToast('谱面已经是空的'); return; }
       stopPlayback(); clearVocalTake(); notes = []; renderRuler(); renderStaff(); saveState();
