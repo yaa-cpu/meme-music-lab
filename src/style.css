@@ -848,3 +848,26 @@ body[data-page="works"] .songbook{margin-top:0;border-top:0;padding-top:0}
 .work-name{display:block;padding:10px 12px;font-size:15px;font-weight:900;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media (max-width:900px){#song-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:520px){#song-grid{grid-template-columns:1fr}}
+
+
+/* 运输栏所有控件统一长宽比 1:2（宽 : 高 = 1 : 2） */
+.transport{--transport-h: clamp(72px, 8vw, 96px)!important;grid-template-columns:repeat(10, calc(var(--transport-h) / 2))!important;justify-content:space-between!important;align-items:stretch!important}
+.transport .control-button,
+.transport .mini-wheel-control{width:calc(var(--transport-h) / 2)!important;height:var(--transport-h)!important;min-width:0!important;aspect-ratio:1 / 2!important;flex:0 0 auto!important}
+.transport .control-button{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:6px!important;padding:4px 2px!important;font-size:10px!important;line-height:1.15!important}
+.transport .control-button svg{width:16px;height:16px}
+.transport .control-button span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.transport .mini-wheel-control{display:flex!important;flex-direction:column!important;align-items:stretch!important;justify-content:flex-end!important;gap:4px!important}
+.transport .mini-wheel-control>span{text-align:center!important;font-size:9px!important;letter-spacing:0!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+.transport .mini-wheel{width:100%!important;height:auto!important;flex:1 1 auto!important;min-height:0!important}
+.transport .mini-wheel-track strong{font-size:10px!important}
+.transport .mini-wheel-track small{display:none!important}
+@media (max-width:900px){
+  .transport{--transport-h:80px!important}
+  .transport .control-button span{font-size:9px!important}
+}
+@media (max-width:700px){
+  .transport{--transport-h:64px!important}
+  .transport .control-button span{display:none!important}
+  .transport .mini-wheel-track strong{font-size:8px!important}
+}
