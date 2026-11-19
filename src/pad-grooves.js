@@ -53,8 +53,7 @@
   var PUMP = {
     sunny: { depth: 0.70, hold: 0.020, release: 0.030 },
     bounce: { depth: 0.68, hold: 0.016, release: 0.026 },
-    chill: { depth: 0.74, hold: 0.028, release: 0.042 },
-    friendwine: { depth: 0.66, hold: 0.018, release: 0.028 }
+    chill: { depth: 0.74, hold: 0.028, release: 0.042 }
   };
 
   // ---- 过门（fill）定义：返回 { sn: 军鼓力度, ht: hat 力度, kk: 额外 kick } ----
@@ -251,82 +250,7 @@
   };
 
 
-  // ===========================================================================
-  // 风格 4：friendwine — 朋友的酒 DJ 版，129.8 BPM，A 大调
-  // 标志：四拍底鼓 + 2/4 拍拍手 + 反拍开镲 + 八度跳进 bass
-  //       off-beat 钢琴 stab 与 A 大调七和弦 pad，按原曲速度做 DJ 段落
-  // ===========================================================================
-  function friendwineSections(overrides) {
-    var base = {
-      name: 'groove', gain: 0.95, kick: 1, ghost: 0.6, snare: 1, clap: 0.6,
-      rim: 0, hat: 1, open: 0.8, perc: 0.5, bass: 1, stab: 1, pad: 0.3,
-      lead: 0, filter: [9000], fill: 'none'
-    };
-    return overrides.map(function (o) {
-      var out = {};
-      for (var k in base) out[k] = base[k];
-      for (var j in o) out[j] = o[j];
-      return out;
-    });
-  }
-
-  var FRIENDWINE = {
-    swing: 0.06,
-    swingPositions: [1, 3, 5, 7, 9, 11, 13, 15],
-    kick: [0, 4, 8, 12],
-    ghostKick: [10, 14],
-    snare: [4, 12],
-    clap: [4, 12],
-    rim: [],
-    hatSteps: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
-    hatAccent: [2, 6, 10, 14],
-    openHat: [2, 6, 10, 14],
-    percSteps: [1, 3, 5, 7, 9, 11, 13, 15],
-    bass: [
-      [0, 0, 1.8, 0.62], [3, 12, 0.8, 0.50], [6, 7, 0.8, 0.50],
-      [8, 0, 1.8, 0.60], [11, 12, 0.8, 0.50], [14, 7, 0.8, 0.46]
-    ],
-    bassFill: [[15, 12, 0.5, 0.40]],
-    chords: [
-      { name: 'A', voicing: [57, 61, 64, 69], root: 33 },
-      { name: 'E', voicing: [52, 56, 59, 64], root: 40 },
-      { name: 'F#m7', voicing: [54, 57, 61, 64], root: 42 },
-      { name: 'D', voicing: [50, 54, 57, 62], root: 38 },
-      { name: 'A', voicing: [57, 61, 64, 69], root: 33 },
-      { name: 'E', voicing: [52, 56, 59, 64], root: 40 },
-      { name: 'D', voicing: [50, 54, 57, 62], root: 38 },
-      { name: 'E', voicing: [52, 56, 59, 64], root: 40 }
-    ],
-    stab: { positions: [2, 6, 10, 14], inst: 'piano', length: 0.8, vel: 0.34, octave: 0 },
-    pad: { positions: [0, 8], inst: 'pad', length: 7.6, vel: 0.18, octave: 0 },
-    lead: { positions: [6, 14], inst: 'marimba', offset: 12, length: 1.2, vel: 0.12 },
-    variation: [
-      {},
-      { ghostExtra: [15] },
-      {},
-      { kickExtra: [13], bassExtra: [[15, 12, 0.5, 0.40]] }
-    ],
-    sections: friendwineSections([
-      /* 01 */ { name: 'intro', gain: 0.72, hat: 0.55, bass: 0, stab: 0.35, pad: 0.8, clap: 0, ghost: 0, perc: 0, open: 0, filter: [900, 1600] },
-      /* 02 */ { name: 'intro', gain: 0.76, hat: 0.62, bass: 0, stab: 0.4, pad: 0.8, clap: 0, ghost: 0, perc: 0, open: 0, filter: [1600, 2400] },
-      /* 03 */ { name: 'add', gain: 0.84, hat: 0.7, open: 0.4, bass: 0.8, stab: 0.5, pad: 0.6, clap: 0, ghost: 0, perc: 0.2, filter: [2600, 4200] },
-      /* 04 */ { name: 'add', gain: 0.88, hat: 0.8, open: 0.6, bass: 1, stab: 0.8, pad: 0.5, clap: 0.5, perc: 0.4, filter: [4200, 6500], fill: 'snare4' },
-      /* 05 */ { name: 'groove', gain: 0.93, hat: 0.9, open: 0.9, perc: 0.7, pad: 0.3, filter: [9000] },
-      /* 06 */ { name: 'groove', gain: 0.96, hat: 1, open: 1, perc: 0.8, pad: 0.25, filter: [10000] },
-      /* 07 */ { name: 'build', gain: 0.92, kick: 0.9, hat: 1, open: 0.5, bass: 0.75, stab: 0.5, pad: 1, ghost: 0, filter: [3000, 7000], riser: 0.6, fill: 'snare8' },
-      /* 08 */ { name: 'build', gain: 0.9, kick: 0.55, hat: 1, open: 0, bass: 0.35, stab: 0.3, pad: 1, ghost: 0, filter: [7000, 14000], riser: 0.35, fill: 'snare16' },
-      /* 09 */ { name: 'drop', gain: 1.0, ghost: 1, clap: 1, perc: 1, pad: 0.5, lead: 0.7, filter: [16000], impact: 1 },
-      /* 10 */ { name: 'drop', gain: 1.0, ghost: 1, clap: 1, perc: 1, pad: 0.4, lead: 0.9, filter: [16000] },
-      /* 11 */ { name: 'drop', gain: 0.98, ghost: 1, clap: 1, perc: 1, pad: 0.35, lead: 1, filter: [16000] },
-      /* 12 */ { name: 'drop2', gain: 1.0, ghost: 1, clap: 1, perc: 1, pad: 0.35, lead: 0.9, filter: [16000], fill: 'snare4' },
-      /* 13 */ { name: 'breakdown', gain: 0.78, kick: 0, ghost: 0, snare: 0, clap: 0, hat: 0.7, open: 0, perc: 0, bass: 0, stab: 0.35, pad: 1, lead: 0, filter: [12000, 5000] },
-      /* 14 */ { name: 'breakdown', gain: 0.74, kick: 0, ghost: 0, snare: 0, clap: 0, hat: 0.55, open: 0, perc: 0, bass: 0, stab: 0.3, pad: 1, lead: 0, filter: [5000, 1800], riser: 0.3, fill: 'hatRoll' },
-      /* 15 */ { name: 'build2', gain: 0.82, kick: 0.8, ghost: 0, snare: 0, clap: 0, hat: 0.9, open: 0, perc: 0, bass: 0.5, stab: 0.25, pad: 1, lead: 0, filter: [1800, 6000], riser: 0.5, fill: 'snare8' },
-      /* 16 */ { name: 'build2', gain: 0.86, kick: 0.9, ghost: 0.4, snare: 0.8, clap: 0, hat: 1, open: 0, perc: 0, bass: 0.7, stab: 0.3, pad: 0.6, lead: 0, filter: [6000, 12000], riser: 0.2, fill: 'snare16' }
-    ])
-  };
-
-  var GROOVES = { sunny: SUNNY, bounce: BOUNCE, chill: CHILL, friendwine: FRIENDWINE };
+  var GROOVES = { sunny: SUNNY, bounce: BOUNCE, chill: CHILL };
 
   // ===========================================================================
   // 调度实现

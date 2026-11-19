@@ -2697,8 +2697,60 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
     });
   }
 
+  // 朋友的酒：不改编、不重排，直接把现有工程 JSON 的音符按 16 小节循环回放。
+  let friendwineBackingData = null;
+  let friendwineBackingLoading = null;
+  function loadFriendwineBacking() {
+    if (friendwineBackingData) return Promise.resolve(friendwineBackingData);
+    if (!friendwineBackingLoading) {
+      friendwineBackingLoading = fetch('./assets/ace/friendwine_synth_project.json')
+        .then((response) => response.ok ? response.json() : null)
+        .then((data) => { friendwineBackingData = data; return data; })
+        .catch(() => null);
+    }
+    return friendwineBackingLoading;
+  }
+
+  const FRIENDWINE_DRUM_KINDS = ['kick', 'kick', 'snare', 'snare', 'hat', 'tom', 'clap', 'clap', 'openhat', 'rim', 'kick', 'snare'];
+  function scheduleFriendwineBackingStep(step, when) {
+    const data = friendwineBackingData;
+    if (!data || !Array.isArray(data.tracks)) return;
+    const loopStep = ((step % 256) + 256) % 256;
+    const flags = { kick: false, snare: false, hat: false, bass: false, chord: false };
+    data.tracks.forEach((track) => {
+      const preset = track.preset;
+      const isDrums = preset === 'drumkit';
+      const gain = Number.isFinite(Number(track.gain)) ? Number(track.gain) : 1;
+      const fx = track.fx || {};
+      (track.notes || []).forEach((note) => {
+        const start = Math.round(Number(note[1]) * 2);    // 工程的 8 分音符列 → 底奏的 16 分步
+        if (start !== loopStep) return;
+        const lengthSteps = Math.max(1, Math.round(Number(note[2]) * 2));
+        const midi = Number(note[0]);
+        const velocity = Number.isFinite(Number(note[3])) ? Number(note[3]) : 1;
+        const volume = Math.max(0, Math.min(1.5, gain * velocity));
+        const opts = isDrums
+          ? { bus: 'drums', reverbPreset: fx.reverb || 'none', reverbWet: fx.wet || 0 }
+          : { bus: 'tonal', reverbPreset: fx.reverb || 'none', reverbWet: fx.wet || 0, delaySend: fx.delay || 0 };
+        padInstrumentTone(preset, midi, when, lengthSteps, volume, opts);
+        if (isDrums) {
+          const kind = FRIENDWINE_DRUM_KINDS[((midi % 12) + 12) % 12];
+          if (kind === 'kick') flags.kick = true;
+          else if (kind === 'snare' || kind === 'clap' || kind === 'rim') flags.snare = true;
+          else flags.hat = true;
+        } else if (preset === 'bass') flags.bass = true;
+        else flags.chord = true;
+      });
+    });
+    emitPadBeat(step, when, 'friendwine', {
+      kick: flags.kick, snare: flags.snare, hat: flags.hat, bass: flags.bass, chord: flags.chord,
+      bar: Math.floor(step / 64) % 4, barOfLoop: Math.floor(step / 16) % 16, swingMs: 0, gain: 1
+    });
+  }
+
   // 底奏编曲引擎适配层：引擎只产出"第几步发什么"，这里翻译成现有合成函数。
   function padScheduleViaGrooves(step, when, id) {
+    if (id === 'friendwine') { scheduleFriendwineBackingStep(step, when); return; }
     if (!window.PadGrooves) { schedulePadBackingStep(step, when, id); return; }
     const api = {
       drum(kind, at, volume) {
@@ -3222,6 +3274,7 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
   bindStaff();
   bindControls();
   bindStaffGestures();
+  loadFriendwineBacking();
   // 运输栏单排：鼠标滚轮在空白处可横向滚动
   const transportRow = $('.transport-row');
   if (transportRow) {
