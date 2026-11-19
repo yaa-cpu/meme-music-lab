@@ -949,3 +949,21 @@ body.phone-preview-open{overflow:hidden}
   body[data-page="studio"].sample-open .performance-inline .performance-console{border-radius:12px;border:0;padding:8px;box-shadow:none}
   body[data-page="studio"] .site-footer{display:none}
 }
+
+
+/* 手机线谱页：采样台常驻但压缩成紧凑操作条（不占用一屏空间） */
+@media (max-width:520px){
+  body[data-page="studio"] .performance-inline{display:block!important;flex:0 0 auto}
+  body[data-page="studio"] .performance-inline .performance-console{border:0!important;padding:4px 0 0!important;box-shadow:none!important;border-radius:0!important;background:transparent!important}
+  body[data-page="studio"] .sample-console{display:block!important;padding:0!important;margin:0!important;border:0!important}
+  body[data-page="studio"] .sample-console-head{display:none!important}
+  body[data-page="studio"] .cartridge-changer{display:none!important}
+  body[data-page="studio"] .meme-grid.sample-note-row{display:flex!important;gap:6px!important;overflow-x:auto!important;padding:0 0 4px!important;max-height:66px}
+  body[data-page="studio"] .card-button.sample-note{flex:0 0 104px!important}
+  body[data-page="studio"] .performance-body{display:block!important}
+  body[data-page="studio"] .now-playing{display:none!important}
+  body[data-page="studio"] .pitch-pad{grid-template-columns:repeat(8,minmax(0,1fr))!important;gap:3px!important;margin-top:4px}
+  body[data-page="studio"] .pitch-key{min-height:42px!important;padding:3px 1px!important;border-width:1px!important;border-radius:6px!important}
+  body[data-page="studio"] .pitch-key strong{font-size:10px!important}
+  body[data-page="studio"] .pitch-key small{display:none!important}
+}
