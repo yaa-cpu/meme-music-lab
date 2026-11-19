@@ -812,3 +812,12 @@ dialog[open]{animation:dialog-in .18s ease-out}
   .transport .control-button span{display:none!important}
   .transport .mini-wheel-control>span{font-size:8px!important}
 }
+
+
+/* 线谱 / loop 卡带 / 采样台合并成一个连续面板，去掉中间分割线 */
+.performance-inline{margin:0;padding:0}
+.performance-inline .performance-console{border:1.5px solid var(--ink);border-top:0;border-radius:0 0 10px 10px;box-shadow:none;padding:9px 10px}
+.performance-inline .sample-console-head{margin-bottom:6px}
+.staff-scroll{border-radius:8px 8px 0 0!important;border-bottom:0!important;box-shadow:none!important}
+.tape-strip{border-radius:0!important;border-bottom:0!important;box-shadow:none!important;margin-top:0!important}
+.staff-footer{margin-top:6px!important}
