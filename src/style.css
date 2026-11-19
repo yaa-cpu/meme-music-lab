@@ -1282,3 +1282,14 @@ body[data-page="studio"] .performance-inline{flex:0 0 176px!important;height:176
 @media (max-width:520px){
   body[data-page="pad"]{min-height:100dvh!important;background:oklch(0.94 0.055 105)!important}
 }
+
+
+/* 打击垫页：只把页面背景铺满全屏（卡片与页面同色、去边框），鼓面尺寸不变 */
+@media (max-width:520px){
+  body[data-page="pad"]{display:flex!important;flex-direction:column!important;height:100dvh!important;overflow:hidden!important;background:oklch(0.94 0.055 105)!important}
+  body[data-page="pad"] .site-header{flex:0 0 auto!important;background:oklch(0.94 0.055 105)!important}
+  body[data-page="pad"] main{flex:1 1 auto!important;min-height:0!important;width:100%!important;max-width:none!important;margin:0!important;align-self:stretch!important;display:flex!important;flex-direction:column!important;padding:0!important;background:oklch(0.94 0.055 105)!important}
+  body[data-page="pad"] .pad-home{flex:0 0 auto!important;margin:0!important;padding:12px 29px 10px!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:oklch(0.94 0.055 105)!important}
+  body[data-page="pad"] .pad-hero-layout{margin:0 auto!important;width:100%!important}
+  body[data-page="pad"] .site-footer{display:flex!important;background:oklch(0.94 0.055 105)!important;color:var(--ink)!important;border-top:0!important;margin-top:0!important}
+}
