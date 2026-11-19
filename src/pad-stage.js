@@ -20,12 +20,9 @@
       ]
     },
     {
-      id: 'hachimi-melody', name: '哈基米旋律', builtIn: true, layout: 9, backing: 'friendwine',
-      slots: [
-        ['hachimi-ha', 60], ['hachimi-ha', 62], ['hachimi-ha', 64],
-        ['hachimi-ji', 62], ['hachimi-ji', 64], ['hachimi-ji', 67],
-        ['hachimi-mi', 64], ['hachimi-mi', 67], ['hachimi-mi', 69]
-      ].map(([source, midi]) => ({ kind: 'sample', source, midi }))
+      id: 'hachimi-melody', name: '哈基米旋律', builtIn: true, layout: 4, backing: 'friendwine',
+      slots: ['hachimi-1-3', 'hachimi-4-6', 'hachimi-7-9', 'hachimi-10-12']
+        .map((source, index) => ({ kind: 'sample', source, midi: SCALE[index] }))
     },
     {
       id: 'instrument-toy', name: '乐器玩具箱', builtIn: true, layout: 9, backing: 'friendwine',
@@ -241,19 +238,6 @@
     }
     const preset = currentPreset();
     ensureSlotsForLayout(preset);
-    if (item.source.startsWith('hachimi-')) {
-      const columns = preset.layout === 4 ? 2 : 3;
-      const rows = ['hachimi-ha', 'hachimi-ji', 'hachimi-mi'];
-      preset.slots = preset.slots.map((slot, index) => ({
-        kind: 'sample',
-        source: rows[Math.min(Math.floor(index / columns), rows.length - 1)],
-        midi: 60 + Math.min(index, 8) + Math.floor(index / columns)
-      }));
-      saveState();
-      renderPads(); renderSlotPicker(); renderLibrary();
-      options.toast('哈基米已按行铺开：哈 / 基 / 米');
-      return;
-    }
     const visibleCount = Math.max(1, preset.layout);
     preset.slots = preset.slots.map((slot, index) => ({
       kind: 'sample',
