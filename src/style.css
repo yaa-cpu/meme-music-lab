@@ -821,3 +821,16 @@ dialog[open]{animation:dialog-in .18s ease-out}
 .staff-scroll{border-radius:8px 8px 0 0!important;border-bottom:0!important;box-shadow:none!important}
 .tape-strip{border-radius:0!important;border-bottom:0!important;box-shadow:none!important;margin-top:0!important}
 .staff-footer{margin-top:6px!important}
+
+
+/* 三个独立页面的顶栏导航 */
+.page-nav{display:flex;align-items:center;gap:6px}
+.page-nav a{display:inline-flex;align-items:center;min-height:38px;padding:0 14px;border:1.5px solid var(--ink);border-radius:999px;background:var(--surface);color:var(--ink);font-size:11px;font-weight:900;letter-spacing:.04em;box-shadow:2px 2px 0 var(--ink);transition:transform .12s,background .12s}
+.page-nav a:hover{transform:translateY(-1px);background:var(--acid)}
+.page-nav a.active{background:var(--acid);box-shadow:none;transform:none}
+body[data-page="backpack"] .backpack{border-top:0;margin-top:0;padding-top:0}
+@media (max-width:760px){.site-header{flex-wrap:wrap}.page-nav{order:3;width:100%;justify-content:center}}
+
+
+/* 路由切换：hidden 必须真正隐藏（作者样式里的 display:grid 会覆盖 UA 规则） */
+[hidden]{display:none!important}

@@ -3120,6 +3120,37 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
     });
   }
 
+  // ── 三个独立页面：#/pad 打击垫、#/backpack 卡带背包、#/studio 线谱+曲库 ──
+  const PAGE_ROUTES = {
+    pad: ['#pad-home'],
+    backpack: ['.backpack'],
+    studio: ['.studio-layout', '.songbook']
+  };
+  const PAGE_SECTIONS = ['#pad-home', '.studio-layout', '.backpack', '.songbook'];
+  function currentPage() {
+    const raw = (location.hash || '').replace(/^#\/?/, '').split(/[/?]/)[0];
+    return PAGE_ROUTES[raw] ? raw : 'pad';
+  }
+  function applyPage() {
+    const route = currentPage();
+    document.body.dataset.page = route;
+    PAGE_SECTIONS.forEach((selector) => {
+      document.querySelectorAll(selector).forEach((section) => {
+        section.hidden = PAGE_ROUTES[route].indexOf(selector) < 0;
+      });
+    });
+    document.querySelectorAll('.page-nav a').forEach((link) => {
+      const active = link.dataset.route === route;
+      link.classList.toggle('active', active);
+      if (active) link.setAttribute('aria-current', 'page');
+      else link.removeAttribute('aria-current');
+    });
+    document.title = route === 'backpack' ? '采样卡带背包图鉴 · 梗图音乐坊'
+      : route === 'studio' ? '线谱音序器 · 梗图音乐坊' : '梗图音乐坊';
+    if (route !== 'pad') window.scrollTo(0, 0);
+  }
+  window.addEventListener('hashchange', applyPage);
+
   function bindControls() {
     $('#play-button').addEventListener('click', togglePlay);
     $('#record-button').addEventListener('click', () => recording ? finishRecording() : startRecording());
@@ -3274,6 +3305,7 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
   bindStaff();
   bindControls();
   bindStaffGestures();
+  applyPage();
   loadFriendwineBacking();
   // 运输栏单排：鼠标滚轮在空白处可横向滚动
   const transportRow = $('.transport-row');
