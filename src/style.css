@@ -985,3 +985,23 @@ body.phone-preview-open{overflow:hidden}
   body[data-page="studio"] .pitch-key strong{font-size:10px!important;line-height:1.1!important}
   body[data-page="studio"] .performance-inline .performance-console{padding:2px 0 0!important}
 }
+
+
+/* 手机线谱页：完整保留“采样工作台”（标题行 + 采样卡 + NOW PLAYING + 音阶键） */
+@media (max-width:520px){
+  body[data-page="studio"] .sample-console-head{display:flex!important;min-height:20px!important;margin:0 0 4px!important;padding:0!important;gap:6px!important}
+  body[data-page="studio"] .sample-console-head strong{font-size:10px!important}
+  body[data-page="studio"] .sample-console-head small{font-size:8px!important}
+  body[data-page="studio"] .sample-console-head .sample-console-hint{display:none!important}
+  body[data-page="studio"] .meme-grid.sample-note-row{max-height:62px!important;padding:0 0 2px!important}
+  body[data-page="studio"] .card-button.sample-note{flex:0 0 108px!important;height:56px!important;min-height:0!important;padding:4px 6px!important;grid-template-columns:32px minmax(0,1fr) 20px!important;gap:5px!important}
+  body[data-page="studio"] .sample-note-avatar{width:32px!important;height:36px!important}
+  body[data-page="studio"] .sample-note .note-chip{width:20px!important;height:20px!important}
+  body[data-page="studio"] .now-playing{display:flex!important;min-height:46px!important;padding:6px 8px!important;gap:8px!important;border-radius:8px!important}
+  body[data-page="studio"] .now-image{width:30px!important;height:38px!important;flex-basis:30px!important}
+  body[data-page="studio"] .now-playing small{display:none!important}
+  body[data-page="studio"] .now-playing h3{font-size:14px!important;margin:1px 0!important}
+  body[data-page="studio"] .now-playing p{font-size:8px!important;line-height:1.3!important}
+  body[data-page="studio"] .pitch-key{min-height:38px!important}
+  body[data-page="studio"] .pitch-key strong{font-size:11px!important}
+}
