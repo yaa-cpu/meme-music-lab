@@ -3324,9 +3324,7 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
         event.preventDefault(); performMeme(selectedId, pitchCount - Number(event.key), true);
       }
     });
-    window.addEventListener('resize', () => { updatePlayhead(); positionNoteFx(); });
-    window.addEventListener('scroll', positionNoteFx, { passive: true });
-    $('#staff-scroll').addEventListener('scroll', positionNoteFx, { passive: true });
+    window.addEventListener('resize', updatePlayhead);
   }
 
   function bindDialogs() {
@@ -3351,6 +3349,32 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
   renderBackpack();
   refreshScale(pitchCount, false);
   applyReverb();
+  // 手机画幅预览：把应用装进 390×844 的 iframe 里，媒体查询会按手机宽度重新排版
+  function bindPhonePreview() {
+    const overlay = $('#phone-preview');
+    const frame = $('#phone-preview-frame');
+    if (!overlay || !frame) return;
+    const open = () => {
+      frame.src = `${location.pathname.replace(/[^/]*$/, '')}?phone=1${location.hash || '#/pad'}`;
+      overlay.hidden = false;
+      document.body.classList.add('phone-preview-open');
+    };
+    const close = () => {
+      overlay.hidden = true;
+      frame.src = 'about:blank';
+      document.body.classList.remove('phone-preview-open');
+    };
+    $('#phone-preview-open')?.addEventListener('click', open);
+    $('#phone-preview-close')?.addEventListener('click', close);
+    overlay.addEventListener('click', (event) => {
+      if (event.target === overlay) close();
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !overlay.hidden) close();
+    });
+  }
+
+  bindPhonePreview();
   bindStaff();
   bindControls();
   bindStaffGestures();

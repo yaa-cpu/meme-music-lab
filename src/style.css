@@ -891,7 +891,7 @@ body[data-page="works"] .songbook{margin-top:0;border-top:0;padding-top:0}
 
 
 /* 运输栏：删除键放最右；选中音符时混响组变绿 = 单音混响模式 */
-.transport{display:flex!important;align-items:stretch!important;gap:8px!important}
+.transport{display:flex!important;flex-direction:row!important;align-items:stretch!important;gap:8px!important;overflow-x:auto!important;scrollbar-width:none!important}
 .transport>.transport-row{display:contents!important}
 .transport .transport-delete{margin-left:auto!important}
 .transport .transport-delete:disabled{opacity:.35!important;cursor:not-allowed!important}
@@ -899,3 +899,22 @@ body[data-page="works"] .songbook{margin-top:0;border-top:0;padding-top:0}
 .transport.note-edit .transport-reverb .mini-wheel::after{border-color:rgba(126,217,87,.9)!important;background:rgba(126,217,87,.10)!important}
 .transport.note-edit .transport-reverb .mini-wheel-track>span.active{color:#9ff07a!important}
 .transport.note-edit .transport-reverb .mini-wheel-control>span{color:#9ff07a!important}
+
+
+/* 手机画幅预览 */
+.phone-preview-overlay{position:fixed;inset:0;z-index:120;display:flex;align-items:center;justify-content:center;padding:18px;background:oklch(0.22 0.02 115 / .72);backdrop-filter:blur(4px)}
+.phone-preview-overlay[hidden]{display:none!important}
+.phone-device{position:relative;height:min(844px, 88vh);aspect-ratio:390 / 844;max-width:94vw;border:10px solid var(--ink);border-radius:44px;background:#0e0d0a;box-shadow:0 24px 60px oklch(0 0 0 / .45), inset 0 0 0 2px oklch(1 0 0 / .06);overflow:hidden}
+.phone-device iframe{display:block;width:100%;height:100%;border:0;background:var(--paper)}
+.phone-notch{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:104px;height:22px;border-radius:999px;background:#0e0d0a;z-index:3;pointer-events:none}
+.phone-preview-close{position:fixed;top:18px;right:18px;z-index:5;min-height:34px;padding:0 12px;border:1.5px solid var(--ink);border-radius:999px;background:var(--acid);color:var(--ink);font-size:11px;font-weight:900;cursor:pointer;box-shadow:2px 2px 0 var(--ink)}
+.phone-preview-close:hover{background:var(--surface)}
+body.phone-preview-open{overflow:hidden}
+
+/* 手机宽度下的紧凑调整（iframe 内 390px 生效） */
+@media (max-width:520px){
+  .transport{--transport-h:52px!important;column-gap:5px!important;padding:6px!important}
+  .transport .mini-wheel-track strong{font-size:8px!important}
+  .site-header{padding:14px 14px 8px}
+  .page-nav a{min-height:34px;padding:0 10px;font-size:10px}
+}

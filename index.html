@@ -66,6 +66,7 @@
       <a href="#/studio" data-route="studio">线谱</a>
     </nav>
     <div class="header-actions">
+      <button class="text-button" id="phone-preview-open" type="button">手机预览</button>
       <span class="demo-badge"><i></i> DEMO 02</span>
       <button class="text-button" id="credits-button" type="button">素材出处</button>
       <button class="icon-button help-button" id="help-button" type="button" aria-label="查看玩法"><svg><use href="#i-help"/></svg></button>
@@ -219,6 +220,14 @@
   </main>
 
   <footer class="site-footer"><span>梗图音乐坊 / 一个不太正经的音乐实验</span><span>建议戴耳机，别在深夜外放。</span></footer>
+
+  <div class="phone-preview-overlay" id="phone-preview" hidden>
+    <div class="phone-device" role="dialog" aria-modal="true" aria-label="手机画幅预览">
+      <span class="phone-notch" aria-hidden="true"></span>
+      <iframe id="phone-preview-frame" title="手机画幅预览"></iframe>
+      <button class="phone-preview-close" id="phone-preview-close" type="button" aria-label="关闭手机预览">关闭预览</button>
+    </div>
+  </div>
 
   <dialog id="pad-backpack-dialog" aria-labelledby="pad-backpack-title">
     <div class="pad-backpack-head">
