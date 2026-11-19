@@ -1031,3 +1031,21 @@ body.phone-preview-open{overflow:hidden}
   body[data-page="studio"] .pitch-key small{display:block!important;font-size:8px!important}
   body[data-page="studio"] .performance-inline .performance-console{padding:4px 0 0!important}
 }
+
+
+/* 手机线谱页：去掉无用的标题文字和 NOW PLAYING 黑块，线谱行拉伸填满，工作台更好点 */
+@media (max-width:520px){
+  body[data-page="studio"] .sample-console-head{display:none!important}
+  body[data-page="studio"] .now-playing{display:none!important}
+  body[data-page="studio"] .staff-canvas{min-height:100%!important;display:flex!important;flex-direction:column!important}
+  body[data-page="studio"] .staff-grid{flex:1 1 auto!important;display:flex!important;flex-direction:column!important;min-height:0!important}
+  body[data-page="studio"] .staff-row{flex:1 1 0!important;height:auto!important;min-height:44px!important}
+  body[data-page="studio"] .rail-track{min-height:44px!important}
+  body[data-page="studio"] .sample-console{grid-template-rows:auto!important;gap:0 7px!important}
+  body[data-page="studio"] .cartridge-changer{grid-row:1!important}
+  body[data-page="studio"] .meme-grid.sample-note-row{grid-row:1!important;max-height:112px!important}
+  body[data-page="studio"] .card-button.sample-note{flex:0 0 116px!important;height:70px!important}
+  body[data-page="studio"] .sample-note-avatar{width:36px!important;height:46px!important}
+  body[data-page="studio"] .pitch-key{min-height:64px!important}
+  body[data-page="studio"] .pitch-key strong{font-size:15px!important}
+}
