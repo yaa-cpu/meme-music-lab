@@ -68,10 +68,10 @@
     ...[
       ['maodie-2', '哈！2', '耄耋哈气 2', 'Q', 'maodie-2.mp3', 'var(--p-accent)', './assets/maodie.webp', '耄耋哈气2.mp3', 'https://www.bilibili.com/video/BV1DMduY9E5K/'],
       ['chicken-2', '鸡 2', '鸡你太美 2', 'W', 'chicken-2.mp3', 'var(--p-blue)', './assets/chicken.svg', '鸡你太美1.mp3', 'https://www.bilibili.com/video/BV1J4411v7g6/?t=24'],
-      ['hachimi-1-3', '哈基米 1–3', '逐音 1–3', 'Z', 'hachimi-seg-1.mp3', 'var(--p-acid)', './assets/hachimi.svg', '哈基米 1-3.mp3', 'https://www.bilibili.com/video/BV1WfFJzyEjv/?t=3'],
-      ['hachimi-4-6', '哈基米 4–6', '逐音 4–6', 'X', 'hachimi-seg-2.mp3', 'var(--p-pink)', './assets/hachimi.svg', '哈基米 4-6.mp3', 'https://www.bilibili.com/video/BV1WfFJzyEjv/?t=3'],
-      ['hachimi-7-9', '哈基米 7–9', '逐音 7–9', 'C', 'hachimi-seg-3.mp3', 'var(--p-blue)', './assets/hachimi.svg', '哈基米 7-9.mp3', 'https://www.bilibili.com/video/BV1WfFJzyEjv/?t=3'],
-      ['hachimi-10-12', '哈基米 10–12', '逐音 10–12', 'V', 'hachimi-seg-4.mp3', 'var(--p-yellow)', './assets/hachimi.svg', '哈基米 10-12.mp3', 'https://www.bilibili.com/video/BV1WfFJzyEjv/?t=3']
+      ['hachimi-1-3', '哈基米 1–3', '逐音 1–3', 'Z', 'hachimi-seg-1.mp3?v=h4new', 'var(--p-acid)', './assets/hachimi.svg', '哈基米 1-3.mp3', 'https://www.bilibili.com/video/BV1WfFJzyEjv/?t=3'],
+      ['hachimi-4-6', '哈基米 4–6', '逐音 4–6', 'X', 'hachimi-seg-2.mp3?v=h4new', 'var(--p-pink)', './assets/hachimi.svg', '哈基米 4-6.mp3', 'https://www.bilibili.com/video/BV1WfFJzyEjv/?t=3'],
+      ['hachimi-7-9', '哈基米 7–9', '逐音 7–9', 'C', 'hachimi-seg-3.mp3?v=h4new', 'var(--p-blue)', './assets/hachimi.svg', '哈基米 7-9.mp3', 'https://www.bilibili.com/video/BV1WfFJzyEjv/?t=3'],
+      ['hachimi-10-12', '哈基米 10–12', '逐音 10–12', 'V', 'hachimi-seg-4.mp3?v=h4new', 'var(--p-yellow)', './assets/hachimi.svg', '哈基米 10-12.mp3', 'https://www.bilibili.com/video/BV1WfFJzyEjv/?t=3']
     ].map(([id, title, sub, key, file, color, image, fileName, source]) => ({
       id, title, sub, key, type: 'original', image, audio: `./assets/${file}`, color,
       origin: `使用你提供的“${fileName}”裁剪采样。`, sourceLabel: '我的裁剪 · 原始来源',
