@@ -238,18 +238,12 @@
       <button class="icon-button dialog-close" type="button" aria-label="关闭打击垫背包"><svg><use href="#i-close"/></svg></button>
     </div>
     <div class="pad-backpack-body">
-      <div class="pad-preset-manager">
-        <label class="pad-field"><span>当前预设</span><select id="pad-preset-select" aria-label="选择打击垫预设"></select></label>
-        <label class="pad-field"><span>底奏（自动伴奏，不属于按键分类）</span><select id="pad-backing-select" aria-label="选择自动底奏"><option value="sunny">柑橘跳跳糖 · 摇摆流行</option><option value="bounce">像素弹跳 · 舞曲</option><option value="chill">夜空气泡 · 慢摇</option><option value="friendwine">朋友的酒 · DJ 129</option><option value="off">关闭底奏</option></select></label>
-        <div class="pad-preset-actions"><button class="small-button" id="pad-preset-delete" type="button"><svg><use href="#i-trash"/></svg>删除自定义</button></div>
-      </div>
-      <div class="pad-custom-save"><label><span>把当前按键布局存成我的预设</span><input id="pad-custom-name" type="text" maxlength="24" placeholder="例如：周末抽象小队" autocomplete="off"></label><button id="pad-preset-save" type="button">保存我的预设</button></div>
       <div class="pad-editor-grid">
         <section class="pad-editor-column" aria-labelledby="pad-editing-title">
-          <h3 id="pad-editing-title">正在替换 1 号按键</h3>
-          <p id="pad-editing-current">先选按键，再从右侧挑声音。</p>
+          <h3 id="pad-editing-title">拖拽填充按键</h3>
+          <p id="pad-editing-current">从下面的声音库里拖一个声音，放到 1–9 号按键上即可替换。</p>
           <div id="pad-slot-picker" aria-label="选择要替换的打击垫按键"></div>
-          <p class="pad-preset-tip">4 键布局使用前四颗按键；自定义预设只保存在当前浏览器。</p>
+          <p class="pad-preset-tip">拖动声音到按键上替换；自定义预设只保存在当前浏览器。</p>
         </section>
         <section class="pad-editor-column" aria-label="声音背包">
           <div id="pad-kind-tabs" aria-label="声音类型"><button type="button" data-kind="sample" class="active" aria-pressed="true">梗采样</button><button type="button" data-kind="note" aria-pressed="false">乐器音符</button><button type="button" data-kind="drum" aria-pressed="false">鼓点</button></div>

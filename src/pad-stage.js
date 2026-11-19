@@ -115,9 +115,11 @@
 
   function renderPresets() {
     const select = $('#pad-preset-select');
-    select.innerHTML = state.presets.map((preset) => `<option value="${escapeHTML(preset.id)}"${preset.id === state.presetId ? ' selected' : ''}>${escapeHTML(preset.name)}${preset.builtIn ? '' : ' · 我的'}</option>`).join('');
-    $('#pad-preset-name').textContent = currentPreset().name;
-    $('#pad-preset-delete').disabled = Boolean(currentPreset().builtIn);
+    if (select) select.innerHTML = state.presets.map((preset) => `<option value="${escapeHTML(preset.id)}"${preset.id === state.presetId ? ' selected' : ''}>${escapeHTML(preset.name)}${preset.builtIn ? '' : ' · 我的'}</option>`).join('');
+    const name = $('#pad-preset-name');
+    if (name) name.textContent = currentPreset().name;
+    const del = $('#pad-preset-delete');
+    if (del) del.disabled = Boolean(currentPreset().builtIn);
   }
 
   function renderPads() {
@@ -171,11 +173,34 @@
       const source = sourceInfo(slot);
       return `<button type="button" class="pad-slot-button${index === editingSlot ? ' active' : ''}" data-slot="${index}" aria-pressed="${index === editingSlot}"><span>${index + 1}</span><strong>${source.title}</strong></button>`;
     }).join('');
-    $$('.pad-slot-button').forEach((button) => button.addEventListener('click', () => {
-      editingSlot = Number(button.dataset.slot);
-      editingKind = currentPreset().slots[editingSlot].kind;
-      renderSlotPicker(); renderLibrary(); renderEditingSummary();
-    }));
+    $$('.pad-slot-button').forEach((button) => {
+      button.addEventListener('click', () => {
+        editingSlot = Number(button.dataset.slot);
+        editingKind = currentPreset().slots[editingSlot].kind;
+        renderSlotPicker(); renderLibrary(); renderEditingSummary();
+      });
+      button.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        button.classList.add('drag-over');
+        event.dataTransfer.dropEffect = 'copy';
+      });
+      button.addEventListener('dragleave', () => button.classList.remove('drag-over'));
+      button.addEventListener('drop', (event) => {
+        event.preventDefault();
+        button.classList.remove('drag-over');
+        let payload = null;
+        try { payload = JSON.parse(event.dataTransfer.getData('application/x-pad-sound') || 'null'); } catch (_) { /* ignore */ }
+        if (!payload || !payload.source) return;
+        const index = Number(button.dataset.slot);
+        const preset = currentPreset();
+        const previous = preset.slots[index];
+        preset.slots[index] = { kind: payload.kind, source: payload.source, midi: previous?.midi || 36 + index };
+        editingSlot = index;
+        editingKind = payload.kind;
+        saveState(); renderPads(); renderSlotPicker(); renderLibrary(); renderEditingSummary();
+        options.toast(`${payload.title || '声音'} 已拖到 ${index + 1} 号按键`);
+      });
+    });
     renderEditingSummary();
   }
 
@@ -183,8 +208,8 @@
     const slot = currentPreset().slots[editingSlot] || currentPreset().slots[0];
     if (!slot) return;
     const source = sourceInfo(slot);
-    $('#pad-editing-title').textContent = `正在替换 ${editingSlot + 1} 号按键`;
-    $('#pad-editing-current').textContent = `${source.title} · 点击下面任意声音即可完成替换`;
+    $('#pad-editing-title').textContent = `拖到 ${editingSlot + 1} 号按键`;
+    $('#pad-editing-current').textContent = `${source.title} · 从下面把声音拖到任意按键即可替换`;
     $$('#pad-kind-tabs button').forEach((button) => {
       const active = button.dataset.kind === editingKind;
       button.classList.toggle('active', active);
@@ -197,23 +222,20 @@
     $('#pad-library').innerHTML = items.map((item) => {
       const unlocked = options.isUnlocked(item.kind, item.source);
       const visual = item.image ? `<img src="${item.image}" alt="">` : `<span>${item.symbol || item.short || 'NOTE'}</span>`;
-      return `<button class="pad-library-item" type="button" data-source="${item.source}" style="--library-color:${item.color}" ${unlocked ? '' : 'disabled'} title="${unlocked ? `装到 ${editingSlot + 1} 号按键` : '请先在卡带图鉴解锁'}">
+      return `<button class="pad-library-item" type="button" draggable="${unlocked ? 'true' : 'false'}" data-kind="${item.kind}" data-source="${item.source}" style="--library-color:${item.color}" ${unlocked ? '' : 'disabled'} title="${unlocked ? '拖到任意按键' : '请先在卡带图鉴解锁'}">
         <span class="pad-library-visual">${visual}</span><strong>${item.title}</strong><small>${unlocked ? item.sub : '未解锁'}</small>
       </button>`;
     }).join('');
-    $$('.pad-library-item').forEach((button) => button.addEventListener('click', () => {
+    $$('.pad-library-item').forEach((button) => {
       const item = items.find((entry) => entry.source === button.dataset.source);
       if (!item) return;
-      const preset = currentPreset();
-      const previous = preset.slots[editingSlot];
-      preset.slots[editingSlot] = {
-        kind: item.kind,
-        source: item.source,
-        midi: previous.midi || SCALE[editingSlot]
-      };
-      saveState(); renderPads(); renderLibrary();
-      options.toast(`${item.title} 已装到 ${editingSlot + 1} 号按键`);
-    }));
+      button.addEventListener('dragstart', (event) => {
+        event.dataTransfer.effectAllowed = 'copy';
+        event.dataTransfer.setData('application/x-pad-sound', JSON.stringify({ kind: item.kind, source: item.source, title: item.title }));
+        button.classList.add('dragging');
+      });
+      button.addEventListener('dragend', () => button.classList.remove('dragging'));
+    });
   }
 
   let hitLightTimer = null;
@@ -347,7 +369,8 @@
 
   function renderBackingSelect() {
     const preset = currentPreset();
-    $('#pad-backing-select').value = preset.backing;
+    const backingSelect = $('#pad-backing-select');
+    if (backingSelect) backingSelect.value = preset.backing;
     $('#pad-backing-name').textContent = options.loopName(preset.backing);
     const active = backingOn && !studioPaused && preset.backing !== 'off';
     // 图案的律动周期 = 两拍，跟着当前底奏的速度走（BPM 由 pad-grooves 引擎提供）。
@@ -686,7 +709,7 @@
   function bindControls() {
     $('#pad-backpack-open').addEventListener('click', openBackpack);
     $('#backpack-pad-button')?.addEventListener('click', openBackpack);
-    $('#pad-preset-select').addEventListener('change', (event) => selectPreset(event.target.value));
+    $('#pad-preset-select')?.addEventListener('change', (event) => selectPreset(event.target.value));
     $('#pad-surprise').addEventListener('click', () => {
       const builtIns = state.presets.filter((preset) => preset.builtIn);
       const current = builtIns.findIndex((preset) => preset.id === state.presetId);
@@ -710,7 +733,7 @@
       renderBackingSelect(); saveState();
       options.toast(`底奏：${options.loopName(next)}`);
     });
-    $('#pad-backing-select').addEventListener('change', (event) => {
+    $('#pad-backing-select')?.addEventListener('change', (event) => {
       currentPreset().backing = event.target.value;
       backingOn = event.target.value !== 'off';
       studioPaused = false;

@@ -1225,3 +1225,9 @@ body[data-page="studio"] .performance-inline{flex:0 0 176px!important;height:176
   body[data-page="studio"] .site-header{width:100%!important;max-width:none!important;margin:0!important;align-self:stretch!important;box-sizing:border-box!important}
   .page-nav a{white-space:nowrap!important}
 }
+
+
+/* 采样背包：拖拽填充 */
+.pad-slot-button.drag-over{outline:2px dashed var(--ink);background:var(--acid)}
+.pad-library-item[draggable="true"]{cursor:grab}
+.pad-library-item.dragging{opacity:.45}
