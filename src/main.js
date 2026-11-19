@@ -2052,6 +2052,14 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
 
   // 同一个采样在不同排鼓面点按时，从不同的“高能量位置”开始播放：
   // 把采样分成 3 段，每段找音量最高的 60ms 窗口作为起点，避免从静音/低音量处起播。
+  // 用户提供的四段哈基米采样，按 25fps 时间码换算出的三排起点（秒）。
+  // 第一排 / 第二排 / 第三排分别从这三处高能量位置开始。
+  const hachimiRowStarts = {
+    'hachimi-1-3': [0, 17 / 25, 1 + 1 / 25],
+    'hachimi-4-6': [9 / 25, 24 / 25, 1 + 6 / 25],
+    'hachimi-7-9': [10 / 25, 24 / 25, 1 + 9 / 25],
+    'hachimi-10-12': [8 / 25, 23 / 25, 1 + 6 / 25]
+  };
   const sampleStartCache = new Map();
   function sampleStartPositions(id) {
     if (sampleStartCache.has(id)) return sampleStartCache.get(id);
@@ -2111,7 +2119,9 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
       // 参考大狗 Tap：同一采样在不同分区只做克制的音高变化，避免极高把位失真成丝丝声。
       const playbackRate = padHitEarly ? Math.min(1.32, Math.max(.7, rawRate)) : rawRate;
       const sampleOffset = Math.max(0, Number(note?.offset) || 0) * stepDuration() * playbackRate;
-      const padRowOffset = padHitEarly ? sampleStartPositions(id)[padRow] : 0;
+      const padRowOffset = padHitEarly
+        ? (hachimiRowStarts[id]?.[padRow] ?? sampleStartPositions(id)[padRow])
+        : 0;
       const lead = sampleLeads.get(id) || 0;
       const padHit = padHitEarly;
       // 打击垫固定从裁剪起点进（不做随机切段），但要一直放到采样结尾，不再只放开头 0.1s。
