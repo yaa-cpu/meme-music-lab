@@ -1254,20 +1254,6 @@ body[data-page="studio"] .performance-inline{flex:0 0 176px!important;height:176
 .backpack{min-height:0!important}
 
 
-/* 手机打击垫页：全屏铺满，无页脚滚动 */
-@media (max-width:520px){
-  body[data-page="pad"]{display:flex!important;flex-direction:column!important;height:100dvh!important;overflow:hidden!important}
-  body[data-page="pad"] .site-header{flex:0 0 auto!important}
-  body[data-page="pad"] main{flex:1 1 auto!important;min-height:0!important;display:flex!important;flex-direction:column!important;padding:0 8px!important}
-  body[data-page="pad"] .pad-home{flex:1 1 auto!important;min-height:0!important;margin:0 0 6px!important;padding:10px 12px!important;display:flex!important;flex-direction:column!important;border-radius:16px!important}
-  body[data-page="pad"] .pad-hero-layout{flex:1 1 auto!important;min-height:0!important;display:flex!important;flex-direction:column!important;gap:8px!important;max-width:none!important;width:100%!important}
-  body[data-page="pad"] .pad-intro h1{font-size:34px!important}
-  body[data-page="pad"] .pad-toolbar{padding:0!important;gap:6px!important}
-  body[data-page="pad"] .pad-playground{flex:1 1 auto!important;min-height:0!important;aspect-ratio:auto!important;max-width:none!important;width:100%!important;padding:8px!important}
-  body[data-page="pad"] .pad-surprise{position:static!important;align-self:center!important;margin-top:4px!important}
-  body[data-page="pad"] .pad-status{margin:0!important}
-  body[data-page="pad"] .site-footer{display:none!important}
-}
 
 /* 背包卡盒稍微放大并按左右间距自适应；所有卡盒带封面，未解锁盖锁 */
 .backpack-grid{grid-template-columns:repeat(auto-fill,minmax(78px,1fr))!important;gap:10px!important;width:100%!important}
@@ -1290,3 +1276,9 @@ body[data-page="studio"] .performance-inline{flex:0 0 176px!important;height:176
 #pad-slot-picker .pad-slot-button .pad-number{font-size:9px}
 #pad-slot-picker .pad-slot-button .pad-hit-ring{display:none}
 .pad-preset-tip{text-align:center}
+
+
+/* 打击垫页仅让背景铺满全屏，不改动鼓面/其它 UI */
+@media (max-width:520px){
+  body[data-page="pad"]{min-height:100dvh!important;background:oklch(0.94 0.055 105)!important}
+}
