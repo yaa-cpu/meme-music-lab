@@ -2070,10 +2070,13 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
       const gain = audioCtx.createGain();
       const buffer = buffers[id];
       const volume = id === 'oiia' ? .7 : .82;
-      const playbackRate = 2 ** (((note?.midi ?? pitches[row].midi) - 67) / 12);
+      const padHitEarly = Boolean(note?.padHit);
+      const rawRate = 2 ** (((note?.midi ?? pitches[row].midi) - 67) / 12);
+      // 参考大狗 Tap：同一采样在不同分区只做克制的音高变化，避免极高把位失真成丝丝声。
+      const playbackRate = padHitEarly ? Math.min(1.32, Math.max(.7, rawRate)) : rawRate;
       const sampleOffset = Math.max(0, Number(note?.offset) || 0) * stepDuration() * playbackRate;
       const lead = sampleLeads.get(id) || 0;
-      const padHit = Boolean(note?.padHit);
+      const padHit = padHitEarly;
       // 打击垫固定从裁剪起点进（不做随机切段），但要一直放到采样结尾，不再只放开头 0.1s。
       const startOffset = Math.min(sampleOffset + lead, Math.max(0, buffer.duration - .02));
       const sampleDuration = buffer.duration / playbackRate;
@@ -2095,9 +2098,8 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
       source.buffer = buffer;
       source.playbackRate.value = playbackRate;
       if (padHit) {
-        source.loop = true;
-        source.loopStart = startOffset;
-        source.loopEnd = buffer.duration;
+        // 一次点按播放完整一声，不在按住时高速循环采样（循环会制造丝丝声）。
+        source.loop = false;
       } else {
         source.loop = !preview && duration > availableDuration;
         if (source.loop && startOffset > 0) { source.loopStart = startOffset; source.loopEnd = buffer.duration; }
@@ -2111,7 +2113,12 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
       // 打击垫循环播放，节点留到松开为止再断开。
       source.connect(gain).connect(createSoundBus(note, when, padHit ? 60 : duration));
       source.start(when, startOffset);
-      if (!padHit) source.stop(stopAt + .08);
+      if (padHit) {
+        const fadeOut = Math.min(.06, Math.max(.012, duration * .12));
+        gain.gain.setValueAtTime(volume, Math.max(when + attack, stopAt - fadeOut));
+        gain.gain.linearRampToValueAtTime(0, stopAt);
+      }
+      source.stop(stopAt + .08);
       // 打击垫重触发：同一个采样再次被敲时，直接掐掉上一声（6ms 消咔哒）再从起点重新发声，
       // 这样连击的节奏反馈靠“重新触发”而不是靠把采样截短。
       if (padHit) {

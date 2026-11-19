@@ -16,7 +16,7 @@ Web Audio 合成仿音为本地代码生成，只在原声加载失败时作为�
 
 ## 哈基米逐音采样与整曲
 
-十二张逐音卡共用本地原创猫咪音符插图（`assets/hachimi.svg`），不含真人图片。当前按顺序合并为 4 段：1–3、4–6、7–9、10–12（每段由 3 个原逐音片段拼接），原始素材来自 [B站《哈基米之歌》BV1WfFJzyEjv](https://www.bilibili.com/video/BV1WfFJzyEjv/?t=3)。切分点与首尾处理以用户文件为准。
+十二张逐音卡共用本地原创猫咪音符插图（`assets/hachimi.svg`），不含真人图片。当前使用新提供的「哈基米南北绿豆1–4.mp3」四段采样（分别对应 1–3、4–6、7–9、10–12），原始素材来自 [B站《哈基米之歌》BV1WfFJzyEjv](https://www.bilibili.com/video/BV1WfFJzyEjv/?t=3)。切分点与首尾处理以用户文件为准。
 
 
 ## 乐器、混响与演示谱面

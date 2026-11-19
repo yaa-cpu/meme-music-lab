@@ -238,10 +238,11 @@
     }
     const preset = currentPreset();
     ensureSlotsForLayout(preset);
+    const visibleCount = Math.max(1, preset.layout);
     preset.slots = preset.slots.map((slot, index) => ({
       kind: 'sample',
       source: item.source,
-      midi: slot.midi || 36 + index
+      midi: 60 + Math.round((Math.min(index, visibleCount - 1) / Math.max(1, visibleCount - 1)) * 8)
     }));
     saveState();
     renderPads(); renderSlotPicker(); renderLibrary();
