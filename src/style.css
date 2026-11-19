@@ -1132,3 +1132,37 @@ body.phone-preview-open{overflow:hidden}
 /* 覆盖手机媒体查询里旧的 8px 圆角，统一 40x40 + 10px 圆角 */
 body[data-page="studio"] .card-button.sample-note .note-chip{border-radius:10px!important;width:40px!important;height:40px!important}
 body[data-page="studio"] .card-button.sample-note .sample-note-avatar{border-radius:10px!important;width:40px!important;height:40px!important}
+
+
+/* 卡带轮与采样卡整块统一为 40×40、1:1、10px 圆角矩形（不是内部图标） */
+.cartridge-console .cartridge-wheel-shell{width:40px!important;height:40px!important;flex:0 0 40px!important;border-radius:10px!important;box-shadow:2px 2px 0 var(--ink)!important}
+.cartridge-console .cartridge-wheel{inset:2px!important;height:36px!important;border-radius:8px!important}
+.cartridge-console .cartridge-wheel-number{font-size:15px!important}
+.cartridge-console .cartridge-heading{display:none!important}
+.cartridge-console .cartridge-changer{padding:0!important;border-right:0!important}
+.card-button.sample-note{width:40px!important;height:40px!important;min-height:40px!important;padding:0!important;border-radius:10px!important;display:block!important;flex:0 0 40px!important;overflow:hidden!important;box-shadow:2px 2px 0 var(--ink)!important}
+.card-button.sample-note .keycap,
+.card-button.sample-note .sample-note-copy,
+.card-button.sample-note .note-chip{display:none!important}
+.card-button.sample-note .sample-note-avatar{width:100%!important;height:100%!important;border:0!important;border-radius:0!important;display:flex!important;align-items:center!important;justify-content:center!important;background:var(--card-color)!important}
+.card-button.sample-note .sample-note-avatar img{width:100%!important;height:100%!important;object-fit:cover!important}
+.card-button.sample-note .sample-instrument-symbol{font-size:22px!important}
+.meme-grid.sample-note-row{grid-auto-columns:40px!important;gap:6px!important}
+@media (max-width:520px){
+  body[data-page="studio"] .sample-console{grid-template-columns:40px minmax(0,1fr)!important;gap:6px!important;align-items:center!important}
+  body[data-page="studio"] .cartridge-wheel-shell{width:40px!important;height:40px!important;flex:0 0 40px!important}
+  body[data-page="studio"] .cartridge-wheel{inset:2px!important;height:36px!important}
+  body[data-page="studio"] .meme-grid.sample-note-row{max-height:44px!important}
+  body[data-page="studio"] .card-button.sample-note{flex:0 0 40px!important;width:40px!important;height:40px!important;min-height:40px!important}
+  body[data-page="studio"] .performance-inline{flex:0 0 180px!important;height:180px!important}
+}
+
+
+/* 强制 40x40 方块卡片 10px 圆角；工作台高度收紧 */
+body[data-page="studio"] .card-button.sample-note{border-radius:10px!important}
+body[data-page="studio"] .performance-inline{flex:0 0 176px!important;height:176px!important;min-height:0!important}
+
+
+/* 覆盖 :has 规则的更高优先级，工作台固定 176px */
+body[data-page="studio"] .performance-inline:has(.pitch-pad.piano-pad),
+body[data-page="studio"] .performance-inline{flex:0 0 176px!important;height:176px!important;min-height:0!important}
