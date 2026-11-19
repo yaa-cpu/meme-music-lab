@@ -5,12 +5,12 @@
   const SCALE = [60, 62, 64, 67, 69, 72, 74, 76, 79];
   const BUILT_INS = [
     {
-      id: 'meme-party', name: '梗图派对', builtIn: true, layout: 9, backing: 'sunny',
+      id: 'meme-party', name: '梗图派对', builtIn: true, layout: 9, backing: 'friendwine',
       slots: ['doro', 'maodie', 'chicken', 'oiia', 'dog', 'nailong', 'dog-1', 'dog-2', 'bingbingbing']
         .map((source, index) => ({ kind: 'sample', source, midi: SCALE[index] }))
     },
     {
-      id: 'dog-groove', name: '大狗节奏站', builtIn: true, layout: 4, backing: 'bounce',
+      id: 'dog-groove', name: '大狗节奏站', builtIn: true, layout: 4, backing: 'friendwine',
       slots: [
         { kind: 'drum', source: 'drum:kick' }, { kind: 'drum', source: 'drum:snare' },
         { kind: 'sample', source: 'dog-1', midi: 60 }, { kind: 'sample', source: 'dog-3', midi: 67 },
@@ -20,12 +20,12 @@
       ]
     },
     {
-      id: 'hachimi-melody', name: '哈基米旋律', builtIn: true, layout: 9, backing: 'chill',
+      id: 'hachimi-melody', name: '哈基米旋律', builtIn: true, layout: 9, backing: 'friendwine',
       slots: ['hachimi-ha', 'hachimi-ji', 'hachimi-mi', 'hachimi-nan', 'hachimi-bei', 'hachimi-lv', 'hachimi-dou', 'hachimi-8', 'hachimi-9']
         .map((source, index) => ({ kind: 'sample', source, midi: SCALE[index] }))
     },
     {
-      id: 'instrument-toy', name: '乐器玩具箱', builtIn: true, layout: 9, backing: 'sunny',
+      id: 'instrument-toy', name: '乐器玩具箱', builtIn: true, layout: 9, backing: 'friendwine',
       slots: ['piano', 'marimba', 'harp', 'guitar', 'flute', '8bit', 'bass', 'synth', 'pad']
         .map((id, index) => ({ kind: 'note', source: `instrument:${id}`, midi: SCALE[index] }))
     }
@@ -54,7 +54,7 @@
       name: String(preset.name || '我的打击垫').slice(0, 24),
       builtIn: Boolean(preset.builtIn),
       layout: Number(preset.layout) === 4 ? 4 : 9,
-      backing: ['sunny', 'bounce', 'chill', 'friendwine', 'off'].includes(preset.backing) ? preset.backing : 'sunny',
+      backing: ['sunny', 'bounce', 'chill', 'friendwine', 'off'].includes(preset.backing) ? preset.backing : 'friendwine',
       slots: slots.map((slot, index) => ({
         kind: ['sample', 'note', 'drum'].includes(slot.kind) ? slot.kind : 'sample',
         source: String(slot.source || fallback.slots[index].source),
@@ -679,15 +679,16 @@
       saveState(); renderPads(); renderLibrary();
     }));
     $('#pad-loop-toggle').addEventListener('click', () => {
-      if (currentPreset().backing === 'off') currentPreset().backing = 'sunny';
-      if (studioPaused) {
-        studioPaused = false;
-        backingOn = true;
-      } else {
-        backingOn = !backingOn;
-      }
-      options.setBacking(backingOn, currentPreset().backing);
+      const grooves = ['friendwine', 'sunny', 'bounce', 'chill'];
+      const current = currentPreset().backing;
+      const pool = grooves.filter((id) => id !== current);
+      const next = pool[Math.floor(Math.random() * pool.length)] || 'friendwine';
+      currentPreset().backing = next;
+      studioPaused = false;
+      backingOn = true;
+      options.setBacking(true, next);
       renderBackingSelect(); saveState();
+      options.toast(`底奏：${options.loopName(next)}`);
     });
     $('#pad-backing-select').addEventListener('change', (event) => {
       currentPreset().backing = event.target.value;
