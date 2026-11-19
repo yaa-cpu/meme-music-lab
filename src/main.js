@@ -3124,7 +3124,8 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
   const PAGE_ROUTES = {
     pad: ['#pad-home'],
     backpack: ['.backpack'],
-    studio: ['.studio-layout', '.songbook']
+    studio: ['.studio-layout'],
+    works: ['.songbook']
   };
   const PAGE_SECTIONS = ['#pad-home', '.studio-layout', '.backpack', '.songbook'];
   function currentPage() {
@@ -3146,7 +3147,8 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
       else link.removeAttribute('aria-current');
     });
     document.title = route === 'backpack' ? '采样卡带背包图鉴 · 梗图音乐坊'
-      : route === 'studio' ? '线谱音序器 · 梗图音乐坊' : '梗图音乐坊';
+      : route === 'studio' ? '线谱音序器 · 梗图音乐坊'
+      : route === 'works' ? '作品背包 · 梗图音乐坊' : '梗图音乐坊';
     if (route !== 'pad') window.scrollTo(0, 0);
   }
   window.addEventListener('hashchange', applyPage);

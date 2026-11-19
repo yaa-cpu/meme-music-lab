@@ -134,6 +134,7 @@
         <div class="staff-toolbar">
           <p><span class="selection-swatch" id="selection-swatch"></span>当前音符：<strong id="selected-name">Doro</strong><span class="toolbar-divider"></span>空白处右滑：放入＋延长 · 点左侧音阶名选中轨道<span class="toolbar-divider"></span><span id="tape-hint">点左侧音阶名选中轨道，再合成 loop 底奏卡带</span></p>
           <div>
+            <a class="small-button" id="open-works" href="#/works" title="打开作品背包"><svg><use href="#i-note"/></svg>作品背包</a>
             <button class="small-button" id="replace-melody" type="button" title="有音符：把主旋律换成当前采样；空线谱：按 4/4 随机铺采样"><svg><use href="#i-spark"/></svg>替换主旋律</button>
             <button class="small-button" id="make-tape" type="button" disabled><svg><use href="#i-loop"/></svg>合成卡带</button>
             <button class="small-button" id="demo-button" type="button"><svg><use href="#i-spark"/></svg>来点抽象</button>
@@ -204,7 +205,7 @@
 
     <section class="songbook" aria-labelledby="songbook-title">
       <div class="performance-heading">
-        <div><span class="section-index">05</span><h2 id="songbook-title">先来一首熟悉的</h2></div>
+        <div><span class="section-index">05</span><h2 id="songbook-title">作品背包</h2></div>
         <div class="songbook-actions">
           <p>逐音合成完整旋律并自动播放 · 不播放原曲 · 之后仍可自由编辑</p>
           <button class="small-button" id="import-project" type="button"><svg><use href="#i-spark"/></svg>导入 ACE 工程</button>
