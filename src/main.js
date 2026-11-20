@@ -3612,7 +3612,10 @@ try { localStorage.removeItem('meme-music-lab-v1'); } catch (_) { /* clear old d
     const frame = $('#phone-preview-frame');
     if (!overlay || !frame) return;
     const open = () => {
-      frame.src = `${location.pathname.replace(/[^/]*$/, '')}?phone=1${location.hash || '#/pad'}`;
+      const base = location.protocol === 'file:'
+      ? location.href.split('#')[0]
+      : `${location.pathname.replace(/[^/]*$/, '')}?phone=1`;
+    frame.src = `${base}${location.hash || '#/pad'}`;
       overlay.hidden = false;
       document.body.classList.add('phone-preview-open');
     };
